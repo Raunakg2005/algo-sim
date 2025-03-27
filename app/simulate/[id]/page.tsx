@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MergeSortVisualizer from "@/components/merge-sort-visualizer"
+import QuickSortVisualization from "@/components/quick-sort-visualization"
+import HeapSortVisualization from "@/components/heap-sort-visualizer"
 
 interface Option {
   key: string
@@ -16,7 +18,6 @@ interface Option {
   description: string
 }
 
-// Mapping of category to its sub-algorithm choices
 const algorithmOptions: Record<string, Option[]> = {
   divide: [
     {
@@ -130,7 +131,6 @@ const algorithmOptions: Record<string, Option[]> = {
   ],
 }
 
-// Map category IDs to their display names
 const categoryNames: Record<string, string> = {
   divide: "Divide and Conquer",
   greedy: "Greedy Technique",
@@ -145,7 +145,6 @@ export default function SimulationPage() {
   const [selectedSubAlgorithm, setSelectedSubAlgorithm] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>("visualization")
 
-  // Check if the current category has sub-options
   const subOptions = algorithmOptions[id] || []
   const categoryName = categoryNames[id] || id
 
@@ -245,6 +244,10 @@ export default function SimulationPage() {
                     <div className="p-6">
                       {selectedSubAlgorithm === "mergeSort" ? (
                         <MergeSortVisualizer />
+                      ) : selectedSubAlgorithm === "quickSort" ? (
+                        <QuickSortVisualization />
+                      ) : selectedSubAlgorithm === "heapSort" ? (
+                        <HeapSortVisualization />
                       ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
@@ -252,14 +255,14 @@ export default function SimulationPage() {
                           </div>
                           <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
                           <p className="text-gray-600 max-w-md">
-                            The visualization for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} is
-                            under development.
+                            The visualization for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} is under development.
                           </p>
                         </div>
                       )}
                     </div>
                   </TabsContent>
 
+                  {/* Explanation Tab */}
                   <TabsContent value="explanation" className="p-6 m-0">
                     {selectedSubAlgorithm === "mergeSort" ? (
                       <div className="space-y-4">
@@ -277,8 +280,7 @@ export default function SimulationPage() {
                           </li>
                         </ol>
                         <p>
-                          The base case of the recursion is arrays of size 0 or 1, which are already sorted by
-                          definition.
+                          The base case of the recursion is arrays of size 0 or 1, which are already sorted by definition.
                         </p>
 
                         <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
@@ -286,8 +288,7 @@ export default function SimulationPage() {
 
                         <h4 className="text-lg font-semibold mt-4">Space Complexity</h4>
                         <p>
-                          Merge Sort has a space complexity of O(n) as it requires additional space for the temporary
-                          arrays during merging.
+                          Merge Sort has a space complexity of O(n) as it requires additional space for the temporary arrays during merging.
                         </p>
 
                         <h4 className="text-lg font-semibold mt-4">Advantages</h4>
@@ -303,16 +304,165 @@ export default function SimulationPage() {
                           <li>Slower for small arrays compared to insertion sort</li>
                         </ul>
                       </div>
+                    ) : selectedSubAlgorithm === "quickSort" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">How Quick Sort Works</h3>
+                        <p>Quick Sort is a divide and conquer algorithm that works as follows:</p>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Choose Pivot:</strong> Select a pivot element from the array.
+                          </li>
+                          <li>
+                            <strong>Partition:</strong> Rearrange elements so elements less than the pivot come before, and elements greater come after.
+                          </li>
+                          <li>
+                            <strong>Recurse:</strong> Apply Quick Sort recursively to the sub-arrays.
+                          </li>
+                        </ol>
+
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Best/Average Case: O(n log n)</li>
+                          <li>Worst Case: O(n²) (with poor pivot selection)</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Space Complexity</h4>
+                        <p>O(log n) due to recursion stack</p>
+
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>In-place sorting (requires minimal extra memory)</li>
+                          <li>Typically faster than other O(n log n) algorithms in practice</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Worst-case performance can be O(n²)</li>
+                          <li>Not a stable sort</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "heapSort" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">How Heap Sort Works</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Build Heap:</strong> Convert array into a max-heap structure
+                          </li>
+                          <li>
+                            <strong>Sort Phase:</strong>
+                            <ul className="list-disc pl-5 mt-2">
+                              <li>Swap root (max element) with last element</li>
+                              <li>Reduce heap size by 1</li>
+                              <li>Heapify the root element</li>
+                            </ul>
+                          </li>
+                          <li>
+                            <strong>Repeat:</strong> Until heap size reduces to 1
+                          </li>
+                        </ol>
+                        
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(n log n) in all cases</p>
+                        
+                        <h4 className="text-lg font-semibold mt-4">Space Complexity</h4>
+                        <p>O(1) - in-place sorting</p>
+                        
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Guaranteed O(n log n) performance</li>
+                          <li>Memory efficient</li>
+                        </ul>
+                        
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Not stable</li>
+                          <li>Slower than Quick Sort in practice</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "strassen" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Strassen's Matrix Multiplication</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Divide:</strong> Split matrices into 4 submatrices each
+                          </li>
+                          <li>
+                            <strong>Compute 7 Products:</strong>
+                            <ul className="list-disc pl-5 mt-2">
+                              <li>P1 = A11(S22 - S21)</li>
+                              <li>P2 = (S11 + S22)B11</li>
+                              <li>... (other Strassen formulas)</li>
+                            </ul>
+                          </li>
+                          <li>
+                            <strong>Combine:</strong> Calculate final matrix using these products
+                          </li>
+                        </ol>
+
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>
+                          O(n<sup>log<sub>2</sub>7</sup>) ≈ O(n<sup>2.807</sup>)
+                        </p>
+
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Better asymptotic complexity than standard O(n³)</li>
+                          <li>Foundation for improved matrix algorithms</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Larger constant factors in time complexity</li>
+                          <li>Not practical for small matrices</li>
+                          <li>Requires square matrices of power-of-two size</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "minmax" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Min/Max Finding</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Divide:</strong> Split array into two halves
+                          </li>
+                          <li>
+                            <strong>Conquer:</strong>
+                            <ul className="list-disc pl-5 mt-2">
+                              <li>Find min/max in left half</li>
+                              <li>Find min/max in right half</li>
+                            </ul>
+                          </li>
+                          <li>
+                            <strong>Combine:</strong> Compare left and right min/max
+                          </li>
+                        </ol>
+
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>
+                          O(n) with 3n/2 - 2 comparisons (better than 2n-2 in linear scan)
+                        </p>
+
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Reduces number of comparisons</li>
+                          <li>Efficient for parallel processing</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Recursion overhead for small arrays</li>
+                          <li>More complex implementation</li>
+                        </ul>
+                      </div>
                     ) : (
                       <div className="py-8 text-center">
                         <p className="text-gray-600">
-                          Explanation for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} will be
-                          available soon.
+                          Explanation for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} will be available soon.
                         </p>
                       </div>
                     )}
                   </TabsContent>
 
+                  {/* Code Tab */}
                   <TabsContent value="code" className="p-6 m-0">
                     {selectedSubAlgorithm === "mergeSort" ? (
                       <div>
@@ -359,11 +509,142 @@ function merge(left, right) {
 }`}</code>
                         </pre>
                       </div>
+                    ) : selectedSubAlgorithm === "quickSort" ? (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">JavaScript Implementation</h3>
+                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                          <code>{`function quickSort(arr, low = 0, high = arr.length - 1) {
+  if (low < high) {
+    const pivotIndex = partition(arr, low, high);
+    quickSort(arr, low, pivotIndex - 1);
+    quickSort(arr, pivotIndex + 1, high);
+  }
+  return arr;
+}
+
+function partition(arr, low, high) {
+  const pivot = arr[high];
+  let i = low - 1;
+  
+  for (let j = low; j < high; j++) {
+    if (arr[j] <= pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+  
+  [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+  return i + 1;
+}`}</code>
+                        </pre>
+                      </div>
+                    ) : selectedSubAlgorithm === "heapSort" ? (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Heap Sort Code</h3>
+                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                          <code>{`// Heap Sort implementation
+function heapSort(arr) {
+  let n = arr.length;
+
+  // Build max heap
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(arr, n, i);
+  }
+
+  // One by one extract elements
+  for (let i = n - 1; i > 0; i--) {
+    [arr[0], arr[i]] = [arr[i], arr[0]];
+    heapify(arr, i, 0);
+  }
+  return arr;
+}
+
+function heapify(arr, heapSize, i) {
+  let largest = i;
+  let left = 2 * i + 1;
+  let right = 2 * i + 2;
+
+  if (left < heapSize && arr[left] > arr[largest]) {
+    largest = left;
+  }
+  if (right < heapSize && arr[right] > arr[largest]) {
+    largest = right;
+  }
+  if (largest !== i) {
+    [arr[i], arr[largest]] = [arr[largest], arr[i]];
+    heapify(arr, heapSize, largest);
+  }
+}`}</code>
+                        </pre>
+                      </div>
+                    ) : selectedSubAlgorithm === "strassen" ? (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Strassen's Implementation</h3>
+                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                          <code>{`function strassenMultiply(A, B) {
+  // Base case for 2x2 matrix
+  if (A.length === 2) {
+    return [
+      [
+        A[0][0] * B[0][0] + A[0][1] * B[1][0],
+        A[0][0] * B[0][1] + A[0][1] * B[1][1]
+      ],
+      [
+        A[1][0] * B[0][0] + A[1][1] * B[1][0],
+        A[1][0] * B[0][1] + A[1][1] * B[1][1]
+      ]
+    ];
+  }
+
+  // Split matrices into quadrants
+  const [A11, A12, A21, A22] = splitMatrix(A);
+  const [B11, B12, B21, B22] = splitMatrix(B);
+
+  // Compute 7 products recursively
+  const P1 = strassenMultiply(A11, matrixSubtract(B12, B22));
+  const P2 = strassenMultiply(matrixAdd(A11, A12), B22);
+  // ... other products
+
+  // Combine results (this is an example and may need adjustment)
+  return combineMatrix(
+    matrixAdd(matrixSubtract(matrixAdd(P5, P4), P2), P6),
+    matrixAdd(P1, P2),
+    matrixAdd(P3, P4),
+    matrixSubtract(matrixSubtract(matrixAdd(P5, P1), P3), P7)
+  );
+}`}</code>
+                        </pre>
+                      </div>
+                    ) : selectedSubAlgorithm === "minmax" ? (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Min/Max Code</h3>
+                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                          <code>{`function findMinMax(arr, low = 0, high = arr.length - 1) {
+  // Base cases
+  if (low === high) return { min: arr[low], max: arr[low] };
+  if (high === low + 1) {
+    return arr[low] < arr[high] 
+      ? { min: arr[low], max: arr[high] }
+      : { min: arr[high], max: arr[low] };
+  }
+
+  // Divide
+  const mid = Math.floor((low + high) / 2);
+  const left = findMinMax(arr, low, mid);
+  const right = findMinMax(arr, mid + 1, high);
+
+  // Combine
+  return {
+    min: Math.min(left.min, right.min),
+    max: Math.max(left.max, right.max)
+  };
+}`}</code>
+                        </pre>
+                      </div>
                     ) : (
                       <div className="py-8 text-center">
                         <p className="text-gray-600">
-                          Code implementation for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} will be
-                          available soon.
+                          Code implementation for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} will be available soon.
                         </p>
                       </div>
                     )}
@@ -387,10 +668,9 @@ function merge(left, right) {
 
       <footer className="bg-white border-t border-gray-200 py-6 mt-12">
         <div className="container mx-auto px-6 text-center text-gray-600">
-          <p>© {new Date().getFullYear()} Algorithm Visualizer. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Algo-Sim. All rights reserved.</p>
         </div>
       </footer>
     </div>
   )
 }
-
