@@ -18,15 +18,22 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/dashboard">
-                  <Button size="lg" className="bg-white text-purple-800 hover:bg-purple-100">
-                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button
+                  size="lg"
+                  className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-105 hover:translate-x-1 transition-transform duration-200 ease-in-out"
+                  >
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="#features">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                    Learn More
+                  <Button
+                  size="lg"
+                  className="bg-purple-700 text-white hover:bg-purple-800 hover:scale-105 hover:translate-x-1 transition-transform duration-200 ease-in-out"
+                  >
+                  Learn More
                   </Button>
                 </Link>
+                
               </div>
             </div>
             <div className="md:w-1/2 flex justify-center">
@@ -104,9 +111,9 @@ export default function LandingPage() {
                 <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
                 <p className="mb-4 opacity-90">Explore various algorithms in this category</p>
                 <Link href="/dashboard">
-                  <Button variant="outline" className="border-white text-white hover:bg-white/20">
-                    Explore
-                  </Button>
+                    <Button className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-105 transition-transform duration-200 ease-in-out">
+                      Explore
+                    </Button>
                 </Link>
               </div>
             ))}
