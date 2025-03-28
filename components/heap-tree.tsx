@@ -31,7 +31,6 @@ export default function HeapTree({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  // Measure container width using a ref.
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
@@ -44,10 +43,9 @@ export default function HeapTree({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Calculate positions for tree view (only if heapSize is not 0)
   useEffect(() => {
     if (containerWidth === 0) return;
-    if (heapSize === 0) return; // Skip tree layout if sorting is complete
+    if (heapSize === 0) return; 
 
     const isMobile = containerWidth < 768;
     const baseWidth = isMobile ? containerWidth - 20 : 600;
@@ -70,7 +68,6 @@ export default function HeapTree({
 
   const getParentIndex = (i: number) => Math.floor((i - 1) / 2);
 
-  // Render tree edges only if in tree view.
   const edges = array.map((_, index) => {
     if (index === 0) return null;
     const parentIndex = getParentIndex(index);
@@ -103,7 +100,6 @@ export default function HeapTree({
     );
   });
 
-  // Render nodes for tree view.
   const treeNodes = array.map((value, index) => {
     const isComparing = comparing?.includes(index);
     const isSwapping = swapping?.includes(index);
@@ -185,8 +181,6 @@ export default function HeapTree({
       </motion.div>
     );
   });
-
-  // If the heap is empty (sorting is complete), render the sorted array in a linear animated view.
   if (heapSize === 0) {
     return (
       <div ref={containerRef} className="w-full flex justify-center items-center p-4">
@@ -205,7 +199,6 @@ export default function HeapTree({
     );
   }
 
-  // Otherwise, render the tree view.
   return (
     <div ref={containerRef} className="relative w-full h-full">
       <svg className="absolute inset-0 w-full h-full">{edges}</svg>

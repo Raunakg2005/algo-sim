@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, RotateCcw, Play, Pause } from "lucide-react"
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import BookElement from "./book-element"
 import HeapTree from "./heap-tree"
+import { motion } from "framer-motion"
 
 type SortingStep = {
   type: "initial" | "build-heap" | "heapify" | "extract-max" | "sorted"
@@ -30,12 +30,12 @@ export default function HeapSortVisualization() {
   const [steps, setSteps] = useState<SortingStep[]>([])
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1500) 
-  const [showTree, setShowTree] = useState(true)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1500)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Generate a random array with 10 elements
   const generateRandomArray = () => {
-    const size = 7 
+    const size = 10
     const newArray = Array.from({ length: size }, () => Math.floor(Math.random() * 9) + 1)
     setArray(newArray)
     setUserInput(newArray.join(", "))
@@ -57,11 +57,6 @@ export default function HeapSortVisualization() {
 
       if (inputArray.length < 2) {
         setInputError("Please enter at least 2 numbers")
-        return
-      }
-
-      if (inputArray.length > 7) {
-        setInputError("Please enter at most 7 numbers for better visualization")
         return
       }
 
@@ -100,10 +95,6 @@ export default function HeapSortVisualization() {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1)
     }
-  }
-
-  const toggleView = () => {
-    setShowTree(!showTree)
   }
 
   const generateHeapSortSteps = (arr: number[]) => {
@@ -308,7 +299,7 @@ export default function HeapSortVisualization() {
                 id="array-input"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder="e.g., 8, 3, 5, 4, 7, 6, 1"
+                placeholder="e.g., 8, 3, 5, 4, 7, 6, 1, 2, 9, 4"
                 className="flex-1 min-w-[200px]"
               />
               <Button type="submit">Set Array</Button>
@@ -331,67 +322,47 @@ export default function HeapSortVisualization() {
 
         {/* Visualization area */}
         <div className="relative z-10">
-          {/* Description overlay */}
-          <div className="bg-white/90 p-3 rounded-md shadow-sm mb-4 md:mb-8 border border-amber-200">
+          {/* Animated description */}
+          <motion.div
+            key={currentStepIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/90 p-3 rounded-md shadow-sm mb-4 md:mb-8 border border-amber-200"
+          >
             <p className="text-sm md:text-lg font-medium text-stone-700">{currentStep?.description}</p>
-          </div>
+          </motion.div>
 
-          {/* View toggle */}
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              <Button
-                variant={showTree ? "default" : "outline"}
-                onClick={() => setShowTree(true)}
-                className="rounded-r-none"
-              >
-                Tree View
-              </Button>
-              <Button
-                variant={!showTree ? "default" : "outline"}
-                onClick={() => setShowTree(false)}
-                className="rounded-l-none"
-              >
-                Array View
-              </Button>
-            </div>
-          </div>
-
-          {/* Visualization */}
+          {/* Visualization - always show tree view */}
           <div className="flex justify-center items-center min-h-[300px] md:min-h-[400px] mb-4 md:mb-8 relative">
-            {showTree ? (
-              <HeapTree
-                array={currentStep?.array || []}
-                heapSize={currentStep?.heapSize || 0}
-                comparing={currentStep?.comparing}
-                swapping={currentStep?.swapping}
-                currentNodeIndex={currentStep?.currentNodeIndex}
-                sortedIndices={currentStep?.sortedIndices || []}
-              />
-            ) : (
-              <div className="flex justify-center items-end h-64 relative">
-                {currentStep?.array.map((value, index) => {
-                  const isComparing = currentStep.comparing?.includes(index)
-                  const isSwapping = currentStep.swapping?.includes(index)
-                  const isCurrentNode = index === currentStep.currentNodeIndex
-                  const isSorted = currentStep.sortedIndices?.includes(index)
-                  const isInHeap = index < currentStep.heapSize
-
-                  return (
-                    <BookElement
-                      key={`${index}-${value}-${currentStepIndex}`}
-                      value={value}
-                      index={index}
-                      isComparing={isComparing}
-                      isSwapping={isSwapping}
-                      isHighlighted={isCurrentNode}
-                      isSorted={isSorted}
-                      isActive={isInHeap || isSorted}
-                    />
-                  )
-                })}
-              </div>
-            )}
+            <HeapTree
+              array={currentStep?.array || []}
+              heapSize={currentStep?.heapSize || 0}
+              comparing={currentStep?.comparing}
+              swapping={currentStep?.swapping}
+              currentNodeIndex={currentStep?.currentNodeIndex}
+              sortedIndices={currentStep?.sortedIndices || []}
+            />
           </div>
+
+          {/* If sorted, show sorted array view (linear) */}
+          {currentStep?.type === "sorted" && (
+            <div className="w-full bg-gray-100 rounded-lg p-4">
+              <h3 className="text-lg font-bold mb-2 text-stone-700">Sorted Array:</h3>
+              <div className="flex justify-center items-center gap-2">
+                {currentStep.array.map((value, index) => (
+                  <motion.div
+                    key={`linear-${index}`}
+                    className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded shadow"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <span className="font-bold text-stone-700">{value}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Legend */}
           <div className="flex flex-wrap justify-center gap-2 md:gap-4 mt-4 text-xs md:text-sm">
@@ -480,4 +451,3 @@ export default function HeapSortVisualization() {
     </div>
   )
 }
-
