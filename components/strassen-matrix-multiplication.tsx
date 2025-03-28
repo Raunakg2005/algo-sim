@@ -740,7 +740,6 @@ export default function StrassenMatrixMultiplication() {
     )
   }
 
-  // Render operation
   const renderOperation = (operation: Operation) => {
     return (
       <div className="flex items-center justify-center gap-1 text-xs sm:text-sm">
@@ -1136,4 +1135,3 @@ export default function StrassenMatrixMultiplication() {
     </div>
   )
 }
-

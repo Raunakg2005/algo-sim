@@ -156,7 +156,7 @@ export default function SimulationPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <Link href="/" className="text-xl font-bold text-purple-700">
-              Algorithm Visualizer
+              Algo-Sim
             </Link>
             <nav className="hidden md:flex space-x-6">
               <Link href="/" className="text-gray-600 hover:text-purple-700">
@@ -387,42 +387,51 @@ export default function SimulationPage() {
                       </div>
                     ) : selectedSubAlgorithm === "strassen" ? (
                       <div className="space-y-4">
-                        <h3 className="text-xl font-semibold">Strassen's Matrix Multiplication</h3>
-                        <ol className="list-decimal pl-5 space-y-2">
-                          <li>
-                            <strong>Divide:</strong> Split matrices into 4 submatrices each
-                          </li>
-                          <li>
-                            <strong>Compute 7 Products:</strong>
-                            <ul className="list-disc pl-5 mt-2">
-                              <li>P1 = A11(S22 - S21)</li>
-                              <li>P2 = (S11 + S22)B11</li>
-                              <li>... (other Strassen formulas)</li>
-                            </ul>
-                          </li>
-                          <li>
-                            <strong>Combine:</strong> Calculate final matrix using these products
-                          </li>
-                        </ol>
-
-                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
-                        <p>
-                          O(n<sup>log<sub>2</sub>7</sup>) ≈ O(n<sup>2.807</sup>)
-                        </p>
-
-                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
-                        <ul className="list-disc pl-5 space-y-1">
-                          <li>Better asymptotic complexity than standard O(n³)</li>
-                          <li>Foundation for improved matrix algorithms</li>
-                        </ul>
-
-                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
-                        <ul className="list-disc pl-5 space-y-1">
-                          <li>Larger constant factors in time complexity</li>
-                          <li>Not practical for small matrices</li>
-                          <li>Requires square matrices of power-of-two size</li>
-                        </ul>
-                      </div>
+                      <h3 className="text-xl font-semibold">Strassen's Matrix Multiplication</h3>
+                      <ol className="list-decimal pl-5 space-y-2">
+                        <li>
+                          <strong>Divide:</strong> Split each matrix into 4 equal submatrices. For example, for matrices A and B:
+                          <br />
+                          A = [ [A11, A12], [A21, A22] ] and B = [ [B11, B12], [B21, B22] ]
+                        </li>
+                        <li>
+                          <strong>Compute 7 Products:</strong>
+                          <ul className="list-disc pl-5 mt-2">
+                            <li>M1 = (A11 + A22) × (B11 + B22)</li>
+                            <li>M2 = (A21 + A22) × B11</li>
+                            <li>M3 = A11 × (B12 − B22)</li>
+                            <li>M4 = A22 × (B21 − B11)</li>
+                            <li>M5 = (A11 + A12) × B22</li>
+                            <li>M6 = (A21 − A11) × (B11 + B12)</li>
+                            <li>M7 = (A12 − A22) × (B21 + B22)</li>
+                          </ul>
+                        </li>
+                        <li>
+                          <strong>Combine:</strong> Reconstruct the final matrix C using the seven products:
+                          <ul className="list-disc pl-5 mt-2">
+                            <li>C11 = M1 + M4 − M5 + M7</li>
+                            <li>C12 = M3 + M5</li>
+                            <li>C21 = M2 + M4</li>
+                            <li>C22 = M1 − M2 + M3 + M6</li>
+                          </ul>
+                        </li>
+                      </ol>
+                      <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                      <p>
+                        O(n<sup>log<sub>2</sub>7</sup>) ≈ O(n<sup>2.807</sup>)
+                      </p>
+                      <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Better asymptotic complexity than the standard O(n³) algorithm</li>
+                        <li>Foundation for improved matrix multiplication algorithms</li>
+                      </ul>
+                      <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Larger constant factors in time complexity</li>
+                        <li>Not practical for small matrices</li>
+                        <li>Requires square matrices with dimensions of power-of-two (or padded accordingly)</li>
+                      </ul>
+                    </div>
                     ) : selectedSubAlgorithm === "minmax" ? (
                       <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Min/Max Finding</h3>
@@ -457,6 +466,380 @@ export default function SimulationPage() {
                         <ul className="list-disc pl-5 space-y-1">
                           <li>Recursion overhead for small arrays</li>
                           <li>More complex implementation</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "knapsack" ? (
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">Greedy Knapsack Problem</h3>
+                          <ol className="list-decimal pl-5 space-y-2">
+                            <li>Sort items by value-to-weight ratio in descending order</li>
+                            <li>Take items in this order until the knapsack is full</li>
+                            <li>Take fractions of items if needed for the last item</li>
+                          </ol>
+                    
+                          <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                          <p>O(n log n) due to sorting</p>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Simple and efficient for fractional knapsack</li>
+                            <li>Guaranteed optimal solution for fractional version</li>
+                          </ul>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Doesn't work for 0/1 knapsack problem</li>
+                            <li>Requires sorting all items</li>
+                          </ul>
+                        </div>
+                      ) : selectedSubAlgorithm === "jobScheduling" ? (
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">Job Scheduling with Deadlines</h3>
+                          <ol className="list-decimal pl-5 space-y-2">
+                            <li>Sort jobs by profit in descending order</li>
+                            <li>Initialize a result array with time slots</li>
+                            <li>Iterate through jobs and place them in latest possible slot</li>
+                          </ol>
+                    
+                          <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                          <p>O(n²) worst case, O(n log n) with efficient data structures</p>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Maximizes total profit</li>
+                            <li>Efficient for many jobs with deadlines</li>
+                          </ul>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Requires sorting entire job list</li>
+                            <li>Not optimal for all variations of the problem</li>
+                          </ul>
+                        </div>
+                      ) : selectedSubAlgorithm === "mst" ? (
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">Kruskal's Algorithm (MST)</h3>
+                          <ol className="list-decimal pl-5 space-y-2">
+                            <li>Sort all edges in non-decreasing order of weight</li>
+                            <li>Initialize a forest of trees (each vertex is its own tree)</li>
+                            <li>Add edges in order if they connect different trees</li>
+                          </ol>
+                    
+                          <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                          <p>O(E log E) due to sorting and union-find operations</p>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Efficient for sparse graphs</li>
+                            <li>Guaranteed to find minimum spanning tree</li>
+                          </ul>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Requires union-find data structure</li>
+                            <li>Not as efficient for dense graphs</li>
+                          </ul>
+                        </div>
+                      ) : selectedSubAlgorithm === "singleSource" ? (
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">Dijkstra's Algorithm</h3>
+                          <ol className="list-decimal pl-5 space-y-2">
+                            <li>Initialize distance to source as 0 and others as infinity</li>
+                            <li>Use priority queue to track vertices with current shortest paths</li>
+                            <li>Update neighbor distances and repeat until queue is empty</li>
+                          </ol>
+                    
+                          <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                          <p>O((V + E) log V) with binary heap implementation</p>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Efficient for graphs with non-negative weights</li>
+                            <li>Guaranteed shortest path in weighted graphs</li>
+                          </ul>
+                    
+                          <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Doesn't work with negative edge weights</li>
+                            <li>Requires priority queue implementation</li>
+                          </ul>
+                        </div>
+                    ): selectedSubAlgorithm === "multistage" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Multistage Graphs</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Divide the graph into stages, where each stage contains a subset of nodes.
+                          </li>
+                          <li>
+                            Define a cost function that represents the cost from a node in one stage to any node in the next stage.
+                          </li>
+                          <li>
+                            Use DP (often via backward recursion) to compute the minimal cost from the source to the destination.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(n²) to O(n³), depending on the number of stages and connections</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Breaks a complex problem into manageable stages</li>
+                          <li>Exploits optimal substructure</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Requires the problem to naturally decompose into stages</li>
+                          <li>May require heavy preprocessing of the graph</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "01knapsack" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">0/1 Knapsack</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Define <code>dp[i][w]</code> as the maximum value obtainable with the first i items and capacity w.
+                          </li>
+                          <li>
+                            For each item, decide whether to include it or not based on its weight and value.
+                          </li>
+                          <li>
+                            Build up the DP table and return <code>dp[n][W]</code> as the optimal solution.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(n · W) (pseudo-polynomial time)</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Provides an exact solution for the 0/1 knapsack problem</li>
+                          <li>Simple table-based DP formulation</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Not efficient for large capacities</li>
+                          <li>Pseudo-polynomial complexity can be prohibitive</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "tsp" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Travelling Salesman Problem</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Represent the set of visited cities using bitmasking.
+                          </li>
+                          <li>
+                            Define <code>dp[mask][i]</code> as the minimum cost to reach city <code>i</code> having visited the cities in <code>mask</code>.
+                          </li>
+                          <li>
+                            Recursively build the solution and choose the minimum cost tour that returns to the starting city.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(n² · 2ⁿ)</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Yields the optimal solution for small n</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Exponential time complexity, not scalable</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "singleSource" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Single Source Shortest Path (DAG)</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Perform a topological sort of the DAG.
+                          </li>
+                          <li>
+                            Initialize distances: set the source to 0 and all others to ∞.
+                          </li>
+                          <li>
+                            Relax the edges in topological order to compute the shortest path.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(V + E)</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Efficient and simple for DAGs</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Only applicable if the graph is a DAG</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "allPairs" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">All Pairs Shortest Path (Floyd–Warshall)</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Initialize a matrix <code>dist</code> with edge weights; set <code>dist[i][j] = Infinity</code> if no edge exists.
+                          </li>
+                          <li>
+                            For each vertex <code>k</code>, update every <code>dist[i][j]</code> with <code>min(dist[i][j], dist[i][k] + dist[k][j])</code>.
+                          </li>
+                          <li>
+                            The final <code>dist</code> matrix contains the shortest distances between every pair of vertices.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(V³)</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Simple and works with negative edge weights (if no negative cycles)</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>High computational cost for large graphs</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "matrixChain" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Matrix Chain Multiplication</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            Define <code>dp[i][j]</code> as the minimum cost of multiplying matrices i through j.
+                          </li>
+                          <li>
+                            For each possible split between i and j, compute <code>dp[i][j] = min(dp[i][k] + dp[k+1][j] + cost(i,j))</code>.
+                          </li>
+                          <li>
+                            Fill the table in order of increasing chain length to obtain the optimal solution.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(n³)</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Optimizes multiplication cost</li>
+                          <li>Effective for moderate number of matrices</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Not efficient for very large chains</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "subsetSum" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Sum of Subsets</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>Given a set of numbers and a target sum, explore all subsets recursively.</li>
+                          <li>At each step, decide whether to include or exclude the current element.</li>
+                          <li>If the current subset sums to the target, record it as a valid solution.</li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(2ⁿ) in the worst case (exponential), where n is the number of elements.</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Simple recursive formulation</li>
+                          <li>Can be optimized with backtracking techniques</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Exponential time complexity for large input sizes</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "8queens" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">8-Queens Problem</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>Place 8 queens on a chessboard so that no two queens threaten each other.</li>
+                          <li>Place a queen row by row, and backtrack when a conflict is found.</li>
+                          <li>Record each valid configuration of queens.</li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>Exponential in the worst-case, though practical optimizations reduce average runtime.</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Classic backtracking problem with well-known solutions</li>
+                          <li>Helps illustrate constraint propagation</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Exponential worst-case complexity</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "graphColoring" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Graph Coloring</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>Assign colors to vertices of a graph such that no two adjacent vertices share the same color.</li>
+                          <li>Use recursive backtracking to try different color assignments.</li>
+                          <li>Backtrack if a vertex cannot be assigned any valid color.</li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>O(mⁿ) in the worst-case, where n is the number of vertices and m is the number of colors.</p>
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Flexible: works for many variations of the graph coloring problem</li>
+                        </ul>
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Exponential complexity for large graphs</li>
+                          <li>May require heuristic optimizations for practical use</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "01knapsack" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">0/1 Knapsack (Branch and Bound)</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Sort Items:</strong> First, sort items by their value-to-weight ratio (or a similar metric) to guide the search.
+                          </li>
+                          <li>
+                            <strong>Recursive Search:</strong> Recursively explore decisions to include or exclude each item.
+                          </li>
+                          <li>
+                            <strong>Bounding Function:</strong> For each node in the decision tree, compute an upper bound on the maximum possible profit.
+                          </li>
+                          <li>
+                            <strong>Pruning:</strong> Discard branches whose bound is lower than the current best solution.
+                          </li>
+                        </ol>
+                  
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>Worst-case is exponential, but effective pruning can significantly reduce average-case runtime.</p>
+                  
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Prunes many suboptimal branches, potentially speeding up the search</li>
+                          <li>Yields an exact solution</li>
+                        </ul>
+                  
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Worst-case exponential time complexity remains</li>
+                          <li>More complex to implement than greedy or DP approaches</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "15puzzle" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">15 Puzzle Problem (Branch and Bound)</h3>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>State Representation:</strong> Represent each puzzle configuration as a node (with 0 indicating the empty space).
+                          </li>
+                          <li>
+                            <strong>Heuristic Bound:</strong> Use a heuristic (e.g., Manhattan distance) to estimate the minimum number of moves required.
+                          </li>
+                          <li>
+                            <strong>Search:</strong> Explore moves using branch and bound (or best-first search), pruning branches whose bound exceeds the current best solution.
+                          </li>
+                        </ol>
+                  
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>Exponential in the worst-case; however, an effective heuristic can prune many nodes in practice.</p>
+                  
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Can dramatically reduce the search space with a good heuristic</li>
+                          <li>Finds the optimal solution</li>
+                        </ul>
+                  
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Highly dependent on the quality of the heuristic</li>
+                          <li>May still be slow for complex or unsolvable configurations</li>
                         </ul>
                       </div>
                     ) : (
@@ -647,7 +1030,543 @@ function heapify(arr, heapSize, i) {
 }`}</code>
                         </pre>
                       </div>
-                    ) : (
+                    ) : selectedSubAlgorithm === "knapsack" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Fractional Knapsack Code</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`function fractionalKnapsack(capacity, items) {
+                  // Sort items by value/weight ratio descending
+                  items.sort((a, b) => (b.value / b.weight) - (a.value / a.weight));
+                  
+                  let totalValue = 0;
+                  
+                  for (const item of items) {
+                    if (capacity <= 0) break;
+                    const take = Math.min(item.weight, capacity);
+                    totalValue += take * (item.value / item.weight);
+                    capacity -= take;
+                  }
+                  return totalValue;
+                }`}</code>
+                      </pre>
+                    </div>
+                  ) : selectedSubAlgorithm === "jobScheduling" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Job Scheduling Code</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`function jobScheduling(jobs) {
+                  // Sort jobs by profit descending
+                  jobs.sort((a, b) => b.profit - a.profit);
+                  
+                  const result = [];
+                  const slots = Array(jobs.length).fill(false);
+                  
+                  for (const job of jobs) {
+                    for (let i = Math.min(job.deadline - 1, jobs.length - 1); i >= 0; i--) {
+                      if (!slots[i]) {
+                        slots[i] = true;
+                        result.push(job);
+                        break;
+                      }
+                    }
+                  }
+                  return result.sort((a, b) => a.deadline - b.deadline);
+                }`}</code>
+                      </pre>
+                    </div>
+                  ) : selectedSubAlgorithm === "mst" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Kruskal's Algorithm Code</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`class UnionFind {
+                  constructor(size) {
+                    this.parent = Array(size).fill().map((_, i) => i);
+                  }
+                  
+                  find(x) {
+                    while (this.parent[x] !== x) x = this.parent[x];
+                    return x;
+                  }
+                  
+                  union(x, y) {
+                    const rootX = this.find(x);
+                    const rootY = this.find(y);
+                    if (rootX !== rootY) this.parent[rootY] = rootX;
+                  }
+                }
+                
+                function kruskalMST(edges, numVertices) {
+                  edges.sort((a, b) => a.weight - b.weight);
+                  const uf = new UnionFind(numVertices);
+                  const result = [];
+                  
+                  for (const edge of edges) {
+                    if (uf.find(edge.src) !== uf.find(edge.dest)) {
+                      result.push(edge);
+                      uf.union(edge.src, edge.dest);
+                    }
+                  }
+                  return result;
+                }`}</code>
+                      </pre>
+                    </div>
+                  ) : selectedSubAlgorithm === "singleSource" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Dijkstra's Algorithm Code</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`function dijkstra(graph, start) {
+                  const distances = Array(graph.length).fill(Infinity);
+                  const heap = new PriorityQueue();
+                  
+                  distances[start] = 0;
+                  heap.enqueue(start, 0);
+                  
+                  while (!heap.isEmpty()) {
+                    const current = heap.dequeue().element;
+                    
+                    for (const [neighbor, weight] of graph[current]) {
+                      const alt = distances[current] + weight;
+                      if (alt < distances[neighbor]) {
+                        distances[neighbor] = alt;
+                        heap.enqueue(neighbor, alt);
+                      }
+                    }
+                  }
+                  return distances;
+                }`}</code>
+                      </pre>
+                    </div>
+                    ) : selectedSubAlgorithm === "multistage" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Multistage Graphs Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function multistageGraphShortestPath(stages) {
+                      // stages: an array where each element is an array of nodes in that stage.
+                      const n = stages.length;
+                      // dp[i][j] represents the minimum cost to reach node j at stage i.
+                      const dp = Array.from({ length: n }, () => []);
+                      
+                      // Base case: cost to reach nodes in the first stage is just the node's cost.
+                      dp[0] = stages[0];
+                      
+                      // Compute costs for subsequent stages.
+                      for (let i = 1; i < n; i++) {
+                        for (let j = 0; j < stages[i].length; j++) {
+                          dp[i][j] = Infinity;
+                          for (let k = 0; k < stages[i - 1].length; k++) {
+                            dp[i][j] = Math.min(dp[i][j], dp[i - 1][k] + costBetween(stages[i - 1][k], stages[i][j]));
+                          }
+                        }
+                      }
+                      
+                      // Return the minimum cost at the final stage.
+                      return Math.min(...dp[n - 1]);
+                    }
+
+                    function costBetween(u, v) {
+                      // Example cost function: absolute difference.
+                      return Math.abs(u - v);
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "01knapsack" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">0/1 Knapsack Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function knapsack01(W, weights, values) {
+                      const n = weights.length;
+                      const dp = Array.from({ length: n + 1 }, () => Array(W + 1).fill(0));
+                      
+                      for (let i = 1; i <= n; i++) {
+                        for (let w = 0; w <= W; w++) {
+                          if (weights[i - 1] > w) {
+                            dp[i][w] = dp[i - 1][w];
+                          } else {
+                            dp[i][w] = Math.max(dp[i - 1][w], dp[i - 1][w - weights[i - 1]] + values[i - 1]);
+                          }
+                        }
+                      }
+                      
+                      return dp[n][W];
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "tsp" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Travelling Salesman Problem Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function tsp(dist) {
+                      const n = dist.length;
+                      const dp = Array.from({ length: 1 << n }, () => Array(n).fill(Infinity));
+                      dp[1][0] = 0;
+                      
+                      for (let mask = 1; mask < (1 << n); mask += 2) {
+                        for (let u = 0; u < n; u++) {
+                          if (mask & (1 << u)) {
+                            for (let v = 0; v < n; v++) {
+                              if (!(mask & (1 << v))) {
+                                dp[mask | (1 << v)][v] = Math.min(dp[mask | (1 << v)][v], dp[mask][u] + dist[u][v]);
+                              }
+                            }
+                          }
+                        }
+                      }
+                      
+                      let ans = Infinity;
+                      for (let i = 0; i < n; i++) {
+                        ans = Math.min(ans, dp[(1 << n) - 1][i] + dist[i][0]);
+                      }
+                      
+                      return ans;
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "singleSource" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Single Source Shortest Path (DAG) Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function dagShortestPath(graph, start) {
+                      const n = graph.length;
+                      const dist = Array(n).fill(Infinity);
+                      dist[start] = 0;
+                      const topoOrder = topologicalSort(graph);
+                      
+                      for (const u of topoOrder) {
+                        for (const [v, w] of graph[u]) {
+                          dist[v] = Math.min(dist[v], dist[u] + w);
+                        }
+                      }
+                      
+                      return dist;
+                    }
+
+                    function topologicalSort(graph) {
+                      const n = graph.length;
+                      const inDegree = Array(n).fill(0);
+                      for (let u = 0; u < n; u++) {
+                        for (const [v] of graph[u]) {
+                          inDegree[v]++;
+                        }
+                      }
+                      
+                      const queue = [];
+                      for (let i = 0; i < n; i++) {
+                        if (inDegree[i] === 0) queue.push(i);
+                      }
+                      
+                      const order = [];
+                      while (queue.length) {
+                        const u = queue.shift();
+                        order.push(u);
+                        for (const [v] of graph[u]) {
+                          inDegree[v]--;
+                          if (inDegree[v] === 0) queue.push(v);
+                        }
+                      }
+                      
+                      return order;
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "allPairs" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">All Pairs Shortest Path (Floyd–Warshall) Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function floydWarshall(dist) {
+                      const n = dist.length;
+                      for (let k = 0; k < n; k++) {
+                        for (let i = 0; i < n; i++) {
+                          for (let j = 0; j < n; j++) {
+                            dist[i][j] = Math.min(dist[i][j], dist[i][k] + dist[k][j]);
+                          }
+                        }
+                      }
+                      return dist;
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "matrixChain" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Matrix Chain Multiplication Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function matrixChainOrder(p) {
+                      const n = p.length - 1;
+                      const m = Array.from({ length: n }, () => Array(n).fill(0));
+                      
+                      for (let L = 2; L <= n; L++) {
+                        for (let i = 0; i <= n - L; i++) {
+                          const j = i + L - 1;
+                          m[i][j] = Infinity;
+                          for (let k = i; k < j; k++) {
+                            const q = m[i][k] + m[k + 1][j] + p[i] * p[k + 1] * p[j + 1];
+                            if (q < m[i][j]) {
+                              m[i][j] = q;
+                            }
+                          }
+                        }
+                      }
+                      return m[0][n - 1];
+                    }`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "subsetSum" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Sum of Subsets Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function findSubsets(nums, target) {
+                      const result = [];
+                      
+                      function backtrack(start, subset, sum) {
+                        if (sum === target) {
+                          result.push([...subset]);
+                          // Continue searching for other subsets
+                        }
+                        if (sum >= target) return;
+                        
+                        for (let i = start; i < nums.length; i++) {
+                          subset.push(nums[i]);
+                          backtrack(i + 1, subset, sum + nums[i]);
+                          subset.pop();
+                        }
+                      }
+                      
+                      backtrack(0, [], 0);
+                      return result;
+                    }
+                    
+                    // Example usage:
+                    const nums = [3, 34, 4, 12, 5, 2];
+                    const target = 9;
+                    console.log(findSubsets(nums, target));`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "8queens" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">8-Queens Problem Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function solveNQueens(n = 8) {
+                      const results = [];
+                      const board = Array.from({ length: n }, () => Array(n).fill('.'));
+                    
+                      function isSafe(row, col) {
+                        for (let i = 0; i < row; i++) {
+                          if (board[i][col] === 'Q') return false;
+                        }
+                        for (let i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--) {
+                          if (board[i][j] === 'Q') return false;
+                        }
+                        for (let i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++) {
+                          if (board[i][j] === 'Q') return false;
+                        }
+                        return true;
+                      }
+                    
+                      function backtrack(row) {
+                        if (row === n) {
+                          results.push(board.map(r => r.join('')));
+                          return;
+                        }
+                        for (let col = 0; col < n; col++) {
+                          if (!isSafe(row, col)) continue;
+                          board[row][col] = 'Q';
+                          backtrack(row + 1);
+                          board[row][col] = '.';
+                        }
+                      }
+                    
+                      backtrack(0);
+                      return results;
+                    }
+                    
+                    // Example usage:
+                    console.log(solveNQueens());`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "graphColoring" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Graph Coloring Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function graphColoring(graph, m) {
+                      const n = graph.length;
+                      const colors = Array(n).fill(0);
+                    
+                      function isSafe(node, c) {
+                        for (let i = 0; i < n; i++) {
+                          if (graph[node][i] === 1 && colors[i] === c) {
+                            return false;
+                          }
+                        }
+                        return true;
+                      }
+                    
+                      function backtrack(node) {
+                        if (node === n) return true;
+                        for (let c = 1; c <= m; c++) {
+                          if (isSafe(node, c)) {
+                            colors[node] = c;
+                            if (backtrack(node + 1)) return true;
+                            colors[node] = 0;
+                          }
+                        }
+                        return false;
+                      }
+                    
+                      if (backtrack(0)) {
+                        return colors;
+                      } else {
+                        return "No solution exists";
+                      }
+                    }
+                    
+                    // Example usage:
+                    // Graph represented as an adjacency matrix
+                    const graph = [
+                      [0, 1, 1, 0],
+                      [1, 0, 1, 1],
+                      [1, 1, 0, 1],
+                      [0, 1, 1, 0],
+                    ];
+                    const m = 3; // number of colors
+                    console.log(graphColoring(graph, m));`}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "01knapsack" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">0/1 Knapsack (Branch and Bound) Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function knapsackBranchAndBound(capacity, items) {
+                      // items: array of objects { value, weight }
+                      // Sort items by value/weight ratio descending
+                      items.sort((a, b) => (b.value / b.weight) - (a.value / a.weight));
+                      
+                      let best = 0;
+                      
+                      function bound(level, currentWeight, currentValue) {
+                        if (currentWeight >= capacity) return 0;
+                        let profitBound = currentValue;
+                        let totalWeight = currentWeight;
+                        let i = level;
+                        // Greedily add items until capacity is reached
+                        while (i < items.length && totalWeight + items[i].weight <= capacity) {
+                          totalWeight += items[i].weight;
+                          profitBound += items[i].value;
+                          i++;
+                        }
+                        // Add fractional part if possible
+                        if (i < items.length) {
+                          profitBound += (capacity - totalWeight) * (items[i].value / items[i].weight);
+                        }
+                        return profitBound;
+                      }
+                      
+                      function branchAndBound(level, currentWeight, currentValue) {
+                        if (currentWeight <= capacity && currentValue > best) {
+                          best = currentValue;
+                        }
+                        if (level >= items.length || bound(level, currentWeight, currentValue) <= best) {
+                          return;
+                        }
+                        // Include item at current level
+                        branchAndBound(level + 1, currentWeight + items[level].weight, currentValue + items[level].value);
+                        // Exclude item at current level
+                        branchAndBound(level + 1, currentWeight, currentValue);
+                      }
+                      
+                      branchAndBound(0, 0, 0);
+                      return best;
+                    }
+                    
+                    // Example usage:
+                    const items = [
+                      { value: 60, weight: 10 },
+                      { value: 100, weight: 20 },
+                      { value: 120, weight: 30 },
+                    ];
+                    const capacity = 50;
+                    console.log(knapsackBranchAndBound(capacity, items));
+                    `}</code>
+                          </pre>
+                        </div>
+                      ) : selectedSubAlgorithm === "15puzzle" ? (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">15 Puzzle Problem (Branch and Bound) Code</h3>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                            <code>{`function solve15Puzzle(initialState) {
+                      // initialState: an array of length 16 representing the puzzle (0 is the empty space)
+                      const goalState = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
+                    
+                      function heuristic(state) {
+                        // Manhattan distance heuristic
+                        let distance = 0;
+                        for (let i = 0; i < state.length; i++) {
+                          if (state[i] !== 0) {
+                            const targetIndex = state[i] - 1;
+                            const currentRow = Math.floor(i / 4);
+                            const currentCol = i % 4;
+                            const targetRow = Math.floor(targetIndex / 4);
+                            const targetCol = targetIndex % 4;
+                            distance += Math.abs(currentRow - targetRow) + Math.abs(currentCol - targetCol);
+                          }
+                        }
+                        return distance;
+                      }
+                    
+                      let bestSolution = null;
+                      let bestCost = Infinity;
+                    
+                      function branchAndBound(state, cost, depth, visited) {
+                        const h = heuristic(state);
+                        const f = cost + h;
+                        if (f >= bestCost) return;
+                        if (arraysEqual(state, goalState)) {
+                          bestCost = cost;
+                          bestSolution = depth;
+                          return;
+                        }
+                        const neighbors = getNeighbors(state);
+                        for (const neighbor of neighbors) {
+                          const key = neighbor.join(",");
+                          if (!visited.has(key)) {
+                            visited.add(key);
+                            branchAndBound(neighbor, cost + 1, depth + 1, visited);
+                            visited.delete(key);
+                          }
+                        }
+                      }
+                    
+                      function arraysEqual(a, b) {
+                        return a.length === b.length && a.every((val, index) => val === b[index]);
+                      }
+                    
+                      function getNeighbors(state) {
+                        const neighbors = [];
+                        const zeroIndex = state.indexOf(0);
+                        const row = Math.floor(zeroIndex / 4);
+                        const col = zeroIndex % 4;
+                        const moves = [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]];
+                        for (const [r, c] of moves) {
+                          if (r >= 0 && r < 4 && c >= 0 && c < 4) {
+                            const newIndex = r * 4 + c;
+                            const newState = [...state];
+                            [newState[zeroIndex], newState[newIndex]] = [newState[newIndex], newState[zeroIndex]];
+                            neighbors.push(newState);
+                          }
+                        }
+                        return neighbors;
+                      }
+                    
+                      branchAndBound(initialState, 0, 0, new Set());
+                      return bestSolution;
+                    }
+                    
+                    // Example usage:
+                    const initialState = [1,2,3,4,5,6,7,8,9,10,11,12,13,15,14,0];
+                    console.log(solve15Puzzle(initialState));
+                    `}</code>
+                          </pre>
+                        </div>
+                      ) : (
+
                       <div className="py-8 text-center">
                         <p className="text-gray-600">
                           Code implementation for {subOptions.find((o) => o.key === selectedSubAlgorithm)?.name} will be available soon.
