@@ -51,7 +51,7 @@ export default function Dashboard() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <Link href="/" className="text-xl font-bold text-purple-700">
-              Algorithm Visualizer
+              Algo-Sim
             </Link>
             <nav className="hidden md:flex space-x-6">
               <Link href="/" className="text-gray-600 hover:text-purple-700">

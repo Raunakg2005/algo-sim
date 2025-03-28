@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MergeSortVisualizer from "@/components/merge-sort-visualizer"
 import QuickSortVisualization from "@/components/quick-sort-visualization"
 import HeapSortVisualization from "@/components/heap-sort-visualizer"
+import MinMaxVisualization from "@/components/divide-conquer-maxmin"
+import StrassenMatrixMultiplication from "@/components/strassen-matrix-multiplication"
 
 interface Option {
   key: string
@@ -248,7 +250,11 @@ export default function SimulationPage() {
                         <QuickSortVisualization />
                       ) : selectedSubAlgorithm === "heapSort" ? (
                         <HeapSortVisualization />
-                      ) : (
+                      ) : selectedSubAlgorithm === "minmax" ? (
+                        <MinMaxVisualization />
+                      ) : selectedSubAlgorithm === "strassen" ? (
+                        <StrassenMatrixMultiplication />
+                      ):(
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                             <Info className="h-8 w-8 text-purple-600" />

@@ -11,9 +11,6 @@ interface BookElementProps {
   isRightPointer?: boolean
   isSwapping?: boolean
   isActive?: boolean
-  isComparing?: boolean
-  isHighlighted?: boolean
-  isSorted?: boolean
 }
 
 export default function BookElement({
@@ -22,17 +19,13 @@ export default function BookElement({
   isPivot = false,
   isLeftPointer = false,
   isRightPointer = false,
-  isComparing = false,
   isSwapping = false,
-  isHighlighted = false,
-  isSorted = false,
   isActive = true,
 }: BookElementProps) {
-  // Calculate height based on value (1-9)
-  const height = 100 + value * 15 // px
-
-  // Generate a consistent color based on the value
-  const hue = (value * 36) % 360 // spread colors across the spectrum
+  
+  const height = 100 + value * 15 
+  
+  const hue = (value * 36) % 360 
   const bookColor = `hsl(${hue}, 70%, 85%)`
   const bookSpineColor = `hsl(${hue}, 70%, 75%)`
   const bookTopColor = `hsl(${hue}, 70%, 90%)`

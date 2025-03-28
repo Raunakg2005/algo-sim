@@ -11,7 +11,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Algorithm Visualizer
+                Algo-Sim
               </h1>
               <p className="text-xl mb-8 text-purple-100">
                 Learn algorithms through interactive visualizations. See how algorithms work step by step with beautiful animations.
@@ -141,7 +141,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold">Algorithm Visualizer</h3>
+              <h3 className="text-xl font-bold">Algo-Sim</h3>
               <p className="text-gray-400">Learn algorithms through interactive visualizations</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -151,7 +151,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
-            <p>© {new Date().getFullYear()} Algorithm Visualizer. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Algo-Sim. All rights reserved.</p>
           </div>
         </div>
       </footer>
