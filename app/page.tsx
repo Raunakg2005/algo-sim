@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Code, Lightbulb, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Footer from "./footer"
 
 export default function LandingPage() {
   return (
@@ -137,24 +138,8 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold">Algo-Sim</h3>
-              <p className="text-gray-400">Learn algorithms through interactive visualizations</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="hover:text-purple-400">Dashboard</Link>
-              <Link href="#" className="hover:text-purple-400">About</Link>
-              <Link href="#" className="hover:text-purple-400">Contact</Link>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
-            <p>© {new Date().getFullYear()} Algo-Sim. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
+
     </div>
   )
 }
