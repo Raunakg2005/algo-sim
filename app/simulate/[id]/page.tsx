@@ -13,6 +13,12 @@ import QuickSortVisualization from "@/components/quick-sort-visualization"
 import HeapSortVisualization from "@/components/heap-sort-visualizer"
 import MinMaxVisualization from "@/components/divide-conquer-maxmin"
 import StrassenMatrixMultiplication from "@/components/strassen-matrix-multiplication"
+import KnapsackSimulation from "@/components/knapsack-simulation"
+import JobSchedulingSimulation from "@/components/job-scheduling-simulation"
+import MSTSimulation from "@/components/mst-simulation"
+import DijkstraSimulation from "@/components/dijkstra-simulation"
+import MultistageGraphOptimization from "@/components/multistage-graph-optimization"
+import Knapsack from "@/components/knapsack-problem"
 
 interface Option {
   key: string
@@ -65,7 +71,7 @@ const algorithmOptions: Record<string, Option[]> = {
       description: "Find a subset of edges that forms a tree including every vertex with minimum weight.",
     },
     {
-      key: "singleSource",
+      key: "singleSourceDijkstra",
       name: "Single Source Shortest Path",
       description: "Find the shortest path from a source vertex to all other vertices.",
     },
@@ -254,7 +260,19 @@ export default function SimulationPage() {
                         <MinMaxVisualization />
                       ) : selectedSubAlgorithm === "strassen" ? (
                         <StrassenMatrixMultiplication />
-                      ):(
+                      ):selectedSubAlgorithm === "knapsack" ? (
+                        <KnapsackSimulation />
+                      ) : selectedSubAlgorithm === "jobScheduling" ? (
+                        <JobSchedulingSimulation/>
+                      ) : selectedSubAlgorithm === "mst" ? (
+                        <MSTSimulation/>
+                      ): selectedSubAlgorithm === "singleSourceDijkstra" ? (
+                        <DijkstraSimulation/>
+                      ) : selectedSubAlgorithm === "multistage" ? (
+                        <MultistageGraphOptimization/>
+                      ) : selectedSubAlgorithm === "01knapsack" ? (
+                        <Knapsack />
+                       ) :  (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                             <Info className="h-8 w-8 text-purple-600" />

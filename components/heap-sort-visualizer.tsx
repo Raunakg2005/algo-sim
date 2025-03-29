@@ -7,7 +7,6 @@ import { ChevronLeft, ChevronRight, RotateCcw, Play, Pause } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import BookElement from "./book-element"
 import HeapTree from "./heap-tree"
 import { motion } from "framer-motion"
 
