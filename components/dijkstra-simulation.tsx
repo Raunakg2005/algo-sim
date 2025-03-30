@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Play, Pause, RotateCcw, StepForward, X, Check } from 'lucide-react'
+import { Play, Pause, RotateCcw, StepForward, X, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
@@ -91,6 +91,7 @@ export default function DijkstraShortestPath() {
     return () => window.removeEventListener("resize", updateDimensions)
   }, [])
 
+  // Add a new node
   const addNode = () => {
     if (!newNodeLabel.trim()) {
       setInputError("Node label cannot be empty")
@@ -209,7 +210,7 @@ export default function DijkstraShortestPath() {
         throw new Error("Node labels must be unique")
       }
 
-      const padding = 50
+      const padding = 100 
       nodeLabels.forEach((label) => {
         const x = Math.random() * (canvasWidth - 2 * padding) + padding
         const y = Math.random() * (canvasHeight - 2 * padding) + padding
@@ -616,49 +617,64 @@ export default function DijkstraShortestPath() {
   }
 
   const randomGraph = () => {
-    const nodeCount = Math.floor(Math.random() * 4) + 5;
-    const nodes: Node[] = [];
-    
-    const padding = 80; 
+    const nodeCount = Math.floor(Math.random() * 4) + 5
+    const nodes: Node[] = []
+
+    const padding = 100 
+
+    const cols = Math.ceil(Math.sqrt(nodeCount))
+    const rows = Math.ceil(nodeCount / cols)
+
+    const cellWidth = (canvasWidth - 2 * padding) / cols
+    const cellHeight = (canvasHeight - 2 * padding) / rows
+
     for (let i = 0; i < nodeCount; i++) {
-      const label = String.fromCharCode(65 + i); 
+      const row = Math.floor(i / cols)
+      const col = i % cols
+
+      const jitter = 0.3 
+      const x = padding + col * cellWidth + cellWidth * (0.5 + (Math.random() - 0.5) * jitter)
+      const y = padding + row * cellHeight + cellHeight * (0.5 + (Math.random() - 0.5) * jitter)
+
+      const label = String.fromCharCode(65 + i) 
       nodes.push({
         id: `node-${label}`,
         label,
-        x: Math.random() * (canvasWidth - 2 * padding) + padding,
-        y: Math.random() * (canvasHeight - 2 * padding) + padding
-      });
+        x,
+        y,
+      })
     }
-    
-    const edges: Edge[] = [];
-    const maxEdges = nodeCount * (nodeCount - 1) / 2;
-    const edgeCount = Math.floor(Math.random() * (maxEdges * 0.3) + maxEdges * 0.3);
-    
+
+    const edges: Edge[] = []
+    const maxEdges = (nodeCount * (nodeCount - 1)) / 2
+    const edgeCount = Math.floor(Math.random() * (maxEdges * 0.3) + maxEdges * 0.3)
+
     for (let i = 0; i < edgeCount; i++) {
-      let source: number, target: number;
+      let source: number, target: number
       do {
-        source = Math.floor(Math.random() * nodeCount);
-        target = Math.floor(Math.random() * nodeCount);
+        source = Math.floor(Math.random() * nodeCount)
+        target = Math.floor(Math.random() * nodeCount)
       } while (
-        source === target || 
-        edges.some(e => 
-          (e.source === nodes[source].id && e.target === nodes[target].id) ||
-          (e.source === nodes[target].id && e.target === nodes[source].id)
+        source === target ||
+        edges.some(
+          (e) =>
+            (e.source === nodes[source].id && e.target === nodes[target].id) ||
+            (e.source === nodes[target].id && e.target === nodes[source].id),
         )
-      );
-      
+      )
+
       edges.push({
         source: nodes[source].id,
         target: nodes[target].id,
-        weight: Math.floor(Math.random() * 10) + 1
-      });
+        weight: Math.floor(Math.random() * 10) + 1,
+      })
     }
-    
-    setGraph({ nodes, edges });
-    
-    setSourceNode(nodes[0].id);
-    setTargetNode(nodes[nodes.length - 1].id);
-  };
+
+    setGraph({ nodes, edges })
+
+    setSourceNode(nodes[0].id)
+    setTargetNode(nodes[nodes.length - 1].id)
+  }
 
   return (
     <div className="flex flex-col items-center w-full max-w-6xl mx-auto p-4 space-y-6">
@@ -877,13 +893,7 @@ E,F,1"
                 <Button onClick={startAlgorithm} disabled={!sourceNode}>
                   Start Algorithm
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    
-                    randomGraph();
-                  }}
-                >
+                <Button variant="outline" onClick={randomGraph}>
                   Random Graph
                 </Button>
               </div>
@@ -1116,3 +1126,4 @@ E,F,1"
     </div>
   )
 }
+

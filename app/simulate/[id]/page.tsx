@@ -19,6 +19,10 @@ import MSTSimulation from "@/components/mst-simulation"
 import DijkstraSimulation from "@/components/dijkstra-simulation"
 import MultistageGraphOptimization from "@/components/multistage-graph-optimization"
 import Knapsack from "@/components/knapsack-problem"
+import SumOfSubsets from "@/components/sum-of-subsets"
+import EightQueen from "@/components/eight-queens"
+import GraphColoring from "@/components/graph-coloring"
+import TSPSimulation from "@/components/tsp-simulation"
 
 interface Option {
   key: string
@@ -272,7 +276,15 @@ export default function SimulationPage() {
                         <MultistageGraphOptimization/>
                       ) : selectedSubAlgorithm === "01knapsack" ? (
                         <Knapsack />
-                       ) :  (
+                       ) :selectedSubAlgorithm === "tsp" ? (
+                        <TSPSimulation/>
+                       ): selectedSubAlgorithm === "subsetSum" ? (
+                        <SumOfSubsets/>
+                       ) : selectedSubAlgorithm === "8queens" ? (
+                        <EightQueen/>
+                       ): selectedSubAlgorithm === "graphColoring" ? (
+                        <GraphColoring/>
+                       ): (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                             <Info className="h-8 w-8 text-purple-600" />
