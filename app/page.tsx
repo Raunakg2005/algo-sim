@@ -1,14 +1,55 @@
-import Link from "next/link"
-import { ArrowRight, Code, Lightbulb, Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Footer from "./footer"
+"use client";
+
+import { useEffect } from "react";
+import Link from "next/link";
+import { ArrowRight, Code, Lightbulb, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Footer from "./footer";
 
 export default function LandingPage() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const target = entry.target as HTMLElement;
+            target.style.transitionDelay = target.dataset.delay || "0s";
+            entry.target.classList.add("opacity-100", "translate-y-0");
+          } else {
+            entry.target.classList.remove("opacity-100", "translate-y-0");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".slide-up");
+    elements.forEach((el, index) => {
+      (el as HTMLElement).style.transitionDelay = `${index * 0.1}s`; // Add staggered delay
+      el.classList.add(
+        "opacity-0",
+        "translate-y-10",
+        "transition-all",
+        "duration-700",
+        "ease-out"
+      );
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <header className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white">
-        <div className="container mx-auto px-6 py-16 md:py-24">
+      <header
+        className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white h-screen flex items-center"
+        style={{
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+      >
+        <div className="container mx-auto px-6 slide-up" data-delay="0s">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
@@ -20,21 +61,20 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/dashboard">
                   <Button
-                  size="lg"
-                  className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-105 hover:translate-x-1 transition-transform duration-200 ease-in-out"
+                    size="lg"
+                    className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-110 hover:translate-x-2 transition-transform duration-300 ease-in-out"
                   >
-                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="#features">
                   <Button
-                  size="lg"
-                  className="bg-purple-700 text-white hover:bg-purple-800 hover:scale-105 hover:translate-x-1 transition-transform duration-200 ease-in-out"
+                    size="lg"
+                    className="bg-purple-700 text-white hover:bg-purple-800 hover:scale-110 hover:translate-x-2 transition-transform duration-300 ease-in-out"
                   >
-                  Learn More
+                    Learn More
                   </Button>
                 </Link>
-                
               </div>
             </div>
             <div className="md:w-1/2 flex justify-center">
@@ -60,43 +100,47 @@ export default function LandingPage() {
       </header>
 
       {/* Features Section */}
-      <section id="features" className="py-16 bg-gray-50">
+      <section id="features" className="py-16 bg-gray-50 slide-up" data-delay="0.2s">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12">Why Learn With Visualizations?</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <Zap className="h-6 w-6 text-purple-600" />
+            {[
+              {
+                icon: <Zap className="h-6 w-6 text-purple-600" />,
+                title: "Interactive Learning",
+                description: "Interact with algorithms in real-time. Adjust parameters and see how they affect performance.",
+                bgColor: "bg-purple-100",
+              },
+              {
+                icon: <Code className="h-6 w-6 text-blue-600" />,
+                title: "Step-by-Step Breakdown",
+                description: "Follow each step of the algorithm with clear explanations and visual cues.",
+                bgColor: "bg-blue-100",
+              },
+              {
+                icon: <Lightbulb className="h-6 w-6 text-green-600" />,
+                title: "Intuitive Understanding",
+                description: "Gain deeper insights into how algorithms work through visual representations.",
+                bgColor: "bg-green-100",
+              },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className={`bg-white p-6 rounded-lg shadow-md transform transition-transform duration-500 hover:scale-105`}
+              >
+                <div className={`w-12 h-12 ${feature.bgColor} rounded-full flex items-center justify-center mb-4`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Interactive Learning</h3>
-              <p className="text-gray-600">
-                Interact with algorithms in real-time. Adjust parameters and see how they affect performance.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Code className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Step-by-Step Breakdown</h3>
-              <p className="text-gray-600">
-                Follow each step of the algorithm with clear explanations and visual cues.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <Lightbulb className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Intuitive Understanding</h3>
-              <p className="text-gray-600">
-                Gain deeper insights into how algorithms work through visual representations.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Categories Preview */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white slide-up" data-delay="0.4s">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12">Algorithm Categories</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -108,13 +152,16 @@ export default function LandingPage() {
               { name: "Branch and Bound", color: "from-red-500 to-red-700" },
               { name: "Graph Algorithms", color: "from-indigo-500 to-indigo-700" },
             ].map((category, index) => (
-              <div key={index} className={`rounded-lg p-6 text-white bg-gradient-to-r ${category.color} shadow-md`}>
+              <div
+                key={index}
+                className={`rounded-lg p-6 text-white bg-gradient-to-r ${category.color} shadow-md transform transition-transform duration-500 hover:scale-105`}
+              >
                 <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
                 <p className="mb-4 opacity-90">Explore various algorithms in this category</p>
                 <Link href="/dashboard">
-                    <Button className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-105 transition-transform duration-200 ease-in-out">
-                      Explore
-                    </Button>
+                  <Button className="bg-white text-purple-800 hover:bg-purple-100 hover:scale-110 transition-transform duration-300 ease-in-out">
+                    Explore
+                  </Button>
                 </Link>
               </div>
             ))}
@@ -123,14 +170,24 @@ export default function LandingPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+      <section
+        className="py-16 bg-gradient-to-r from-indigo-600 to-purple-600 text-white w-full slide-up"
+        data-delay="0.6s"
+        style={{
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+      >
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to start learning?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Dive into our interactive visualizations and master algorithms through visual learning.
           </p>
           <Link href="/dashboard">
-            <Button size="lg" className="bg-white text-purple-700 hover:bg-purple-100">
+            <Button
+              size="lg"
+              className="bg-white text-purple-700 hover:bg-purple-100 hover:scale-110 hover:translate-x-2 transition-transform duration-300 ease-in-out"
+            >
               Go to Dashboard
             </Button>
           </Link>
@@ -139,8 +196,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <Footer />
-
     </div>
-  )
+  );
 }
 

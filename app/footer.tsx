@@ -25,8 +25,10 @@ const Footer = () => {
 
   return (
     <footer className="bg-gradient-to-b from-[#0A0A0A] to-[#1A1A1A] text-white py-10 px-6">
+      <div className="mb-8"></div><div className="mb-8"></div>
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center border-b border-gray-700 pb-8">
         {/* Brand, Tagline & Quick Links */}
+        
         <div className="flex flex-col items-center md:items-start mb-8 md:mb-0">
           <h3 className="text-3xl font-extrabold text-white mb-2">
             Algo-Sim
@@ -74,11 +76,10 @@ const Footer = () => {
         </div>  
 
       {/* Footer Bottom */}
-      <div className="mt-6 text-center text-white/80">
+      <div className="mt-2 text-center text-white/80">
         <p className="text-sm">
           © {new Date().getFullYear()} Algo-Sim. All rights reserved.
         </p>
-        
       </div>
     </footer>
   );
