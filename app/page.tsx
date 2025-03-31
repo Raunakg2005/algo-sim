@@ -25,7 +25,7 @@ export default function LandingPage() {
 
     const elements = document.querySelectorAll(".slide-up");
     elements.forEach((el, index) => {
-      (el as HTMLElement).style.transitionDelay = `${index * 0.1}s`; // Add staggered delay
+      (el as HTMLElement).style.transitionDelay = `${index * 0.1}s`; 
       el.classList.add(
         "opacity-0",
         "translate-y-10",
