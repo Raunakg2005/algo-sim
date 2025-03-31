@@ -87,7 +87,6 @@ export default function CoordinateInput({ cities, onChange, disabled = false }: 
         </div>
       </div>
 
-      {/* List of cities */}
       {cities.length > 0 && (
         <div className="border rounded-md overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">

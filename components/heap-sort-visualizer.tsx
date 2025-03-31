@@ -32,7 +32,6 @@ export default function HeapSortVisualization() {
   const [playbackSpeed, setPlaybackSpeed] = useState(1500)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Generate a random array with 10 elements
   const generateRandomArray = () => {
     const size = 10
     const newArray = Array.from({ length: size }, () => Math.floor(Math.random() * 9) + 1)
@@ -316,12 +315,9 @@ export default function HeapSortVisualization() {
       </div>
 
       <div className="w-full bg-white rounded-lg shadow-md p-4 md:p-8 relative overflow-hidden">
-        {/* Table surface with wood texture */}
         <div className="absolute inset-0 bg-amber-50 opacity-50"></div>
 
-        {/* Visualization area */}
         <div className="relative z-10">
-          {/* Animated description */}
           <motion.div
             key={currentStepIndex}
             initial={{ opacity: 0, y: 10 }}
@@ -331,7 +327,6 @@ export default function HeapSortVisualization() {
             <p className="text-sm md:text-lg font-medium text-stone-700">{currentStep?.description}</p>
           </motion.div>
 
-          {/* Visualization - always show tree view */}
           <div className="flex justify-center items-center min-h-[300px] md:min-h-[400px] mb-4 md:mb-8 relative">
             <HeapTree
               array={currentStep?.array || []}
@@ -343,7 +338,6 @@ export default function HeapSortVisualization() {
             />
           </div>
 
-          {/* If sorted, show sorted array view (linear) */}
           {currentStep?.type === "sorted" && (
             <div className="w-full bg-gray-100 rounded-lg p-4">
               <h3 className="text-lg font-bold mb-2 text-stone-700">Sorted Array:</h3>

@@ -45,7 +45,6 @@ export default function BookElement({
         damping: 20,
       }}
     >
-      {/* Book */}
       <div
         className="relative"
         style={{
@@ -53,7 +52,6 @@ export default function BookElement({
           height: `${height}px`,
         }}
       >
-        {/* Book front */}
         <div
           className={cn(
             "absolute bottom-0 w-full rounded-sm shadow-md transition-all duration-300",
@@ -67,7 +65,6 @@ export default function BookElement({
             transformOrigin: "left",
           }}
         >
-          {/* Book spine */}
           <div
             className="absolute left-0 top-0 bottom-0 w-[5px] rounded-l-sm"
             style={{
@@ -75,13 +72,11 @@ export default function BookElement({
             }}
           ></div>
 
-          {/* Book value */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-2xl font-bold text-stone-700">{value}</span>
           </div>
         </div>
 
-        {/* Book top */}
         <div
           className="absolute top-0 w-full h-[5px] rounded-t-sm"
           style={{
@@ -93,10 +88,8 @@ export default function BookElement({
         ></div>
       </div>
 
-      {/* Index label */}
       <div className="absolute -bottom-8 left-0 right-0 text-center text-xs text-stone-500">{index}</div>
 
-      {/* Pointer indicators */}
       {isLeftPointer && (
         <motion.div
           className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-full"
@@ -117,7 +110,6 @@ export default function BookElement({
         </motion.div>
       )}
 
-      {/* Pivot indicator */}
       {isPivot && (
         <motion.div
           className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-amber-100 px-2 py-1 rounded text-xs font-bold text-amber-800 whitespace-nowrap shadow-sm"
@@ -128,7 +120,6 @@ export default function BookElement({
         </motion.div>
       )}
 
-      {/* Swapping animation */}
       {isSwapping && (
         <motion.div
           className="absolute inset-0 rounded-sm"

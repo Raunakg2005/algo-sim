@@ -1,4 +1,3 @@
-// graph size issue
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -8,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Play, Pause, RotateCcw, StepForward, StepBack, Plus, Minus, BookOpen } from "lucide-react"
+import { Play, Pause, RotateCcw, StepForward, StepBack, Plus, Minus, BookOpen } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -73,19 +72,19 @@ export default function GraphColoring() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
   const [algorithmStarted, setAlgorithmStarted] = useState<boolean>(false)
-  const [solutions, setSolutions] = useState<{ [key: string]: number }[]>([])
+  const [solutions, setSolutions] = useState<{ [key: string]: number | null }[]>([])
   const [currentSolution, setCurrentSolution] = useState<number>(0)
   const animationRef = useRef<NodeJS.Timeout | null>(null)
 
-  const [graphWidth, setGraphWidth] = useState<number>(600)
-  const [graphHeight, setGraphHeight] = useState<number>(400)
+  const [graphWidth, setGraphWidth] = useState<number>(700)
+  const [graphHeight, setGraphHeight] = useState<number>(500)
   const graphContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const updateDimensions = () => {
       if (graphContainerRef.current) {
         const width = graphContainerRef.current.clientWidth
-        const height = Math.max(400, width * 0.6) 
+        const height = Math.max(400, width * 0.6)
         setGraphWidth(width)
         setGraphHeight(height)
       }
@@ -120,18 +119,18 @@ export default function GraphColoring() {
     setInputError("")
 
     const nodes: Node[] = []
-    const nodeRadius = 30
+    const nodeRadius = 20
     const padding = nodeRadius + 20
 
     const centerX = graphWidth / 2
     const centerY = graphHeight / 2
-    const radius = Math.min(graphWidth, graphHeight) / 2 - padding
+    const radius = Math.min(graphWidth, graphHeight) / 2.5 - padding
 
     for (let i = 0; i < numNodes; i++) {
       const angle = (i / numNodes) * 2 * Math.PI
       const x = centerX + radius * Math.cos(angle)
       const y = centerY + radius * Math.sin(angle)
-      const label = String.fromCharCode(65 + i) 
+      const label = String.fromCharCode(65 + i)
 
       nodes.push({
         id: `node-${label}`,
@@ -158,18 +157,18 @@ export default function GraphColoring() {
     setNumColors(randomColors)
 
     const nodes: Node[] = []
-    const nodeRadius = 30
+    const nodeRadius = 20
     const padding = nodeRadius + 20
 
     const centerX = graphWidth / 2
     const centerY = graphHeight / 2
-    const radius = Math.min(graphWidth, graphHeight) / 2 - padding
+    const radius = Math.min(graphWidth, graphHeight) / 2.5 - padding
 
     for (let i = 0; i < randomNodes; i++) {
       const angle = (i / randomNodes) * 2 * Math.PI
       const x = centerX + radius * Math.cos(angle)
       const y = centerY + radius * Math.sin(angle)
-      const label = String.fromCharCode(65 + i) 
+      const label = String.fromCharCode(65 + i)
 
       nodes.push({
         id: `node-${label}`,
@@ -277,7 +276,7 @@ export default function GraphColoring() {
     setAlgorithmStarted(true)
 
     const algorithmSteps: AlgorithmStep[] = []
-    const allSolutions: { [key: string]: number }[] = []
+    const allSolutions: { [key: string]: number | null }[] = []
 
     const initialNodeColors: { [key: string]: number | null } = {}
     graph.nodes.forEach((node) => {
@@ -328,7 +327,9 @@ export default function GraphColoring() {
 
         return true
       }
+
       const currentNode = graph.nodes[nodeIndex]
+
       steps.push({
         phase: "try",
         description: `Considering node ${currentNode.label}...`,
@@ -336,6 +337,7 @@ export default function GraphColoring() {
         conflictNodeId: null,
         nodeColors: { ...nodeColors },
       })
+
       for (let color = 0; color < numColors; color++) {
         steps.push({
           phase: "try",
@@ -359,6 +361,7 @@ export default function GraphColoring() {
           })
           continue
         }
+
         nodeColors[currentNode.id] = color
 
         steps.push({
@@ -374,6 +377,7 @@ export default function GraphColoring() {
         }
 
         nodeColors[currentNode.id] = null
+
         steps.push({
           phase: "backtrack",
           description: `Backtracking from node ${currentNode.label}...`,
@@ -429,11 +433,13 @@ export default function GraphColoring() {
       setIsPlaying(false)
     }
   }
+
   const stepBackward = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
     }
   }
+
   const showNextSolution = () => {
     if (solutions.length > 0) {
       const nextSolution = (currentSolution + 1) % solutions.length
@@ -480,6 +486,7 @@ export default function GraphColoring() {
 
     return COLORS[colorIndex]
   }
+
   const getNodeBorder = (nodeId: string): string => {
     if (!algorithmStarted || !steps[currentStep]) {
       return ""
@@ -725,14 +732,12 @@ export default function GraphColoring() {
             </div>
           </Card>
 
-          {/* Graph Preview */}
           <Card className="p-4">
             <h2 className="text-lg font-semibold mb-4">Graph Preview</h2>
             <div
               ref={graphContainerRef}
-              className="w-full h-[400px] bg-gray-100 dark:bg-gray-900 rounded-md relative overflow-hidden"
+              className="w-full h-[600px] bg-gray-100 dark:bg-gray-900 rounded-md relative overflow-hidden"
             >
-              {/* Edges */}
               <svg className="absolute inset-0 w-full h-full">
                 {graph.edges.map((edge) => {
                   const sourceNode = graph.nodes.find((n) => n.id === edge.source)
@@ -754,7 +759,6 @@ export default function GraphColoring() {
                 })}
               </svg>
 
-              {/* Nodes */}
               {graph.nodes.map((node) => (
                 <motion.div
                   key={node.id}
@@ -777,7 +781,7 @@ export default function GraphColoring() {
         <TabsContent value="visualization" className="space-y-4">
           {algorithmStarted && (
             <Card className="p-4 space-y-4">
-              <div className="flex flex-wrap justify-center gap-4 w-full mb-4">
+              <div className="flex flex-wrap justify-center gap-4 w-full mb-2">
                 <Button onClick={resetAlgorithm} variant="outline">
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Reset
@@ -820,17 +824,14 @@ export default function GraphColoring() {
                 </div>
               )}
 
-              {/* Algorithm step description */}
               <Alert variant="default" className="bg-primary/10">
                 <AlertDescription>{steps[currentStep]?.description || "Preparing algorithm..."}</AlertDescription>
               </Alert>
 
-              {/* Graph visualization */}
               <div
                 ref={graphContainerRef}
-                className="w-full h-[400px] bg-gray-100 dark:bg-gray-900 rounded-md relative overflow-hidden"
+                className="w-full h-[600px] bg-gray-100 dark:bg-gray-900 rounded-md relative overflow-hidden"
               >
-                {/* Edges */}
                 <svg className="absolute inset-0 w-full h-full">
                   {graph.edges.map((edge) => {
                     const sourceNode = graph.nodes.find((n) => n.id === edge.source)
@@ -855,7 +856,6 @@ export default function GraphColoring() {
                   })}
                 </svg>
 
-                {/* Nodes */}
                 {graph.nodes.map((node) => {
                   const nodeColor = getNodeColor(node.id)
                   const nodeBorder = getNodeBorder(node.id)
@@ -884,7 +884,6 @@ export default function GraphColoring() {
                 })}
               </div>
 
-              {/* Progress bar */}
               <div className="w-full mt-4">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
@@ -904,7 +903,6 @@ export default function GraphColoring() {
         </TabsContent>
       </Tabs>
 
-      {/* Legend */}
       <Card className="w-full p-4">
         <h2 className="text-lg font-semibold mb-2">Legend</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
@@ -935,7 +933,6 @@ export default function GraphColoring() {
         </div>
       </Card>
 
-      {/* Explanation */}
       <div className="text-sm text-muted-foreground max-w-2xl text-center">
         <p>
           Graph Coloring is a problem of assigning colors to vertices of a graph such that no two adjacent vertices have
@@ -955,4 +952,3 @@ export default function GraphColoring() {
     </div>
   )
 }
-

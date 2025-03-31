@@ -91,7 +91,6 @@ export default function DijkstraShortestPath() {
     return () => window.removeEventListener("resize", updateDimensions)
   }, [])
 
-  // Add a new node
   const addNode = () => {
     if (!newNodeLabel.trim()) {
       setInputError("Node label cannot be empty")
@@ -939,7 +938,7 @@ E,F,1"
         {/* Graph canvas */}
         <div
           ref={canvasRef}
-          className="w-full h-[400px] md:h-[500px] bg-gray-900 rounded-md relative mt-8 overflow-hidden"
+          className="w-full h-[500px] md:h-[600px] bg-gray-900 rounded-md relative mt-8 overflow-hidden"
         >
           {/* Edges */}
           <svg className="absolute inset-0 w-full h-full">
@@ -1029,14 +1028,12 @@ E,F,1"
               >
                 {showNodeLabels && <span className="font-bold text-white">{node.label}</span>}
 
-                {/* Distance label */}
                 {algorithmStarted && distance !== null && (
                   <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-gray-800 px-2 py-0.5 rounded text-xs text-white">
                     {formatDistance(distance)}
                   </div>
                 )}
 
-                {/* Source/Target indicator */}
                 {node.id === sourceNode && (
                   <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-green-400">
                     Source
@@ -1049,7 +1046,6 @@ E,F,1"
                   </div>
                 )}
 
-                {/* Visited indicator */}
                 {algorithmStarted && steps.length > 0 && steps[currentStep].nodeStates[node.id]?.visited && (
                   <div className="absolute -top-3 -right-3 bg-teal-500 rounded-full w-4 h-4 flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
@@ -1060,7 +1056,6 @@ E,F,1"
           })}
         </div>
 
-        {/* Progress bar */}
         {algorithmStarted && steps.length > 0 && (
           <div className="w-full mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1079,7 +1074,6 @@ E,F,1"
         )}
       </Card>
 
-      {/* Legend */}
       <Card className="w-full p-4">
         <h2 className="text-lg font-semibold mb-2">Legend</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
@@ -1110,7 +1104,6 @@ E,F,1"
         </div>
       </Card>
 
-      {/* Explanation */}
       <div className="text-sm text-muted-foreground max-w-2xl text-center">
         <p>
           Dijkstra's algorithm finds the shortest path from a source node to all other nodes in a weighted graph. It

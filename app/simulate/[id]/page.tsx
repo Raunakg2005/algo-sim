@@ -23,6 +23,11 @@ import SumOfSubsets from "@/components/sum-of-subsets"
 import EightQueen from "@/components/eight-queens"
 import GraphColoring from "@/components/graph-coloring"
 import TSPSimulation from "@/components/tsp-simulation"
+import BellmanFordSimulation from "@/components/bellman-ford-simulation"
+import B01Knapsack from "@/components/knapsack-branch-and-bound"
+import MatrixChainMultiplication from "@/components/matrix-chain-multiplication"
+import FifteenPuzzleBranchAndBound from "@/components/fifteen-puzzle-branch-and-bound"
+import FloydWarshall from "@/components/floyd-warshall"
 
 interface Option {
   key: string
@@ -131,7 +136,7 @@ const algorithmOptions: Record<string, Option[]> = {
   ],
   branch: [
     {
-      key: "01knapsack",
+      key: "B01knapsack",
       name: "0/1 Knapsack",
       description: "Maximize the value of items in a knapsack without exceeding its capacity.",
     },
@@ -278,13 +283,23 @@ export default function SimulationPage() {
                         <Knapsack />
                        ) :selectedSubAlgorithm === "tsp" ? (
                         <TSPSimulation/>
-                       ): selectedSubAlgorithm === "subsetSum" ? (
+                       ): selectedSubAlgorithm === "singleSource" ? (
+                        <BellmanFordSimulation/>
+                      ): selectedSubAlgorithm === "allPairs" ? (
+                        <FloydWarshall/>
+                       ): selectedSubAlgorithm === "matrixChain" ? (
+                        <MatrixChainMultiplication/> 
+                      ): selectedSubAlgorithm === "subsetSum" ? (
                         <SumOfSubsets/>
                        ) : selectedSubAlgorithm === "8queens" ? (
                         <EightQueen/>
                        ): selectedSubAlgorithm === "graphColoring" ? (
                         <GraphColoring/>
-                       ): (
+                       ): selectedSubAlgorithm === "B01knapsack" ? (
+                        <B01Knapsack/>
+                       ): selectedSubAlgorithm === "15puzzle" ? (
+                        <FifteenPuzzleBranchAndBound/>
+                       ):(
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                             <Info className="h-8 w-8 text-purple-600" />
@@ -809,7 +824,7 @@ export default function SimulationPage() {
                           <li>May require heuristic optimizations for practical use</li>
                         </ul>
                       </div>
-                    ) : selectedSubAlgorithm === "01knapsack" ? (
+                    ) : selectedSubAlgorithm === "B01knapsack" ? (
                       <div className="space-y-4">
                         <h3 className="text-xl font-semibold">0/1 Knapsack (Branch and Bound)</h3>
                         <ol className="list-decimal pl-5 space-y-2">
@@ -1460,7 +1475,7 @@ function heapify(arr, heapSize, i) {
                     console.log(graphColoring(graph, m));`}</code>
                           </pre>
                         </div>
-                      ) : selectedSubAlgorithm === "01knapsack" ? (
+                      ) : selectedSubAlgorithm === "B01knapsack" ? (
                         <div>
                           <h3 className="text-lg font-semibold mb-4">0/1 Knapsack (Branch and Bound) Code</h3>
                           <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
