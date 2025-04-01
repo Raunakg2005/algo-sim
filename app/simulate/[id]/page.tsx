@@ -180,7 +180,7 @@ export default function SimulationPage() {
               <Link href="/dashboard" className="text-gray-600 hover:text-purple-700">
                 Dashboard
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-purple-700">
+              <Link href="/about" className="text-gray-600 hover:text-purple-700">
                 About
               </Link>
             </nav>
