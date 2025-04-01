@@ -60,7 +60,7 @@ export default function Dashboard() {
               <Link href="/dashboard" className="text-purple-700 font-medium">
                 Dashboard
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-purple-700">
+              <Link href="/about" className="text-gray-600 hover:text-purple-700">
                 About
               </Link>
             </nav>
