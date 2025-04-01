@@ -49,7 +49,6 @@ type AlgorithmStep = {
 }
 
 export default function SumOfSubsets() {
-
   const [numbers, setNumbers] = useState<number[]>([2, 4, 6, 8, 10])
   const [targetSum, setTargetSum] = useState<number>(16)
   const [numbersInput, setNumbersInput] = useState<string>("2, 4, 6, 8, 10")
@@ -508,7 +507,7 @@ export default function SumOfSubsets() {
     return path
   }
 
-  const renderTree = () => {
+const renderTree = () => {
     if (!steps[currentStep]) return null
 
     const treeState = steps[currentStep].treeState
@@ -518,37 +517,37 @@ export default function SumOfSubsets() {
     const currentPath = getPathToNode(currentNodeId)
 
     return (
-      <div className="relative w-full h-full">
-        {/* Edges */}
-        <svg className="absolute inset-0 w-full h-full">
-          {Object.values(treeState).map((node) => {
-            if (!node.parentId) return null
+        <div className="relative w-full h-full" style={{ transform: "translateX(150px)" }}>
+            {/* Edges */}
+            <svg className="absolute inset-0 w-full h-full">
+                {Object.values(treeState).map((node) => {
+                    if (!node.parentId) return null
 
-            const parent = treeState[node.parentId]
-            const parentPos = nodePositions[node.parentId]
-            const nodePos = nodePositions[node.id]
+                    const parent = treeState[node.parentId]
+                    const parentPos = nodePositions[node.parentId]
+                    const nodePos = nodePositions[node.id]
 
-            if (!parentPos || !nodePos) return null
+                    if (!parentPos || !nodePos) return null
 
-            const isCurrentPath = currentPath.includes(node.id) && currentPath.includes(node.parentId)
-            const isTransition =
-              (node.id === currentNodeId && parent.id === previousNodeId) ||
-              (node.id === previousNodeId && parent.id === currentNodeId)
+                    const isCurrentPath = currentPath.includes(node.id) && currentPath.includes(node.parentId)
+                    const isTransition =
+                        (node.id === currentNodeId && parent.id === previousNodeId) ||
+                        (node.id === previousNodeId && parent.id === currentNodeId)
 
-            return (
-              <line
-                key={`${node.parentId}-${node.id}`}
-                x1={parentPos.x}
-                y1={parentPos.y}
-                x2={nodePos.x}
-                y2={nodePos.y}
-                className={`${getEdgeColor(parent, node, isCurrentPath)} transition-all duration-300`}
-                strokeWidth={isCurrentPath ? 2 : 1}
-                strokeDasharray={node.isBacktracked ? "5,5" : "none"}
-              />
-            )
-          })}
-        </svg>
+                    return (
+                        <line
+                            key={`${node.parentId}-${node.id}`}
+                            x1={parentPos.x}
+                            y1={parentPos.y}
+                            x2={nodePos.x}
+                            y2={nodePos.y}
+                            className={`${getEdgeColor(parent, node, isCurrentPath)} transition-all duration-300`}
+                            strokeWidth={isCurrentPath ? 2 : 1}
+                            strokeDasharray={node.isBacktracked ? "5,5" : "none"}
+                        />
+                    )
+                })}
+            </svg>
 
         {/* Nodes */}
         {Object.values(treeState).map((node) => {
