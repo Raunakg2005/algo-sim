@@ -2,11 +2,18 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, Code, GitBranch, Layers, Zap } from "lucide-react"
+import { ArrowRight, Code, GitBranch, icons, Layers, Lightbulb, Zap } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 const algorithms = [
+  {
+    id: "sorting",
+    name: "Sorting Algorithms",
+    description: "Insertion Sort, Selection Sort",
+    icons: <Lightbulb className="h-8 w-8 text-orange-500" />,
+    color: "border-orange-200 hover:border-orange-400 bg-orange-50",
+  },
   {
     id: "divide",
     name: "Divide and Conquer",

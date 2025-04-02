@@ -28,6 +28,8 @@ import B01Knapsack from "@/components/knapsack-branch-and-bound"
 import MatrixChainMultiplication from "@/components/matrix-chain-multiplication"
 import FifteenPuzzleBranchAndBound from "@/components/fifteen-puzzle-branch-and-bound"
 import FloydWarshall from "@/components/floyd-warshall"
+import SelectionSortVisualizer from "@/components/selection-sort-visualization"
+import InsertionSortVisualization from "@/components/insertion-sort-visualization"
 
 interface Option {
   key: string
@@ -36,6 +38,18 @@ interface Option {
 }
 
 const algorithmOptions: Record<string, Option[]> = {
+  sorting: [
+    {
+      key: "insertionSort",
+      name: "Insertion Sort",
+      description: "A simple sorting algorithm that builds a sorted array one element at a time.",
+    },
+    {
+      key: "selectionSort",
+      name: "Selection Sort",
+      description: "A simple comparison-based sorting algorithm that divides the input into sorted and unsorted parts.",
+    },
+  ],
   divide: [
     {
       key: "minmax",
@@ -149,6 +163,7 @@ const algorithmOptions: Record<string, Option[]> = {
 }
 
 const categoryNames: Record<string, string> = {
+  sorting: "Sorting Algorithms",
   divide: "Divide and Conquer",
   greedy: "Greedy Technique",
   dp: "Dynamic Programming",
@@ -259,7 +274,12 @@ export default function SimulationPage() {
 
                   <TabsContent value="visualization" className="p-0 m-0">
                     <div className="p-6">
-                      {selectedSubAlgorithm === "mergeSort" ? (
+                      {selectedSubAlgorithm === "insertionSort" ? (
+                        <InsertionSortVisualization />
+                      ) : selectedSubAlgorithm === "selectionSort" ? (
+                        <SelectionSortVisualizer />
+                      ) :
+                      selectedSubAlgorithm === "mergeSort" ? (
                         <MergeSortVisualizer />
                       ) : selectedSubAlgorithm === "quickSort" ? (
                         <QuickSortVisualization />
@@ -315,7 +335,85 @@ export default function SimulationPage() {
 
                   {/* Explanation Tab */}
                   <TabsContent value="explanation" className="p-6 m-0">
-                    {selectedSubAlgorithm === "mergeSort" ? (
+                    {selectedSubAlgorithm === "insertionSort" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">How Insertion Sort Works</h3>
+                        <p>Insertion Sort is a simple sorting algorithm that works as follows:</p>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                          <strong>Start with the second element:</strong> Assume the first element is already sorted.
+                          </li>
+                          <li>
+                          <strong>Compare and insert:</strong> Pick the next element and compare it with the previous elements.
+                          </li>
+                          <li>
+                          <strong>Shift elements:</strong> Move larger elements to the right to create space for insertion.
+                          </li>
+                          <li>
+                          <strong>Repeat:</strong> Continue this process for all elements in the array.
+                          </li>
+                        </ol>
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>Insertion Sort has a time complexity of:</p>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Best case: O(n) (when the array is already sorted)</li>
+                          <li>Average and worst case: O(n²) (when elements are in reverse order)</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Space Complexity</h4>
+                        <p>Insertion Sort has an O(1) space complexity since it sorts in place without requiring extra storage.</p>
+
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Efficient for small datasets or nearly sorted arrays</li>
+                          <li>Stable sorting algorithm (preserves order of equal elements)</li>
+                          <li>Simple to implement</li>
+                        </ul>
+
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Not efficient for large datasets due to O(n²) complexity</li>
+                          <li>Slower than Merge Sort and Quick Sort for large arrays</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "selectionSort" ? (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">How Selection Sort Works</h3>
+                        <p>Selection Sort is a simple, comparison-based sorting algorithm that works as follows:</p>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          <li>
+                            <strong>Find the minimum element:</strong> Scan the entire array and find the smallest element.
+                          </li>
+                          <li>
+                            <strong>Swap with the first element:</strong> Place the smallest element in its correct position.
+                          </li>
+                          <li>
+                            <strong>Repeat for remaining elements:</strong> Find the next smallest element and place it in order.
+                          </li>
+                          <li>
+                            <strong>Continue until sorted:</strong> Repeat until all elements are in ascending order.
+                          </li>
+                        </ol>
+                    
+                        <h4 className="text-lg font-semibold mt-6">Time Complexity</h4>
+                        <p>Selection Sort has a time complexity of O(n²) in all cases (best, average, and worst).</p>
+                    
+                        <h4 className="text-lg font-semibold mt-4">Space Complexity</h4>
+                        <p>Selection Sort has an O(1) space complexity as it sorts in place.</p>
+                    
+                        <h4 className="text-lg font-semibold mt-4">Advantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Simple to implement and easy to understand</li>
+                          <li>Does not require additional memory (in-place sorting)</li>
+                        </ul>
+                    
+                        <h4 className="text-lg font-semibold mt-4">Disadvantages</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Not a stable sorting algorithm (order of equal elements may change)</li>
+                          <li>Inefficient for large datasets compared to Quick Sort and Merge Sort</li>
+                        </ul>
+                      </div>
+                    ) : selectedSubAlgorithm === "mergeSort" ? (
                       <div className="space-y-4">
                         <h3 className="text-xl font-semibold">How Merge Sort Works</h3>
                         <p>Merge Sort is a divide and conquer algorithm that works as follows:</p>
@@ -898,7 +996,51 @@ export default function SimulationPage() {
 
                   {/* Code Tab */}
                   <TabsContent value="code" className="p-6 m-0">
-                    {selectedSubAlgorithm === "mergeSort" ? (
+                    {selectedSubAlgorithm === "insertionSort" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">JavaScript Implementation</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`function insertionSort(arr) {
+                    for (let i = 1; i < arr.length; i++) {
+                      let key = arr[i];
+                      let j = i - 1;
+                      // Move elements of arr[0..i-1] that are greater than key one position ahead
+                      while (j >= 0 && arr[j] > key) {
+                        arr[j + 1] = arr[j];
+                        j--;
+                      }
+                      arr[j + 1] = key;
+                    }
+                    return arr;
+                  }`}</code>
+                      </pre>
+                    </div>
+                  ) : selectedSubAlgorithm === "selectionSort" ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">JavaScript Implementation</h3>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
+                        <code>{`function selectionSort(arr) {
+                    let n = arr.length;
+                    for (let i = 0; i < n - 1; i++) {
+                      // Find the minimum element in the unsorted part
+                      let minIndex = i;
+                      for (let j = i + 1; j < n; j++) {
+                        if (arr[j] < arr[minIndex]) {
+                          minIndex = j;
+                        }
+                      }
+                      // Swap the found minimum element with the element at index i
+                      if (minIndex !== i) {
+                        let temp = arr[i];
+                        arr[i] = arr[minIndex];
+                        arr[minIndex] = temp;
+                      }
+                    }
+                    return arr;
+                  }`}</code>
+                      </pre>
+                    </div>
+                  ) :selectedSubAlgorithm === "mergeSort" ? (
                       <div>
                         <h3 className="text-lg font-semibold mb-4">JavaScript Implementation</h3>
                         <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
