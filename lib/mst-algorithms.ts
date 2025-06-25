@@ -209,4 +209,3 @@ export function runPrimsAlgorithm(graph: Graph, startNode: Node): AlgorithmStep[
 
   return steps
 }
-

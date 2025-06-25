@@ -99,4 +99,3 @@ export default function JobCard({ job, onRemove, disabled = false, highlighted =
     </Card>
   )
 }
-

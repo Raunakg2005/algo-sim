@@ -525,4 +525,3 @@ export default function EightQueensProblem() {
     </div>
   )
 }
-

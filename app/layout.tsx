@@ -4,6 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Algo-Sim',
   description: 'Created by RKG',
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({

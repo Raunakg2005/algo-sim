@@ -651,4 +651,3 @@ export default function MatrixChainMultiplication() {
     </div>
   )
 }
-

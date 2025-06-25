@@ -14,7 +14,6 @@ import DPTableVisualization from "./dp-table-visualization"
 import { generateRandomCities, type City, calculateDistances } from "@/lib/tsp-utils"
 import { solveTSP, type TSPStep } from "@/lib/tsp-solver"
 import CoordinateInput from "./coordinate-input"
-import DistanceMatrixInput from "./distance-matrix-input"
 import StepExplanation from "./tsp-step-explanation"
 
 export default function TSPSimulation() {
@@ -330,4 +329,3 @@ export default function TSPSimulation() {
     </div>
   )
 }
-

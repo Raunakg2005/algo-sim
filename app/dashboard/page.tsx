@@ -2,52 +2,30 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, Code, GitBranch, icons, Layers, Lightbulb, Zap } from "lucide-react"
+import { ArrowRight, BookOpen, Database } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-const algorithms = [
+const courses = [
   {
-    id: "sorting",
-    name: "Sorting Algorithms",
-    description: "Insertion Sort, Selection Sort",
-    icons: <Lightbulb className="h-8 w-8 text-orange-500" />,
-    color: "border-orange-200 hover:border-orange-400 bg-orange-50",
-  },
-  {
-    id: "divide",
-    name: "Divide and Conquer",
-    description: "Minimum/Maximum, Merge Sort, Quick Sort, Heap Sort, Strassen's Matrix Multiplication",
-    icon: <Layers className="h-8 w-8 text-purple-500" />,
+    id: "aoa",
+    name: "Analysis of Algorithms",
+    shortName: "AOA",
+    description:
+      "Explore algorithm design techniques including sorting, divide & conquer, greedy, dynamic programming, backtracking, and branch & bound",
+    icon: <BookOpen className="h-12 w-12 text-purple-500" />,
     color: "border-purple-200 hover:border-purple-400 bg-purple-50",
+    topics: "Sorting, Divide & Conquer, Greedy, Dynamic Programming, Backtracking, Branch & Bound",
   },
   {
-    id: "greedy",
-    name: "Greedy Technique",
-    description: "Knapsack, Job Scheduling, MST, Shortest Path",
-    icon: <Zap className="h-8 w-8 text-blue-500" />,
+    id: "ds",
+    name: "Data Structures",
+    shortName: "DS",
+    description:
+      "Master fundamental data structures including stacks, queues, linked lists, trees, graphs, and hashing techniques",
+    icon: <Database className="h-12 w-12 text-blue-500" />,
     color: "border-blue-200 hover:border-blue-400 bg-blue-50",
-  },
-  {
-    id: "dp",
-    name: "Dynamic Programming",
-    description: "0/1 Knapsack, TSP, Shortest Paths, Matrix Chain Multiplication",
-    icon: <Code className="h-8 w-8 text-green-500" />,
-    color: "border-green-200 hover:border-green-400 bg-green-50",
-  },
-  {
-    id: "backtracking",
-    name: "Backtracking",
-    description: "Subset Sum, 8-Queens, Graph Coloring",
-    icon: <ArrowRight className="h-8 w-8 text-yellow-500" />,
-    color: "border-yellow-200 hover:border-yellow-400 bg-yellow-50",
-  },
-  {
-    id: "branch",
-    name: "Branch and Bound",
-    description: "0/1 Knapsack, 15 Puzzle",
-    icon: <GitBranch className="h-8 w-8 text-red-500" />,
-    color: "border-red-200 hover:border-red-400 bg-red-50",
+    topics: "Stacks, Queues, Linked Lists, Trees, Graphs, Hashing, Sorting",
   },
 ]
 
@@ -89,37 +67,41 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold mb-2">Algorithm Dashboard</h1>
-          <p className="text-gray-600">Select an algorithm category to explore and visualize</p>
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Choose Your Course
+          </h1>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Select a course to explore interactive simulations and visualizations
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {algorithms.map((algorithm, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {courses.map((course, index) => (
             <motion.div
-              key={algorithm.id}
+              key={course.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.2 }}
             >
-              <Card className={`border-2 transition-all duration-300 ${algorithm.color}`}>
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    {algorithm.icon}
-                    <div>
-                      <CardTitle>{algorithm.name}</CardTitle>
-                      <CardDescription className="mt-1">Explore algorithms in this category</CardDescription>
-                    </div>
-                  </div>
+              <Card className={`border-2 transition-all duration-300 hover:shadow-lg ${course.color} h-full`}>
+                <CardHeader className="text-center pb-4">
+                  <div className="flex justify-center mb-4">{course.icon}</div>
+                  <CardTitle className="text-2xl font-bold">{course.name}</CardTitle>
+                  <CardDescription className="text-lg font-medium text-gray-700">({course.shortName})</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{algorithm.description}</p>
+                <CardContent className="text-center">
+                  <p className="text-gray-600 mb-4">{course.description}</p>
+                  <div className="bg-white/50 rounded-lg p-3 mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Topics Covered:</p>
+                    <p className="text-sm text-gray-600">{course.topics}</p>
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <Link href={`/simulate/${algorithm.id}`} className="w-full">
-                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-                      Explore Algorithms
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                <CardFooter className="pt-0">
+                  <Link href={`/dashboard/${course.id}`} className="w-full">
+                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-lg py-6">
+                      Start Learning {course.shortName}
+                      <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                 </CardFooter>
@@ -128,19 +110,30 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="mt-12 p-6 bg-purple-50 rounded-lg border border-purple-200">
-          <h2 className="text-xl font-semibold mb-2">Recently Viewed</h2>
-          <p className="text-gray-600 mb-4">Your recently viewed algorithms will appear here</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="bg-white">
-              Merge Sort
-            </Button>
-            <Button variant="outline" className="bg-white">
-              Quick Sort
-            </Button>
-            <Button variant="outline" className="bg-white">
-              Dijkstra's Algorithm
-            </Button>
+        <div className="mt-12 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+          <h2 className="text-xl font-semibold mb-2 text-center">Getting Started</h2>
+          <p className="text-gray-600 text-center mb-4">
+            Each course contains interactive simulations to help you understand concepts better
+          </p>
+          <div className="flex justify-center space-x-4">
+            <div className="text-center">
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
+                1
+              </div>
+              <p className="text-sm text-gray-600">Choose Course</p>
+            </div>
+            <div className="text-center">
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
+                2
+              </div>
+              <p className="text-sm text-gray-600">Select Topic</p>
+            </div>
+            <div className="text-center">
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
+                3
+              </div>
+              <p className="text-sm text-gray-600">Interactive Learning</p>
+            </div>
           </div>
         </div>
       </main>
@@ -153,4 +146,3 @@ export default function Dashboard() {
     </div>
   )
 }
-

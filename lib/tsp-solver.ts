@@ -214,5 +214,3 @@ export interface TSPStep {
     }
     return `{${cities.join(", ")}}`
   }
-  
-  

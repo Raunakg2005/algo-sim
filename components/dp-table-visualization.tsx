@@ -154,4 +154,3 @@ export default function DPTableVisualization({ cities, currentStep }: DPTableVis
     </div>
   )
 }
-

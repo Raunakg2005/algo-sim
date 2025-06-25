@@ -76,4 +76,3 @@ export default function StepExplanation({ step, stepIndex, totalSteps }: StepExp
     </Card>
   )
 }
-

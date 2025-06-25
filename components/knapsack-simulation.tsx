@@ -363,4 +363,3 @@ export default function KnapsackSimulation() {
     </div>
   )
 }
-

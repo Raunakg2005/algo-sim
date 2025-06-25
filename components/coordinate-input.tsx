@@ -120,4 +120,3 @@ export default function CoordinateInput({ cities, onChange, disabled = false }: 
     </div>
   )
 }
-
