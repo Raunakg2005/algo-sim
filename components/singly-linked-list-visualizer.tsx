@@ -654,120 +654,127 @@ export default function SinglyLinkedListVisualizer() {
     )
   }
 
-// Replace the existing renderLinkedListVisualization function with this updated version
-const renderLinkedListVisualization = () => {
-  const displayNodes = steps.length > 0 ? currentStep.nodes : nodes;
-  const displayHead = steps.length > 0 ? currentStep.head : head;
-  const highlightedNodes = currentStep.highlightedNodes || [];
+  // Replace the existing renderLinkedListVisualization function with this updated version
+  const renderLinkedListVisualization = () => {
+    const displayNodes = steps.length > 0 ? currentStep.nodes : nodes
+    const displayHead = steps.length > 0 ? currentStep.head : head
+    const highlightedNodes = currentStep.highlightedNodes || []
 
-  // Build the linked list order
-  const orderedNodes: ListNode[] = [];
-  let current = displayHead;
+    // Build the linked list order
+    const orderedNodes: ListNode[] = []
+    let current = displayHead
 
-  while (current !== null) {
-    const node = displayNodes.find((n) => n.id === current);
-    if (node) {
-      orderedNodes.push(node);
-      current = node.next;
-    } else {
-      break;
+    while (current !== null) {
+      const node = displayNodes.find((n) => n.id === current)
+      if (node) {
+        orderedNodes.push(node)
+        current = node.next
+      } else {
+        break
+      }
     }
-  }
 
-  return (
-    <div className="flex flex-col items-center min-h-[400px] mb-4">
-      <div className="mb-4 text-center">
-        <h3 className="text-lg font-semibold mb-2">Singly Linked List Visualization</h3>
-        <p className="text-sm text-gray-600">
-          Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"}
-        </p>
-      </div>
+    return (
+      <div className="flex flex-col items-center min-h-[400px] mb-4">
+        <div className="mb-4 text-center">
+          <h3 className="text-lg font-semibold mb-2">Singly Linked List Visualization</h3>
+          <p className="text-sm text-gray-600">
+            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"}
+          </p>
+        </div>
 
-      {/* Scrollable container for the linked list */}
-      <div className="w-full overflow-x-auto border border-gray-200 rounded-lg bg-white shadow-sm">
-        <div className="min-w-max py-8 px-4">
-          {orderedNodes.length > 0 ? (
-            <div className="flex items-center gap-4">
-              {/* Head pointer */}
-              <div className="flex flex-col items-center">
-                <div className="text-sm font-semibold text-blue-600 mb-2">HEAD</div>
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500"></div>
-              </div>
-
-              {/* Linked list nodes */}
-              {orderedNodes.map((node, index) => {
-                const isHighlighted = highlightedNodes.includes(node.id);
-                const isHead = node.id === displayHead;
-
-                return (
-                  <div key={node.id} className="flex items-center">
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className={`
-                        flex items-center border-2 rounded-lg shadow-sm
-                        ${
-                          isHighlighted
-                            ? "bg-yellow-100 border-yellow-400"
-                            : isHead
-                              ? "bg-blue-100 border-blue-400"
-                              : "bg-white border-gray-300"
-                        }
-                        ${isHighlighted ? "ring-2 ring-yellow-300" : ""}
-                      `}
-                    >
-                      {/* Data part */}
-                      <div className="px-4 py-3 border-r border-gray-300">
-                        <div className="text-sm text-gray-500">Data</div>
-                        <div className="text-lg font-bold">{node.value}</div>
-                      </div>
-
-                      {/* Next pointer part */}
-                      <div className="px-4 py-3">
-                        <div className="text-sm text-gray-500">Next</div>
-                        <div className="text-sm font-mono">{node.next ? `→${node.next}` : "null"}</div>
-                      </div>
-                    </motion.div>
-
-                    {/* Arrow to next node */}
-                    {index < orderedNodes.length - 1 && (
-                      <div className="mx-2">
-                        <ArrowRight className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-
-                    {/* Null pointer at the end */}
-                    {index === orderedNodes.length - 1 && (
-                      <div className="ml-4 flex flex-col items-center">
-                        <div className="text-sm font-semibold text-gray-500 mb-2">NULL</div>
-                        <div className="w-8 h-8 border-2 border-gray-400 rounded bg-gray-100 flex items-center justify-center">
-                          <span className="text-xs text-gray-500">⊗</span>
-                        </div>
-                      </div>
-                    )}
+        {/* Improved scrollable container for the linked list */}
+        <div className="w-full">
+          <ScrollArea className="w-full whitespace-nowrap rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center gap-4 p-8 min-w-max">
+              {orderedNodes.length > 0 ? (
+                <>
+                  {/* Head pointer */}
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <div className="text-sm font-semibold text-blue-600 mb-2">HEAD</div>
+                    <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500"></div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="w-full min-h-[200px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-gray-400 mb-2">
-                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+
+                  {/* Linked list nodes */}
+                  {orderedNodes.map((node, index) => {
+                    const isHighlighted = highlightedNodes.includes(node.id)
+                    const isHead = node.id === displayHead
+
+                    return (
+                      <div key={node.id} className="flex items-center flex-shrink-0">
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className={`
+                          flex items-center border-2 rounded-lg shadow-sm
+                          ${
+                            isHighlighted
+                              ? "bg-yellow-100 border-yellow-400"
+                              : isHead
+                                ? "bg-blue-100 border-blue-400"
+                                : "bg-white border-gray-300"
+                          }
+                          ${isHighlighted ? "ring-2 ring-yellow-300" : ""}
+                        `}
+                        >
+                          {/* Data part */}
+                          <div className="px-4 py-3 border-r border-gray-300">
+                            <div className="text-sm text-gray-500">Data</div>
+                            <div className="text-lg font-bold">{node.value}</div>
+                          </div>
+
+                          {/* Next pointer part */}
+                          <div className="px-4 py-3">
+                            <div className="text-sm text-gray-500">Next</div>
+                            <div className="text-sm font-mono">{node.next ? `→${node.next}` : "null"}</div>
+                          </div>
+                        </motion.div>
+
+                        {/* Arrow to next node */}
+                        {index < orderedNodes.length - 1 && (
+                          <div className="mx-2 flex-shrink-0">
+                            <ArrowRight className="h-6 w-6 text-gray-400" />
+                          </div>
+                        )}
+
+                        {/* Null pointer at the end */}
+                        {index === orderedNodes.length - 1 && (
+                          <div className="ml-4 flex flex-col items-center flex-shrink-0">
+                            <div className="text-sm font-semibold text-gray-500 mb-2">NULL</div>
+                            <div className="w-8 h-8 border-2 border-gray-400 rounded bg-gray-100 flex items-center justify-center">
+                              <span className="text-xs text-gray-500">⊗</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </>
+              ) : (
+                <div className="w-full min-h-[200px] flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-gray-400 mb-2">
+                      <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 font-medium">Linked List is Empty</p>
+                    <p className="text-gray-400 text-sm">Add elements to see the list structure</p>
+                  </div>
                 </div>
-                <p className="text-gray-500 font-medium">Linked List is Empty</p>
-                <p className="text-gray-400 text-sm">Add elements to see the list structure</p>
-              </div>
+              )}
             </div>
-          )}
+          </ScrollArea>
         </div>
       </div>
-    </div>
-  );
-};
+    )
+  }
 
   const AnimationControls = () =>
     steps.length > 0 && (
