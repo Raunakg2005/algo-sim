@@ -5,21 +5,22 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { BookOpen, Plus, Minus, RotateCcw, Play, Pause, Search, ArrowRight, RotateCw } from "lucide-react"
+import { BookOpen, Plus, Minus, RotateCcw, Play, Pause, Search, ArrowRight, ArrowLeft, RotateCw } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface CircularListNode {
+interface CircularDoublyListNode {
   value: number
   next: number | null
+  prev: number | null
   id: number
 }
 
-interface CircularLinkedListStep {
-  nodes: CircularListNode[]
+interface CircularDoublyLinkedListStep {
+  nodes: CircularDoublyListNode[]
   head: number | null
   tail: number | null
   operation: string
@@ -31,15 +32,16 @@ interface CircularLinkedListStep {
   highlightedNodes?: number[]
 }
 
-const circularLinkedListCode = [
-  "class CircularNode {",
+const circularDoublyLinkedListCode = [
+  "class CircularDoublyNode {",
   "  constructor(data) {",
   "    this.data = data;",
   "    this.next = null;",
+  "    this.prev = null;",
   "  }",
   "}",
   "",
-  "class CircularLinkedList {",
+  "class CircularDoublyLinkedList {",
   "  constructor() {",
   "    this.head = null;",
   "    this.tail = null;",
@@ -48,12 +50,14 @@ const circularLinkedListCode = [
   "",
   "  // Insert at beginning",
   "  insertAtBeginning(data) {",
-  "    const newNode = new CircularNode(data);",
+  "    const newNode = new CircularDoublyNode(data);",
   "    if (!this.head) {",
   "      this.head = this.tail = newNode;",
-  "      newNode.next = newNode; // Points to itself",
+  "      newNode.next = newNode.prev = newNode;",
   "    } else {",
   "      newNode.next = this.head;",
+  "      newNode.prev = this.tail;",
+  "      this.head.prev = newNode;",
   "      this.tail.next = newNode;",
   "      this.head = newNode;",
   "    }",
@@ -62,13 +66,15 @@ const circularLinkedListCode = [
   "",
   "  // Insert at end",
   "  insertAtEnd(data) {",
-  "    const newNode = new CircularNode(data);",
+  "    const newNode = new CircularDoublyNode(data);",
   "    if (!this.head) {",
   "      this.head = this.tail = newNode;",
-  "      newNode.next = newNode; // Points to itself",
+  "      newNode.next = newNode.prev = newNode;",
   "    } else {",
   "      newNode.next = this.head;",
+  "      newNode.prev = this.tail;",
   "      this.tail.next = newNode;",
+  "      this.head.prev = newNode;",
   "      this.tail = newNode;",
   "    }",
   "    this.size++;",
@@ -87,13 +93,15 @@ const circularLinkedListCode = [
   "      this.insertAtEnd(data);",
   "      return;",
   "    }",
-  "    const newNode = new CircularNode(data);",
+  "    const newNode = new CircularDoublyNode(data);",
   "    let current = this.head;",
-  "    for (let i = 0; i < position - 1; i++) {",
+  "    for (let i = 0; i < position; i++) {",
   "      current = current.next;",
   "    }",
-  "    newNode.next = current.next;",
-  "    current.next = newNode;",
+  "    newNode.next = current;",
+  "    newNode.prev = current.prev;",
+  "    current.prev.next = newNode;",
+  "    current.prev = newNode;",
   "    this.size++;",
   "  }",
   "",
@@ -105,6 +113,7 @@ const circularLinkedListCode = [
   "      this.head = this.tail = null;",
   "    } else {",
   "      this.tail.next = this.head.next;",
+  "      this.head.next.prev = this.tail;",
   "      this.head = this.head.next;",
   "    }",
   "    this.size--;",
@@ -118,12 +127,9 @@ const circularLinkedListCode = [
   "    if (this.head === this.tail) {",
   "      this.head = this.tail = null;",
   "    } else {",
-  "      let current = this.head;",
-  "      while (current.next !== this.tail) {",
-  "        current = current.next;",
-  "      }",
-  "      current.next = this.head;",
-  "      this.tail = current;",
+  "      this.head.prev = this.tail.prev;",
+  "      this.tail.prev.next = this.head;",
+  "      this.tail = this.tail.prev;",
   "    }",
   "    this.size--;",
   "    return deletedData;",
@@ -144,8 +150,8 @@ const circularLinkedListCode = [
   "    return -1;",
   "  }",
   "",
-  "  // Display list",
-  "  display() {",
+  "  // Traverse forward",
+  "  traverseForward() {",
   "    if (!this.head) return [];",
   "    const elements = [];",
   "    let current = this.head;",
@@ -155,17 +161,29 @@ const circularLinkedListCode = [
   "    } while (current !== this.head);",
   "    return elements;",
   "  }",
+  "",
+  "  // Traverse backward",
+  "  traverseBackward() {",
+  "    if (!this.head) return [];",
+  "    const elements = [];",
+  "    let current = this.tail;",
+  "    do {",
+  "      elements.push(current.data);",
+  "      current = current.prev;",
+  "    } while (current !== this.tail);",
+  "    return elements;",
+  "  }",
   "}",
 ]
 
-export default function CircularLinkedListVisualizer() {
-  const [nodes, setNodes] = useState<CircularListNode[]>([])
+export default function CircularDoublyLinkedListVisualizer() {
+  const [nodes, setNodes] = useState<CircularDoublyListNode[]>([])
   const [head, setHead] = useState<number | null>(null)
   const [tail, setTail] = useState<number | null>(null)
   const [inputValue, setInputValue] = useState<string>("")
   const [positionInput, setPositionInput] = useState<string>("")
   const [inputError, setInputError] = useState<string>("")
-  const [steps, setSteps] = useState<CircularLinkedListStep[]>([])
+  const [steps, setSteps] = useState<CircularDoublyLinkedListStep[]>([])
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
@@ -176,7 +194,7 @@ export default function CircularLinkedListVisualizer() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const addStep = (
-    newNodes: CircularListNode[],
+    newNodes: CircularDoublyListNode[],
     newHead: number | null,
     newTail: number | null,
     operation: string,
@@ -187,7 +205,7 @@ export default function CircularLinkedListVisualizer() {
     activeCodeLine = 0,
     highlightedNodes: number[] = [],
   ) => {
-    const newStep: CircularLinkedListStep = {
+    const newStep: CircularDoublyLinkedListStep = {
       nodes: [...newNodes],
       head: newHead,
       tail: newTail,
@@ -236,9 +254,10 @@ export default function CircularLinkedListVisualizer() {
     const value = validateInput()
     if (value === null) return
 
-    const newNode: CircularListNode = {
+    const newNode: CircularDoublyListNode = {
       value,
       next: head,
+      prev: tail,
       id: nextId,
     }
 
@@ -249,6 +268,7 @@ export default function CircularLinkedListVisualizer() {
     if (head === null) {
       // First node - points to itself
       newNode.next = nextId
+      newNode.prev = nextId
       newTail = nextId
       addStep(
         newNodes,
@@ -263,20 +283,28 @@ export default function CircularLinkedListVisualizer() {
         [],
       )
       addStep(
-        newNodes.map((n) => (n.id === nextId ? { ...n, next: nextId } : n)),
+        newNodes.map((n) => (n.id === nextId ? { ...n, next: nextId, prev: nextId } : n)),
         newHead,
         newTail,
         "insertBeginning",
         value,
         undefined,
-        `Inserted ${value} as first node. Node points to itself to form circular structure`,
+        `Inserted ${value} as first node. Node points to itself in both directions`,
         false,
         19,
         [nextId],
       )
     } else {
-      // Update tail to point to new head
-      newNodes = newNodes.map((node) => (node.id === tail ? { ...node, next: nextId } : node))
+      // Update circular links
+      newNodes = newNodes.map((node) => {
+        if (node.id === head) {
+          return { ...node, prev: nextId }
+        }
+        if (node.id === tail) {
+          return { ...node, next: nextId }
+        }
+        return node
+      })
       addStep(
         newNodes,
         head,
@@ -296,9 +324,9 @@ export default function CircularLinkedListVisualizer() {
         "insertBeginning",
         value,
         undefined,
-        `Inserted ${value} at beginning. Tail now points to new head to maintain circular structure`,
+        `Inserted ${value} at beginning. Updated all circular links`,
         false,
-        24,
+        26,
         [nextId],
       )
     }
@@ -314,9 +342,10 @@ export default function CircularLinkedListVisualizer() {
     const value = validateInput()
     if (value === null) return
 
-    const newNode: CircularListNode = {
+    const newNode: CircularDoublyListNode = {
       value,
       next: head,
+      prev: tail,
       id: nextId,
     }
 
@@ -327,23 +356,32 @@ export default function CircularLinkedListVisualizer() {
     if (head === null) {
       // First node - points to itself
       newNode.next = nextId
+      newNode.prev = nextId
       newHead = nextId
-      addStep(newNodes, null, null, "insertEnd", value, undefined, "List is empty, creating first node", false, 30, [])
+      addStep(newNodes, null, null, "insertEnd", value, undefined, "List is empty, creating first node", false, 31, [])
       addStep(
-        newNodes.map((n) => (n.id === nextId ? { ...n, next: nextId } : n)),
+        newNodes.map((n) => (n.id === nextId ? { ...n, next: nextId, prev: nextId } : n)),
         newHead,
         newTail,
         "insertEnd",
         value,
         undefined,
-        `Inserted ${value} as first node. Node points to itself to form circular structure`,
+        `Inserted ${value} as first node. Node points to itself in both directions`,
         false,
-        33,
+        34,
         [nextId],
       )
     } else {
-      // Update old tail to point to new node
-      newNodes = newNodes.map((node) => (node.id === tail ? { ...node, next: nextId } : node))
+      // Update circular links
+      newNodes = newNodes.map((node) => {
+        if (node.id === tail) {
+          return { ...node, next: nextId }
+        }
+        if (node.id === head) {
+          return { ...node, prev: nextId }
+        }
+        return node
+      })
       addStep(
         newNodes,
         head,
@@ -353,7 +391,7 @@ export default function CircularLinkedListVisualizer() {
         undefined,
         "Creating new node and updating circular links",
         false,
-        35,
+        36,
         [],
       )
       addStep(
@@ -363,9 +401,9 @@ export default function CircularLinkedListVisualizer() {
         "insertEnd",
         value,
         undefined,
-        `Inserted ${value} at end. New tail points to head to maintain circular structure`,
+        `Inserted ${value} at end. Updated all circular links`,
         false,
-        38,
+        41,
         [nextId],
       )
     }
@@ -406,7 +444,7 @@ export default function CircularLinkedListVisualizer() {
         position,
         `Invalid position ${position}. List size is ${listSize}`,
         true,
-        43,
+        46,
         [],
       )
       return
@@ -422,24 +460,25 @@ export default function CircularLinkedListVisualizer() {
       return
     }
 
-    const newNode: CircularListNode = {
+    const newNode: CircularDoublyListNode = {
       value,
       next: null,
+      prev: null,
       id: nextId,
     }
 
-    // Traverse to position - 1
+    // Traverse to position
     let current = head
     const traversalPath: number[] = []
 
-    for (let i = 0; i < position - 1 && current !== null; i++) {
+    for (let i = 0; i < position && current !== null; i++) {
       traversalPath.push(current)
       const node = nodes.find((n) => n.id === current)
       current = node?.next || null
     }
 
     if (current === null) {
-      addStep(nodes, head, tail, "insertPosition", value, position, `Invalid position ${position}`, true, 43, [])
+      addStep(nodes, head, tail, "insertPosition", value, position, `Invalid position ${position}`, true, 46, [])
       return
     }
 
@@ -450,20 +489,31 @@ export default function CircularLinkedListVisualizer() {
       "insertPosition",
       value,
       position,
-      `Traversing to position ${position - 1}: ${traversalPath.join(" → ")}`,
+      `Traversing to position ${position}: ${traversalPath.join(" → ")}`,
       false,
-      54,
+      57,
       traversalPath,
     )
 
     const currentNode = nodes.find((n) => n.id === current)
-    newNode.next = currentNode?.next || null
+    const prevNode = nodes.find((n) => n.id === currentNode?.prev)
 
-    const newNodes = [...nodes, newNode]
-    const updatedNodes = newNodes.map((node) => (node.id === current ? { ...node, next: nextId } : node))
+    newNode.next = current
+    newNode.prev = currentNode?.prev || null
+
+    let newNodes = [...nodes, newNode]
+    newNodes = newNodes.map((node) => {
+      if (node.id === current) {
+        return { ...node, prev: nextId }
+      }
+      if (node.id === currentNode?.prev) {
+        return { ...node, next: nextId }
+      }
+      return node
+    })
 
     addStep(
-      updatedNodes,
+      newNodes,
       head,
       tail,
       "insertPosition",
@@ -471,11 +521,11 @@ export default function CircularLinkedListVisualizer() {
       position,
       `Inserted ${value} at position ${position}`,
       false,
-      58,
+      63,
       [nextId],
     )
 
-    setNodes(updatedNodes)
+    setNodes(newNodes)
     setNextId(nextId + 1)
     setInputValue("")
     setPositionInput("")
@@ -483,7 +533,7 @@ export default function CircularLinkedListVisualizer() {
 
   const deleteFromBeginning = () => {
     if (head === null) {
-      addStep(nodes, head, tail, "deleteBeginning", undefined, undefined, "Cannot delete from empty list", true, 62, [])
+      addStep(nodes, head, tail, "deleteBeginning", undefined, undefined, "Cannot delete from empty list", true, 67, [])
       return
     }
 
@@ -500,7 +550,7 @@ export default function CircularLinkedListVisualizer() {
       undefined,
       `Deleting head node with value ${deletedValue}`,
       false,
-      63,
+      68,
       [head],
     )
 
@@ -515,17 +565,25 @@ export default function CircularLinkedListVisualizer() {
         undefined,
         `Deleted ${deletedValue} from beginning. List is now empty`,
         false,
-        65,
+        70,
         [],
       )
       setNodes([])
       setHead(null)
       setTail(null)
     } else {
-      // Update tail to point to new head
+      // Update circular links
       const updatedNodes = nodes
         .filter((n) => n.id !== head)
-        .map((node) => (node.id === tail ? { ...node, next: newHead } : node))
+        .map((node) => {
+          if (node.id === tail) {
+            return { ...node, next: newHead }
+          }
+          if (node.id === newHead) {
+            return { ...node, prev: tail }
+          }
+          return node
+        })
 
       addStep(
         updatedNodes,
@@ -534,9 +592,9 @@ export default function CircularLinkedListVisualizer() {
         "deleteBeginning",
         deletedValue,
         undefined,
-        `Deleted ${deletedValue} from beginning. Tail now points to new head to maintain circular structure`,
+        `Deleted ${deletedValue} from beginning. Updated circular links`,
         false,
-        68,
+        74,
         [],
       )
 
@@ -547,12 +605,13 @@ export default function CircularLinkedListVisualizer() {
 
   const deleteFromEnd = () => {
     if (tail === null) {
-      addStep(nodes, head, tail, "deleteEnd", undefined, undefined, "Cannot delete from empty list", true, 74, [])
+      addStep(nodes, head, tail, "deleteEnd", undefined, undefined, "Cannot delete from empty list", true, 79, [])
       return
     }
 
     const tailNode = nodes.find((n) => n.id === tail)
     const deletedValue = tailNode?.value
+    const newTail = tailNode?.prev || null
 
     addStep(
       nodes,
@@ -563,7 +622,7 @@ export default function CircularLinkedListVisualizer() {
       undefined,
       `Deleting tail node with value ${deletedValue}`,
       false,
-      75,
+      80,
       [tail],
     )
 
@@ -578,42 +637,25 @@ export default function CircularLinkedListVisualizer() {
         undefined,
         `Deleted ${deletedValue} from end. List is now empty`,
         false,
-        77,
+        82,
         [],
       )
       setNodes([])
       setHead(null)
       setTail(null)
     } else {
-      // Find second to last node
-      let current = head
-      const traversalPath: number[] = []
-
-      while (current !== null) {
-        const currentNode = nodes.find((n) => n.id === current)
-        if (currentNode?.next === tail) break
-        traversalPath.push(current)
-        current = currentNode?.next || null
-      }
-
-      const newTail = current
-
-      addStep(
-        nodes,
-        head,
-        tail,
-        "deleteEnd",
-        deletedValue,
-        undefined,
-        `Finding new tail: ${traversalPath.join(" → ")} → ${newTail}`,
-        false,
-        80,
-        [...traversalPath, ...(newTail !== null ? [newTail] : [])],
-      )
-
+      // Update circular links
       const updatedNodes = nodes
         .filter((n) => n.id !== tail)
-        .map((node) => (node.id === newTail ? { ...node, next: head } : node))
+        .map((node) => {
+          if (node.id === head) {
+            return { ...node, prev: newTail }
+          }
+          if (node.id === newTail) {
+            return { ...node, next: head }
+          }
+          return node
+        })
 
       addStep(
         updatedNodes,
@@ -622,9 +664,9 @@ export default function CircularLinkedListVisualizer() {
         "deleteEnd",
         deletedValue,
         undefined,
-        `Deleted ${deletedValue} from end. New tail points to head to maintain circular structure`,
+        `Deleted ${deletedValue} from end. Updated circular links`,
         false,
-        83,
+        86,
         [],
       )
 
@@ -638,7 +680,7 @@ export default function CircularLinkedListVisualizer() {
     if (value === null) return
 
     if (head === null) {
-      addStep(nodes, head, tail, "search", value, undefined, `Cannot search in empty list`, true, 89, [])
+      addStep(nodes, head, tail, "search", value, undefined, `Cannot search in empty list`, true, 92, [])
       setInputValue("")
       return
     }
@@ -660,12 +702,12 @@ export default function CircularLinkedListVisualizer() {
         position,
         `Searching for ${value}. Checking node ${current} with value ${currentNode?.value}`,
         false,
-        93,
+        96,
         [...searchPath],
       )
 
       if (currentNode?.value === value) {
-        addStep(nodes, head, tail, "search", value, position, `Found ${value} at position ${position}`, false, 94, [
+        addStep(nodes, head, tail, "search", value, position, `Found ${value} at position ${position}`, false, 97, [
           current,
         ])
         setInputValue("")
@@ -685,15 +727,15 @@ export default function CircularLinkedListVisualizer() {
       undefined,
       `Element ${value} not found in the list`,
       false,
-      98,
+      101,
       searchPath,
     )
     setInputValue("")
   }
 
-  const traverseList = () => {
+  const traverseForward = () => {
     if (head === null) {
-      addStep(nodes, head, tail, "traverse", undefined, undefined, "Cannot traverse empty list", true, 102, [])
+      addStep(nodes, head, tail, "traverseForward", undefined, undefined, "Cannot traverse empty list", true, 105, [])
       return
     }
 
@@ -711,12 +753,12 @@ export default function CircularLinkedListVisualizer() {
           nodes,
           head,
           tail,
-          "traverse",
+          "traverseForward",
           undefined,
           undefined,
-          `Circular traversal: ${values.join(" → ")} → (back to head)`,
+          `Forward traversal: ${values.join(" → ")} → (back to head)`,
           false,
-          106,
+          108,
           [...traversalPath],
         )
 
@@ -730,12 +772,61 @@ export default function CircularLinkedListVisualizer() {
       nodes,
       head,
       tail,
-      "traverse",
+      "traverseForward",
       undefined,
       undefined,
-      `Complete circular traversal: ${values.join(" → ")} → ${values[0]} (circular)`,
+      `Complete forward traversal: ${values.join(" → ")} → ${values[0]} (circular)`,
       false,
-      110,
+      112,
+      traversalPath,
+    )
+  }
+
+  const traverseBackward = () => {
+    if (tail === null) {
+      addStep(nodes, head, tail, "traverseBackward", undefined, undefined, "Cannot traverse empty list", true, 116, [])
+      return
+    }
+
+    let current = tail
+    const traversalPath: number[] = []
+    const values: number[] = []
+
+    do {
+      const currentNode = nodes.find((n) => n.id === current)
+      if (currentNode) {
+        traversalPath.push(current)
+        values.push(currentNode.value)
+
+        addStep(
+          nodes,
+          head,
+          tail,
+          "traverseBackward",
+          undefined,
+          undefined,
+          `Backward traversal: ${values.join(" ← ")} ← (back to tail)`,
+          false,
+          119,
+          [...traversalPath],
+        )
+
+        current = currentNode.prev
+      } else {
+        break
+      }
+    } while (current !== tail && current !== null)
+
+    addStep(
+      nodes,
+      head,
+      tail,
+      "traverseBackward",
+      undefined,
+      undefined,
+      `Complete backward traversal: ${values.join(" ← ")} ← ${values[0]} (circular)`,
+      false,
+      123,
       traversalPath,
     )
   }
@@ -801,16 +892,16 @@ export default function CircularLinkedListVisualizer() {
     operation: "",
     element: undefined,
     position: undefined,
-    description: "Perform operations to see the circular linked list in action",
+    description: "Perform operations to see the circular doubly linked list in action",
     isError: false,
     activeCodeLine: 0,
     highlightedNodes: [],
   }
 
-  const renderCircularLinkedListCode = () => {
+  const renderCircularDoublyLinkedListCode = () => {
     return (
       <div className="font-mono text-sm bg-gray-50 p-4 rounded-md border border-gray-200 h-full overflow-auto">
-        {circularLinkedListCode.map((line, index) => (
+        {circularDoublyLinkedListCode.map((line, index) => (
           <div
             key={index}
             className={`py-1 px-2 rounded ${
@@ -824,14 +915,14 @@ export default function CircularLinkedListVisualizer() {
     )
   }
 
-  const renderCircularLinkedListVisualization = () => {
+  const renderCircularDoublyLinkedListVisualization = () => {
     const displayNodes = steps.length > 0 ? currentStep.nodes : nodes
     const displayHead = steps.length > 0 ? currentStep.head : head
     const displayTail = steps.length > 0 ? currentStep.tail : tail
     const highlightedNodes = currentStep.highlightedNodes || []
 
     // Build the linked list order
-    const orderedNodes: CircularListNode[] = []
+    const orderedNodes: CircularDoublyListNode[] = []
     if (displayHead !== null) {
       let current = displayHead
       const visited = new Set<number>()
@@ -849,18 +940,19 @@ export default function CircularLinkedListVisualizer() {
     }
 
     return (
-      <div className="flex flex-col items-center min-h-[340px] mb-1">
-        <div className="mb-1 text-center">
-          <h3 className="text-lg font-semibold mb-0.5">Circular Linked List Visualization</h3>
+      <div className="flex flex-col items-center min-h-[400px] mb-4">
+        <div className="mb-4 text-center">
+          <h3 className="text-lg font-semibold mb-2">Circular Doubly Linked List Visualization</h3>
           <p className="text-sm text-gray-600">
-            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"} | Tail: {displayTail ? `Node ${displayTail}` : "null"}
+            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"} | Tail:{" "}
+            {displayTail ? `Node ${displayTail}` : "null"}
           </p>
         </div>
 
-        {/* Scrollable container for the circular linked list */}
+        {/* Scrollable container for the circular doubly linked list */}
         <div className="w-full">
           <ScrollArea className="w-full whitespace-nowrap rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center gap-3 p-2 min-w-max">
+            <div className="flex items-center gap-4 p-8 min-w-max">
               {orderedNodes.length > 0 ? (
                 <>
                   {/* Head pointer */}
@@ -869,7 +961,7 @@ export default function CircularLinkedListVisualizer() {
                     <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500"></div>
                   </div>
 
-                  {/* Circular linked list nodes */}
+                  {/* Circular doubly linked list nodes */}
                   {orderedNodes.map((node, index) => {
                     const isHighlighted = highlightedNodes.includes(node.id)
                     const isHead = node.id === displayHead
@@ -897,6 +989,17 @@ export default function CircularLinkedListVisualizer() {
                             ${isHighlighted ? "ring-2 ring-yellow-300" : ""}
                           `}
                         >
+                          {/* Prev pointer part */}
+                          <div className="px-3 py-3 border-r border-gray-300">
+                            <div className="text-xs text-gray-500">Prev</div>
+                            <div className="text-xs font-mono">
+                              {node.prev ? `${node.prev}←` : "null"}
+                              {isHead && node.prev === displayTail && (
+                                <span className="text-xs text-blue-600 ml-1">(tail)</span>
+                              )}
+                            </div>
+                          </div>
+
                           {/* Data part */}
                           <div className="px-4 py-3 border-r border-gray-300">
                             <div className="text-sm text-gray-500">Data</div>
@@ -904,9 +1007,9 @@ export default function CircularLinkedListVisualizer() {
                           </div>
 
                           {/* Next pointer part */}
-                          <div className="px-4 py-3">
-                            <div className="text-sm text-gray-500">Next</div>
-                            <div className="text-sm font-mono">
+                          <div className="px-3 py-3">
+                            <div className="text-xs text-gray-500">Next</div>
+                            <div className="text-xs font-mono">
                               {node.next ? `→${node.next}` : "null"}
                               {isTail && node.next === displayHead && (
                                 <span className="text-xs text-green-600 ml-1">(head)</span>
@@ -915,20 +1018,27 @@ export default function CircularLinkedListVisualizer() {
                           </div>
                         </motion.div>
 
-                        {/* Arrow to next node */}
+                        {/* Bidirectional arrows */}
                         {index < orderedNodes.length - 1 && (
-                          <div className="mx-2 flex-shrink-0">
-                            <ArrowRight className="h-6 w-6 text-gray-400" />
+                          <div className="mx-2 flex flex-col items-center flex-shrink-0">
+                            <ArrowRight className="h-4 w-4 text-gray-400 mb-1" />
+                            <ArrowLeft className="h-4 w-4 text-gray-400" />
                           </div>
                         )}
 
-                        {/* Circular arrow at the end */}
+                        {/* Circular arrows at the end */}
                         {index === orderedNodes.length - 1 && orderedNodes.length > 1 && (
                           <div className="ml-4 flex flex-col items-center flex-shrink-0">
                             <div className="text-sm font-semibold text-green-600 mb-2">CIRCULAR</div>
-                            <div className="flex items-center">
-                              <RotateCw className="h-8 w-8 text-green-500" />
-                              <div className="ml-2 text-xs text-green-600">Back to HEAD</div>
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-center mb-1">
+                                <RotateCw className="h-6 w-6 text-green-500" />
+                                <div className="ml-1 text-xs text-green-600">→HEAD</div>
+                              </div>
+                              <div className="flex items-center">
+                                <RotateCw className="h-6 w-6 text-blue-500 transform rotate-180" />
+                                <div className="ml-1 text-xs text-blue-600">←TAIL</div>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -937,8 +1047,9 @@ export default function CircularLinkedListVisualizer() {
                         {index === orderedNodes.length - 1 && orderedNodes.length === 1 && (
                           <div className="ml-4 flex flex-col items-center flex-shrink-0">
                             <div className="text-sm font-semibold text-purple-600 mb-2">SELF</div>
-                            <div className="w-8 h-8 border-2 border-purple-400 rounded-full bg-purple-100 flex items-center justify-center">
-                              <RotateCw className="h-4 w-4 text-purple-500" />
+                            <div className="w-12 h-12 border-2 border-purple-400 rounded-full bg-purple-100 flex flex-col items-center justify-center">
+                              <RotateCw className="h-3 w-3 text-purple-500 mb-1" />
+                              <RotateCw className="h-3 w-3 text-purple-500 transform rotate-180" />
                             </div>
                           </div>
                         )}
@@ -958,10 +1069,14 @@ export default function CircularLinkedListVisualizer() {
                 <div className="w-full min-h-[200px] flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-gray-400 mb-2">
-                      <RotateCw className="w-12 h-12 mx-auto" />
+                      <div className="flex justify-center items-center">
+                        <RotateCw className="w-8 h-8 mr-2" />
+                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
-                    <p className="text-gray-500 font-medium">Circular Linked List is Empty</p>
-                    <p className="text-gray-400 text-sm">Add elements to see the circular structure</p>
+                    <p className="text-gray-500 font-medium">Circular Doubly Linked List is Empty</p>
+                    <p className="text-gray-400 text-sm">Add elements to see the bidirectional circular structure</p>
                   </div>
                 </div>
               )}
@@ -1027,7 +1142,7 @@ export default function CircularLinkedListVisualizer() {
     )
 
   const VisualizationContent = () => (
-    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col h-full w-full">
+    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col h-full">
       <h3 className="font-semibold text-gray-800 mb-2">Visualization</h3>
       <div className="flex flex-col items-center w-full h-full">
         <div className="flex flex-col items-center w-full">
@@ -1036,7 +1151,7 @@ export default function CircularLinkedListVisualizer() {
             <div className="relative w-full max-w-full flex flex-col items-center">
               <div className="flex justify-center w-full overflow-x-auto">
                 <div className="inline-block min-w-[600px]">
-                  {renderCircularLinkedListVisualization()}
+                  {renderCircularDoublyLinkedListVisualization()}
                 </div>
               </div>
             </div>
@@ -1062,224 +1177,162 @@ export default function CircularLinkedListVisualizer() {
 
   const CodeContent = () => (
     <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
-      <h3 className="font-semibold text-gray-800 mb-2">Circular Linked List Implementation</h3>
-      {renderCircularLinkedListCode()}
+      <h3 className="font-semibold text-gray-800 mb-2">Circular Doubly Linked List Implementation</h3>
+      {renderCircularDoublyLinkedListCode()}
     </div>
   )
 
   return (
-    <div className="w-full min-h-screen bg-white p-4 flex justify-center">
-      <Card className="w-full max-w-[95%] xl:max-w-[90%] 2xl:max-w-[80%] shadow-lg">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <BookOpen className="mr-2 h-6 w-6 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-800">Circular Linked List Visualizer</h2>
-            </div>
-          </div>
-
-          {/* Input and Operation Controls */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-2 mb-2">
-              <Select value={operation} onValueChange={setOperation}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="insertBeginning">Insert at Beginning</SelectItem>
-                  <SelectItem value="insertEnd">Insert at End</SelectItem>
-                  <SelectItem value="insertPosition">Insert at Position</SelectItem>
-                  <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
-                  <SelectItem value="deleteEnd">Delete from End</SelectItem>
-                  <SelectItem value="search">Search Element</SelectItem>
-                  <SelectItem value="traverse">Traverse List</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Single-line layout for input, Insert at End, and Clear for insertEnd operation */}
-            {operation === "insertEnd" ? (
-              <div className="flex flex-row gap-2 mb-4 items-center">
-                <Input
-                  placeholder="Enter value"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-grow"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      insertAtEnd();
-                    }
-                  }}
-                />
-                <Button onClick={insertAtEnd} className="bg-green-600 hover:bg-green-700 whitespace-nowrap">
-                  <Plus className="mr-1 h-4 w-4" />
-                  Insert at End
-                </Button>
-                <Button
-                  onClick={clearList}
-                  variant="outline"
-                  className="border-gray-600 text-gray-600 hover:bg-gray-50 whitespace-nowrap"
-                >
-                  <RotateCcw className="mr-1 h-4 w-4" />
-                  Clear
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                {(operation === "insertBeginning" ||
-                  operation === "insertPosition" ||
-                  operation === "search") && (
-                  <Input
-                    placeholder="Enter value"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    className="flex-grow"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        if (operation === "insertBeginning") insertAtBeginning();
-                        else if (operation === "insertEnd") insertAtEnd();
-                        else if (operation === "insertPosition") insertAtPosition();
-                        else if (operation === "search") searchElement();
-                      }
-                    }}
-                  />
-                )}
-
-                {operation === "insertPosition" && (
-                  <Input
-                    placeholder="Position"
-                    value={positionInput}
-                    onChange={(e) => setPositionInput(e.target.value)}
-                    className="w-32"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        insertAtPosition();
-                      }
-                    }}
-                  />
-                )}
-
-                <div className="flex gap-2 flex-wrap">
-                  {operation === "insertBeginning" && (
-                    <Button onClick={insertAtBeginning} className="bg-green-600 hover:bg-green-700">
-                      <Plus className="mr-1 h-4 w-4" />
-                      Insert at Beginning
-                    </Button>
-                  )}
-                  {operation === "insertPosition" && (
-                    <Button onClick={insertAtPosition} className="bg-green-600 hover:bg-green-700">
-                      <Plus className="mr-1 h-4 w-4" />
-                      Insert at Position
-                    </Button>
-                  )}
-                  {operation === "deleteBeginning" && (
-                    <Button onClick={deleteFromBeginning} className="bg-red-600 hover:bg-red-700">
-                      <Minus className="mr-1 h-4 w-4" />
-                      Delete from Beginning
-                    </Button>
-                  )}
-                  {operation === "deleteEnd" && (
-                    <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
-                      <Minus className="mr-1 h-4 w-4" />
-                      Delete from End
-                    </Button>
-                  )}
-                  {operation === "search" && (
-                    <Button onClick={searchElement} className="bg-blue-600 hover:bg-blue-700">
-                      <Search className="mr-1 h-4 w-4" />
-                      Search
-                    </Button>
-                  )}
-                  {operation === "traverse" && (
-                    <Button onClick={traverseList} className="bg-purple-600 hover:bg-purple-700">
-                      <RotateCw className="mr-1 h-4 w-4" />
-                      Traverse List
-                    </Button>
-                  )}
-
-                  <Button
-                    onClick={clearList}
-                    variant="outline"
-                    className="border-gray-600 text-gray-600 hover:bg-gray-50"
-                  >
-                    <RotateCcw className="mr-1 h-4 w-4" />
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {inputError && (
-              <Alert variant="destructive" className="mt-2">
-                <AlertDescription>{inputError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-
-          {/* View Selection and Visualization Area */}
-          <Tabs value={activeView} onValueChange={setActiveView} className="mb-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="split">Split View</TabsTrigger>
-              <TabsTrigger value="visualization">Visualization Only</TabsTrigger>
-              <TabsTrigger value="code">Code Only</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="split" className="mt-4">
-              <AnimationControls />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <CodeContent />
-                <VisualizationContent />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="visualization" className="mt-4">
-              <div className="flex flex-col items-center justify-center min-h-[500px] w-full">
-                <AnimationControls />
-                <div className="w-full flex justify-center">
-                  <VisualizationContent />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="code" className="mt-4">
-              <AnimationControls />
-              <CodeContent />
-            </TabsContent>
-          </Tabs>
-
-          {/* Circular Linked List Information */}
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
-            <h3 className="font-semibold text-gray-800 mb-2">Circular Linked List Operations</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              A Circular Linked List is a linear data structure where the last node points back to the first node,
-              forming a circular structure with no null pointers.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-              <div>
-                <span className="inline-block w-3 h-3 bg-green-100 border border-green-400 rounded-sm mr-1"></span>
-                <strong>Insert:</strong> Add nodes at beginning, end, or specific position
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-red-100 border border-red-400 rounded-sm mr-1"></span>
-                <strong>Delete:</strong> Remove nodes from beginning or end
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-blue-100 border border-blue-500 rounded-sm mr-1"></span>
-                <strong>Search:</strong> Find elements by circular traversal
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-purple-100 border border-purple-500 rounded-sm mr-1"></span>
-                <strong>Circular Traversal:</strong> Continuous loop through all nodes
-              </div>
-            </div>
-            <div className="mt-2 text-sm text-gray-600">
-              <strong>Advantages:</strong> No null pointers, continuous traversal, efficient for round-robin scheduling.{" "}
-              <strong>Use Cases:</strong> Operating system scheduling, multiplayer games, circular buffers!
-            </div>
+    <Card className="w-full min-h-screen bg-white p-4 flex justify-center max-w-[95%] xl:max-w-[90%] 2xl:max-w-[80%] shadow-lg">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <BookOpen className="mr-2 h-6 w-6 text-blue-600" />
+            <h2 className="text-2xl font-bold text-gray-800">Circular Doubly Linked List Visualizer</h2>
           </div>
         </div>
-      </Card>
-    </div>
+        {/* Unified operation dropdown and input controls */}
+        <form
+          className="flex flex-col sm:flex-row gap-2 mb-4"
+          onSubmit={e => {
+            e.preventDefault();
+            if (operation === "insertBeginning") insertAtBeginning();
+            else if (operation === "insertEnd") insertAtEnd();
+            else if (operation === "insertPosition") insertAtPosition();
+            else if (operation === "deleteBeginning") deleteFromBeginning();
+            else if (operation === "deleteEnd") deleteFromEnd();
+            else if (operation === "search") searchElement();
+            else if (operation === "traverseForward") traverseForward();
+            else if (operation === "traverseBackward") traverseBackward();
+          }}
+        >
+          <Select value={operation} onValueChange={setOperation}>
+            <SelectTrigger className="w-56 min-w-[180px]" tabIndex={0} autoFocus>
+              <SelectValue placeholder="Select Operation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="insertBeginning">Insert at Beginning</SelectItem>
+              <SelectItem value="insertEnd">Insert at End</SelectItem>
+              <SelectItem value="insertPosition">Insert at Position</SelectItem>
+              <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
+              <SelectItem value="deleteEnd">Delete from End</SelectItem>
+              <SelectItem value="search">Search Element</SelectItem>
+              <SelectItem value="traverseForward">Traverse Forward</SelectItem>
+              <SelectItem value="traverseBackward">Traverse Backward</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            placeholder="Enter value"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            className="flex-grow"
+            disabled={!(operation === "insertBeginning" || operation === "insertEnd" || operation === "insertPosition" || operation === "search")}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (operation === "insertBeginning") insertAtBeginning();
+                else if (operation === "insertEnd") insertAtEnd();
+                else if (operation === "insertPosition") insertAtPosition();
+                else if (operation === "search") searchElement();
+              }
+            }}
+          />
+
+          <Input
+            id="cdll-pos-input"
+            placeholder="Position"
+            value={positionInput}
+            onChange={e => setPositionInput(e.target.value)}
+            className="w-32"
+            disabled={operation !== "insertPosition"}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (operation === "insertPosition") insertAtPosition();
+              }
+            }}
+          />
+
+          <Button
+            type="button"
+            onClick={insertAtEnd}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Insert at End
+          </Button>
+          <Button
+            type="button"
+            onClick={clearList}
+            variant="outline"
+            className="border-gray-600 text-gray-600 hover:bg-gray-50"
+          >
+            <RotateCcw className="mr-1 h-4 w-4" />
+            Clear
+          </Button>
+        </form>
+        {inputError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{inputError}</AlertDescription>
+          </Alert>
+        )}
+        {/* View Selection and Visualization Area */}
+        <Tabs value={activeView} onValueChange={setActiveView} className="mb-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="split">Split View</TabsTrigger>
+            <TabsTrigger value="visualization">Visualization Only</TabsTrigger>
+            <TabsTrigger value="code">Code Only</TabsTrigger>
+          </TabsList>
+          <TabsContent value="split" className="mt-4">
+            <AnimationControls />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CodeContent />
+              <VisualizationContent />
+            </div>
+          </TabsContent>
+          <TabsContent value="visualization" className="mt-4">
+            <AnimationControls />
+            <VisualizationContent />
+          </TabsContent>
+          <TabsContent value="code" className="mt-4">
+            <AnimationControls />
+            <CodeContent />
+          </TabsContent>
+        </Tabs>
+        {/* Circular Doubly Linked List Information */}
+        <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
+          <h3 className="font-semibold text-gray-800 mb-2">Circular Doubly Linked List Operations</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            A Circular Doubly Linked List combines the features of both circular and doubly linked lists. Each node
+            has references to both next and previous nodes, and the last node points back to the first node while the
+            first node points back to the last node.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+              <span className="inline-block w-3 h-3 bg-green-100 border border-green-400 rounded-sm mr-1"></span>
+              <strong>Insert:</strong> Add nodes at beginning, end, or specific position
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-red-100 border border-red-400 rounded-sm mr-1"></span>
+              <strong>Delete:</strong> Remove nodes from beginning or end
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-blue-100 border border-blue-500 rounded-sm mr-1"></span>
+              <strong>Search:</strong> Find elements by circular traversal
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-purple-100 border border-purple-500 rounded-sm mr-1"></span>
+              <strong>Bidirectional Circular Traversal:</strong> Move forward or backward continuously
+            </div>
+          </div>
+          <div className="mt-2 text-sm text-gray-600">
+            <strong>Advantages:</strong> Bidirectional traversal, no null pointers, efficient insertion/deletion at
+            both ends. <strong>Use Cases:</strong> Advanced navigation systems, media players with shuffle, complex
+            data structures!
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
