@@ -831,11 +831,20 @@ export default function SinglyLinkedListVisualizer() {
     )
 
   const VisualizationContent = () => (
-    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
+    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col h-full">
       <h3 className="font-semibold text-gray-800 mb-2">Visualization</h3>
-      <ScrollArea className="h-[500px]">
-        <div className="flex flex-col items-center">
-          {renderLinkedListVisualization()}
+      <div className="flex flex-col items-center w-full h-full">
+        <div className="flex flex-col items-center w-full">
+          {/* Center the visualization horizontally and use only one real horizontal scrollbar */}
+          <div className="w-full flex flex-col items-center">
+            <div className="relative w-full max-w-full flex flex-col items-center">
+              <div className="flex justify-center w-full overflow-x-auto">
+                <div className="inline-block min-w-[600px]">
+                  {renderLinkedListVisualization()}
+                </div>
+              </div>
+            </div>
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStepIndex}
@@ -851,14 +860,16 @@ export default function SinglyLinkedListVisualizer() {
             </motion.div>
           </AnimatePresence>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 
   const CodeContent = () => (
-    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
+    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] overflow-x-auto">
       <h3 className="font-semibold text-gray-800 mb-2">Singly Linked List Implementation</h3>
-      {renderLinkedListCode()}
+      <div className="min-w-[600px] w-fit">
+        {renderLinkedListCode()}
+      </div>
     </div>
   )
 
@@ -886,7 +897,10 @@ export default function SinglyLinkedListVisualizer() {
                   <SelectItem value="insertPosition">Insert at Position</SelectItem>
                   <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
                   <SelectItem value="deleteEnd">Delete from End</SelectItem>
+                  <SelectItem value="deletePosition">Delete from Position</SelectItem>
                   <SelectItem value="search">Search Element</SelectItem>
+                  <SelectItem value="displayList">Display List</SelectItem>
+                  <SelectItem value="display">Display List</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -897,6 +911,14 @@ export default function SinglyLinkedListVisualizer() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 className="flex-grow"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (operation === "insertBeginning") insertAtBeginning();
+                    else if (operation === "insertEnd") insertAtEnd();
+                    else if (operation === "insertPosition") insertAtPosition();
+                    else if (operation === "search") searchElement();
+                  }
+                }}
               />
 
               {operation === "insertPosition" && (
@@ -905,6 +927,11 @@ export default function SinglyLinkedListVisualizer() {
                   value={positionInput}
                   onChange={(e) => setPositionInput(e.target.value)}
                   className="w-32"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      insertAtPosition();
+                    }
+                  }}
                 />
               )}
 
