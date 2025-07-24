@@ -849,19 +849,18 @@ export default function CircularLinkedListVisualizer() {
     }
 
     return (
-      <div className="flex flex-col items-center min-h-[400px] mb-4">
-        <div className="mb-4 text-center">
-          <h3 className="text-lg font-semibold mb-2">Circular Linked List Visualization</h3>
+      <div className="flex flex-col items-center min-h-[340px] mb-1">
+        <div className="mb-1 text-center">
+          <h3 className="text-lg font-semibold mb-0.5">Circular Linked List Visualization</h3>
           <p className="text-sm text-gray-600">
-            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"} | Tail:{" "}
-            {displayTail ? `Node ${displayTail}` : "null"}
+            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"} | Tail: {displayTail ? `Node ${displayTail}` : "null"}
           </p>
         </div>
 
         {/* Scrollable container for the circular linked list */}
         <div className="w-full">
           <ScrollArea className="w-full whitespace-nowrap rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center gap-4 p-8 min-w-max">
+            <div className="flex items-center gap-3 p-2 min-w-max">
               {orderedNodes.length > 0 ? (
                 <>
                   {/* Head pointer */}
@@ -1028,11 +1027,20 @@ export default function CircularLinkedListVisualizer() {
     )
 
   const VisualizationContent = () => (
-    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
+    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col h-full w-full">
       <h3 className="font-semibold text-gray-800 mb-2">Visualization</h3>
-      <ScrollArea className="h-[500px]">
-        <div className="flex flex-col items-center">
-          {renderCircularLinkedListVisualization()}
+      <div className="flex flex-col items-center w-full h-full">
+        <div className="flex flex-col items-center w-full">
+          {/* Center the visualization horizontally and use only one real horizontal scrollbar */}
+          <div className="w-full flex flex-col items-center">
+            <div className="relative w-full max-w-full flex flex-col items-center">
+              <div className="flex justify-center w-full overflow-x-auto">
+                <div className="inline-block min-w-[600px]">
+                  {renderCircularLinkedListVisualization()}
+                </div>
+              </div>
+            </div>
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStepIndex}
@@ -1048,7 +1056,7 @@ export default function CircularLinkedListVisualizer() {
             </motion.div>
           </AnimatePresence>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 
@@ -1089,82 +1097,117 @@ export default function CircularLinkedListVisualizer() {
               </Select>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              {(operation === "insertBeginning" ||
-                operation === "insertEnd" ||
-                operation === "insertPosition" ||
-                operation === "search") && (
+            {/* Single-line layout for input, Insert at End, and Clear for insertEnd operation */}
+            {operation === "insertEnd" ? (
+              <div className="flex flex-row gap-2 mb-4 items-center">
                 <Input
                   placeholder="Enter value"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="flex-grow"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      insertAtEnd();
+                    }
+                  }}
                 />
-              )}
-
-              {operation === "insertPosition" && (
-                <Input
-                  placeholder="Position"
-                  value={positionInput}
-                  onChange={(e) => setPositionInput(e.target.value)}
-                  className="w-32"
-                />
-              )}
-
-              <div className="flex gap-2 flex-wrap">
-                {operation === "insertBeginning" && (
-                  <Button onClick={insertAtBeginning} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at Beginning
-                  </Button>
-                )}
-                {operation === "insertEnd" && (
-                  <Button onClick={insertAtEnd} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at End
-                  </Button>
-                )}
-                {operation === "insertPosition" && (
-                  <Button onClick={insertAtPosition} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at Position
-                  </Button>
-                )}
-                {operation === "deleteBeginning" && (
-                  <Button onClick={deleteFromBeginning} className="bg-red-600 hover:bg-red-700">
-                    <Minus className="mr-1 h-4 w-4" />
-                    Delete from Beginning
-                  </Button>
-                )}
-                {operation === "deleteEnd" && (
-                  <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
-                    <Minus className="mr-1 h-4 w-4" />
-                    Delete from End
-                  </Button>
-                )}
-                {operation === "search" && (
-                  <Button onClick={searchElement} className="bg-blue-600 hover:bg-blue-700">
-                    <Search className="mr-1 h-4 w-4" />
-                    Search
-                  </Button>
-                )}
-                {operation === "traverse" && (
-                  <Button onClick={traverseList} className="bg-purple-600 hover:bg-purple-700">
-                    <RotateCw className="mr-1 h-4 w-4" />
-                    Traverse List
-                  </Button>
-                )}
-
+                <Button onClick={insertAtEnd} className="bg-green-600 hover:bg-green-700 whitespace-nowrap">
+                  <Plus className="mr-1 h-4 w-4" />
+                  Insert at End
+                </Button>
                 <Button
                   onClick={clearList}
                   variant="outline"
-                  className="border-gray-600 text-gray-600 hover:bg-gray-50"
+                  className="border-gray-600 text-gray-600 hover:bg-gray-50 whitespace-nowrap"
                 >
                   <RotateCcw className="mr-1 h-4 w-4" />
                   Clear
                 </Button>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                {(operation === "insertBeginning" ||
+                  operation === "insertPosition" ||
+                  operation === "search") && (
+                  <Input
+                    placeholder="Enter value"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="flex-grow"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        if (operation === "insertBeginning") insertAtBeginning();
+                        else if (operation === "insertEnd") insertAtEnd();
+                        else if (operation === "insertPosition") insertAtPosition();
+                        else if (operation === "search") searchElement();
+                      }
+                    }}
+                  />
+                )}
+
+                {operation === "insertPosition" && (
+                  <Input
+                    placeholder="Position"
+                    value={positionInput}
+                    onChange={(e) => setPositionInput(e.target.value)}
+                    className="w-32"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        insertAtPosition();
+                      }
+                    }}
+                  />
+                )}
+
+                <div className="flex gap-2 flex-wrap">
+                  {operation === "insertBeginning" && (
+                    <Button onClick={insertAtBeginning} className="bg-green-600 hover:bg-green-700">
+                      <Plus className="mr-1 h-4 w-4" />
+                      Insert at Beginning
+                    </Button>
+                  )}
+                  {operation === "insertPosition" && (
+                    <Button onClick={insertAtPosition} className="bg-green-600 hover:bg-green-700">
+                      <Plus className="mr-1 h-4 w-4" />
+                      Insert at Position
+                    </Button>
+                  )}
+                  {operation === "deleteBeginning" && (
+                    <Button onClick={deleteFromBeginning} className="bg-red-600 hover:bg-red-700">
+                      <Minus className="mr-1 h-4 w-4" />
+                      Delete from Beginning
+                    </Button>
+                  )}
+                  {operation === "deleteEnd" && (
+                    <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
+                      <Minus className="mr-1 h-4 w-4" />
+                      Delete from End
+                    </Button>
+                  )}
+                  {operation === "search" && (
+                    <Button onClick={searchElement} className="bg-blue-600 hover:bg-blue-700">
+                      <Search className="mr-1 h-4 w-4" />
+                      Search
+                    </Button>
+                  )}
+                  {operation === "traverse" && (
+                    <Button onClick={traverseList} className="bg-purple-600 hover:bg-purple-700">
+                      <RotateCw className="mr-1 h-4 w-4" />
+                      Traverse List
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={clearList}
+                    variant="outline"
+                    className="border-gray-600 text-gray-600 hover:bg-gray-50"
+                  >
+                    <RotateCcw className="mr-1 h-4 w-4" />
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {inputError && (
               <Alert variant="destructive" className="mt-2">
@@ -1191,8 +1234,12 @@ export default function CircularLinkedListVisualizer() {
             </TabsContent>
 
             <TabsContent value="visualization" className="mt-4">
-              <AnimationControls />
-              <VisualizationContent />
+              <div className="flex flex-col items-center justify-center min-h-[500px] w-full">
+                <AnimationControls />
+                <div className="w-full flex justify-center">
+                  <VisualizationContent />
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="code" className="mt-4">
