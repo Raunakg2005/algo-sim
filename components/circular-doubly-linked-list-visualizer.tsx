@@ -1142,11 +1142,20 @@ export default function CircularDoublyLinkedListVisualizer() {
     )
 
   const VisualizationContent = () => (
-    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
+    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] flex flex-col h-full">
       <h3 className="font-semibold text-gray-800 mb-2">Visualization</h3>
-      <ScrollArea className="h-[500px]">
-        <div className="flex flex-col items-center">
-          {renderCircularDoublyLinkedListVisualization()}
+      <div className="flex flex-col items-center w-full h-full">
+        <div className="flex flex-col items-center w-full">
+          {/* Center the visualization horizontally and use only one real horizontal scrollbar */}
+          <div className="w-full flex flex-col items-center">
+            <div className="relative w-full max-w-full flex flex-col items-center">
+              <div className="flex justify-center w-full overflow-x-auto">
+                <div className="inline-block min-w-[600px]">
+                  {renderCircularDoublyLinkedListVisualization()}
+                </div>
+              </div>
+            </div>
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStepIndex}
@@ -1162,7 +1171,7 @@ export default function CircularDoublyLinkedListVisualizer() {
             </motion.div>
           </AnimatePresence>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 
@@ -1174,188 +1183,156 @@ export default function CircularDoublyLinkedListVisualizer() {
   )
 
   return (
-    <div className="w-full min-h-screen bg-white p-4 flex justify-center">
-      <Card className="w-full max-w-[95%] xl:max-w-[90%] 2xl:max-w-[80%] shadow-lg">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <BookOpen className="mr-2 h-6 w-6 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-800">Circular Doubly Linked List Visualizer</h2>
-            </div>
-          </div>
-
-          {/* Input and Operation Controls */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-2 mb-2">
-              <Select value={operation} onValueChange={setOperation}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="insertBeginning">Insert at Beginning</SelectItem>
-                  <SelectItem value="insertEnd">Insert at End</SelectItem>
-                  <SelectItem value="insertPosition">Insert at Position</SelectItem>
-                  <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
-                  <SelectItem value="deleteEnd">Delete from End</SelectItem>
-                  <SelectItem value="search">Search Element</SelectItem>
-                  <SelectItem value="traverseForward">Traverse Forward</SelectItem>
-                  <SelectItem value="traverseBackward">Traverse Backward</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              {(operation === "insertBeginning" ||
-                operation === "insertEnd" ||
-                operation === "insertPosition" ||
-                operation === "search") && (
-                <Input
-                  placeholder="Enter value"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-grow"
-                />
-              )}
-
-              {operation === "insertPosition" && (
-                <Input
-                  placeholder="Position"
-                  value={positionInput}
-                  onChange={(e) => setPositionInput(e.target.value)}
-                  className="w-32"
-                />
-              )}
-
-              <div className="flex gap-2 flex-wrap">
-                {operation === "insertBeginning" && (
-                  <Button onClick={insertAtBeginning} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at Beginning
-                  </Button>
-                )}
-                {operation === "insertEnd" && (
-                  <Button onClick={insertAtEnd} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at End
-                  </Button>
-                )}
-                {operation === "insertPosition" && (
-                  <Button onClick={insertAtPosition} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="mr-1 h-4 w-4" />
-                    Insert at Position
-                  </Button>
-                )}
-                {operation === "deleteBeginning" && (
-                  <Button onClick={deleteFromBeginning} className="bg-red-600 hover:bg-red-700">
-                    <Minus className="mr-1 h-4 w-4" />
-                    Delete from Beginning
-                  </Button>
-                )}
-                {operation === "deleteEnd" && (
-                  <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
-                    <Minus className="mr-1 h-4 w-4" />
-                    Delete from End
-                  </Button>
-                )}
-                {operation === "search" && (
-                  <Button onClick={searchElement} className="bg-blue-600 hover:bg-blue-700">
-                    <Search className="mr-1 h-4 w-4" />
-                    Search
-                  </Button>
-                )}
-                {operation === "traverseForward" && (
-                  <Button onClick={traverseForward} className="bg-purple-600 hover:bg-purple-700">
-                    <ArrowRight className="mr-1 h-4 w-4" />
-                    Traverse Forward
-                  </Button>
-                )}
-                {operation === "traverseBackward" && (
-                  <Button onClick={traverseBackward} className="bg-purple-600 hover:bg-purple-700">
-                    <ArrowLeft className="mr-1 h-4 w-4" />
-                    Traverse Backward
-                  </Button>
-                )}
-
-                <Button
-                  onClick={clearList}
-                  variant="outline"
-                  className="border-gray-600 text-gray-600 hover:bg-gray-50"
-                >
-                  <RotateCcw className="mr-1 h-4 w-4" />
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            {inputError && (
-              <Alert variant="destructive" className="mt-2">
-                <AlertDescription>{inputError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-
-          {/* View Selection and Visualization Area */}
-          <Tabs value={activeView} onValueChange={setActiveView} className="mb-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="split">Split View</TabsTrigger>
-              <TabsTrigger value="visualization">Visualization Only</TabsTrigger>
-              <TabsTrigger value="code">Code Only</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="split" className="mt-4">
-              <AnimationControls />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <CodeContent />
-                <VisualizationContent />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="visualization" className="mt-4">
-              <AnimationControls />
-              <VisualizationContent />
-            </TabsContent>
-
-            <TabsContent value="code" className="mt-4">
-              <AnimationControls />
-              <CodeContent />
-            </TabsContent>
-          </Tabs>
-
-          {/* Circular Doubly Linked List Information */}
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
-            <h3 className="font-semibold text-gray-800 mb-2">Circular Doubly Linked List Operations</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              A Circular Doubly Linked List combines the features of both circular and doubly linked lists. Each node
-              has references to both next and previous nodes, and the last node points back to the first node while the
-              first node points back to the last node.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-              <div>
-                <span className="inline-block w-3 h-3 bg-green-100 border border-green-400 rounded-sm mr-1"></span>
-                <strong>Insert:</strong> Add nodes at beginning, end, or specific position
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-red-100 border border-red-400 rounded-sm mr-1"></span>
-                <strong>Delete:</strong> Remove nodes from beginning or end
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-blue-100 border border-blue-500 rounded-sm mr-1"></span>
-                <strong>Search:</strong> Find elements by circular traversal
-              </div>
-              <div>
-                <span className="inline-block w-3 h-3 bg-purple-100 border border-purple-500 rounded-sm mr-1"></span>
-                <strong>Bidirectional Circular Traversal:</strong> Move forward or backward continuously
-              </div>
-            </div>
-            <div className="mt-2 text-sm text-gray-600">
-              <strong>Advantages:</strong> Bidirectional traversal, no null pointers, efficient insertion/deletion at
-              both ends. <strong>Use Cases:</strong> Advanced navigation systems, media players with shuffle, complex
-              data structures!
-            </div>
+    <Card className="w-full min-h-screen bg-white p-4 flex justify-center max-w-[95%] xl:max-w-[90%] 2xl:max-w-[80%] shadow-lg">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <BookOpen className="mr-2 h-6 w-6 text-blue-600" />
+            <h2 className="text-2xl font-bold text-gray-800">Circular Doubly Linked List Visualizer</h2>
           </div>
         </div>
-      </Card>
-    </div>
+        {/* Unified operation dropdown and input controls */}
+        <form
+          className="flex flex-col sm:flex-row gap-2 mb-4"
+          onSubmit={e => {
+            e.preventDefault();
+            if (operation === "insertBeginning") insertAtBeginning();
+            else if (operation === "insertEnd") insertAtEnd();
+            else if (operation === "insertPosition") insertAtPosition();
+            else if (operation === "deleteBeginning") deleteFromBeginning();
+            else if (operation === "deleteEnd") deleteFromEnd();
+            else if (operation === "search") searchElement();
+            else if (operation === "traverseForward") traverseForward();
+            else if (operation === "traverseBackward") traverseBackward();
+          }}
+        >
+          <Select value={operation} onValueChange={setOperation}>
+            <SelectTrigger className="w-56 min-w-[180px]" tabIndex={0} autoFocus>
+              <SelectValue placeholder="Select Operation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="insertBeginning">Insert at Beginning</SelectItem>
+              <SelectItem value="insertEnd">Insert at End</SelectItem>
+              <SelectItem value="insertPosition">Insert at Position</SelectItem>
+              <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
+              <SelectItem value="deleteEnd">Delete from End</SelectItem>
+              <SelectItem value="search">Search Element</SelectItem>
+              <SelectItem value="traverseForward">Traverse Forward</SelectItem>
+              <SelectItem value="traverseBackward">Traverse Backward</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            placeholder="Enter value"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            className="flex-grow"
+            disabled={!(operation === "insertBeginning" || operation === "insertEnd" || operation === "insertPosition" || operation === "search")}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (operation === "insertBeginning") insertAtBeginning();
+                else if (operation === "insertEnd") insertAtEnd();
+                else if (operation === "insertPosition") insertAtPosition();
+                else if (operation === "search") searchElement();
+              }
+            }}
+          />
+
+          <Input
+            id="cdll-pos-input"
+            placeholder="Position"
+            value={positionInput}
+            onChange={e => setPositionInput(e.target.value)}
+            className="w-32"
+            disabled={operation !== "insertPosition"}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (operation === "insertPosition") insertAtPosition();
+              }
+            }}
+          />
+
+          <Button
+            type="button"
+            onClick={insertAtEnd}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Insert at End
+          </Button>
+          <Button
+            type="button"
+            onClick={clearList}
+            variant="outline"
+            className="border-gray-600 text-gray-600 hover:bg-gray-50"
+          >
+            <RotateCcw className="mr-1 h-4 w-4" />
+            Clear
+          </Button>
+        </form>
+        {inputError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{inputError}</AlertDescription>
+          </Alert>
+        )}
+        {/* View Selection and Visualization Area */}
+        <Tabs value={activeView} onValueChange={setActiveView} className="mb-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="split">Split View</TabsTrigger>
+            <TabsTrigger value="visualization">Visualization Only</TabsTrigger>
+            <TabsTrigger value="code">Code Only</TabsTrigger>
+          </TabsList>
+          <TabsContent value="split" className="mt-4">
+            <AnimationControls />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CodeContent />
+              <VisualizationContent />
+            </div>
+          </TabsContent>
+          <TabsContent value="visualization" className="mt-4">
+            <AnimationControls />
+            <VisualizationContent />
+          </TabsContent>
+          <TabsContent value="code" className="mt-4">
+            <AnimationControls />
+            <CodeContent />
+          </TabsContent>
+        </Tabs>
+        {/* Circular Doubly Linked List Information */}
+        <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
+          <h3 className="font-semibold text-gray-800 mb-2">Circular Doubly Linked List Operations</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            A Circular Doubly Linked List combines the features of both circular and doubly linked lists. Each node
+            has references to both next and previous nodes, and the last node points back to the first node while the
+            first node points back to the last node.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+              <span className="inline-block w-3 h-3 bg-green-100 border border-green-400 rounded-sm mr-1"></span>
+              <strong>Insert:</strong> Add nodes at beginning, end, or specific position
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-red-100 border border-red-400 rounded-sm mr-1"></span>
+              <strong>Delete:</strong> Remove nodes from beginning or end
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-blue-100 border border-blue-500 rounded-sm mr-1"></span>
+              <strong>Search:</strong> Find elements by circular traversal
+            </div>
+            <div>
+              <span className="inline-block w-3 h-3 bg-purple-100 border border-purple-500 rounded-sm mr-1"></span>
+              <strong>Bidirectional Circular Traversal:</strong> Move forward or backward continuously
+            </div>
+          </div>
+          <div className="mt-2 text-sm text-gray-600">
+            <strong>Advantages:</strong> Bidirectional traversal, no null pointers, efficient insertion/deletion at
+            both ends. <strong>Use Cases:</strong> Advanced navigation systems, media players with shuffle, complex
+            data structures!
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
