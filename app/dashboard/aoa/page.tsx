@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, Code, GitBranch, Layers, Lightbulb, Zap } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useSession, signOut } from "next-auth/react"
 
 const algorithms = [
   {
@@ -52,6 +53,8 @@ const algorithms = [
 ]
 
 export default function AOADashboard() {
+  const { data: session } = useSession();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <header className="bg-white border-b border-gray-200">
@@ -60,7 +63,7 @@ export default function AOADashboard() {
             <Link href="/" className="text-xl font-bold text-purple-700">
               Algo-Sim
             </Link>
-            <nav className="hidden md:flex space-x-6">
+            <nav className="hidden md:flex space-x-6 items-center">
               <Link href="/" className="text-gray-600 hover:text-purple-700">
                 Home
               </Link>
@@ -70,6 +73,28 @@ export default function AOADashboard() {
               <Link href="/about" className="text-gray-600 hover:text-purple-700">
                 About
               </Link>
+              <Link href="/feedback" className="text-gray-600 hover:text-purple-700">
+                Feedback
+              </Link>
+              {session ? (
+                <>
+                  <span className="text-sm text-gray-600">{session.user?.email}</span>
+                  {session.user?.isAdmin && (
+                    <Link href="/admin" className="text-gray-600 hover:text-purple-700">
+                      Admin
+                    </Link>
+                  )}
+                  <Button onClick={() => signOut()} variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Link href="/auth/signin">
+                  <Button variant="default" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              )}
             </nav>
             <div className="md:hidden">
               <button className="text-gray-600">

@@ -675,6 +675,103 @@ export default function CircularDoublyLinkedListVisualizer() {
     }
   }
 
+  const deleteAtPosition = () => {
+    const position = Number.parseInt(positionInput)
+
+    if (Number.isNaN(position) || position < 0) {
+      setInputError("Please enter a valid position (0 or greater)")
+      return
+    }
+
+    const size = nodes.length
+
+    if (position >= size) {
+      addStep(
+        nodes,
+        head,
+        tail,
+        "deletePosition",
+        undefined,
+        position,
+        `Invalid position ${position}. List size is ${size}`,
+        true,
+        90,
+        [],
+      )
+      setInputError(`Position must be less than list size (${size})`)
+      return
+    }
+
+    setInputError("")
+
+    if (position === 0) {
+      deleteFromBeginning()
+      setPositionInput("")
+      return
+    }
+
+    if (position === size - 1) {
+      deleteFromEnd()
+      setPositionInput("")
+      return
+    }
+
+    // Find the node at position
+    let current = head
+    const traversalPath: number[] = []
+
+    for (let i = 0; i < position; i++) {
+      const currentNode = nodes.find((n) => n.id === current)
+      traversalPath.push(current!)
+      current = currentNode?.next || null
+    }
+
+    const nodeToDelete = nodes.find((n) => n.id === current)
+    const deletedValue = nodeToDelete?.value
+    const prevNode = nodeToDelete?.prev
+    const nextNode = nodeToDelete?.next
+
+    addStep(
+      nodes,
+      head,
+      tail,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Traversing to position ${position}: ${traversalPath.join(" → ")} → ${current}`,
+      false,
+      91,
+      [...traversalPath, ...(current !== null ? [current] : [])],
+    )
+
+    // Update bidirectional links
+    const updatedNodes = nodes.filter((n) => n.id !== current).map((node) => {
+      if (node.id === prevNode) {
+        return { ...node, next: nextNode }
+      }
+      if (node.id === nextNode) {
+        return { ...node, prev: prevNode }
+      }
+      return node
+    })
+
+    addStep(
+      updatedNodes,
+      head,
+      tail,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Deleted ${deletedValue} from position ${position}. Updated bidirectional circular links`,
+      false,
+      94,
+      [],
+    )
+
+    setNodes(updatedNodes)
+    setPositionInput("")
+  }
+
   const searchElement = () => {
     const value = validateInput()
     if (value === null) return
@@ -1197,6 +1294,7 @@ export default function CircularDoublyLinkedListVisualizer() {
                   <SelectItem value="insertPosition">Insert at Position</SelectItem>
                   <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
                   <SelectItem value="deleteEnd">Delete from End</SelectItem>
+                  <SelectItem value="deletePosition">Delete at Position</SelectItem>
                   <SelectItem value="search">Search Element</SelectItem>
                   <SelectItem value="traverseForward">Traverse Forward</SelectItem>
                   <SelectItem value="traverseBackward">Traverse Backward</SelectItem>
@@ -1217,7 +1315,7 @@ export default function CircularDoublyLinkedListVisualizer() {
                 />
               )}
 
-              {operation === "insertPosition" && (
+              {(operation === "insertPosition" || operation === "deletePosition") && (
                 <Input
                   placeholder="Position"
                   value={positionInput}
@@ -1255,6 +1353,12 @@ export default function CircularDoublyLinkedListVisualizer() {
                   <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
                     <Minus className="mr-1 h-4 w-4" />
                     Delete from End
+                  </Button>
+                )}
+                {operation === "deletePosition" && (
+                  <Button onClick={deleteAtPosition} className="bg-red-600 hover:bg-red-700">
+                    <Minus className="mr-1 h-4 w-4" />
+                    Delete at Position
                   </Button>
                 )}
                 {operation === "search" && (

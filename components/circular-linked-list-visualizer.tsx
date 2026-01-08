@@ -633,6 +633,96 @@ export default function CircularLinkedListVisualizer() {
     }
   }
 
+  const deleteAtPosition = () => {
+    const position = Number.parseInt(positionInput)
+
+    if (Number.isNaN(position) || position < 0) {
+      setInputError("Please enter a valid position (0 or greater)")
+      return
+    }
+
+    const size = nodes.length
+
+    if (position >= size) {
+      addStep(
+        nodes,
+        head,
+        tail,
+        "deletePosition",
+        undefined,
+        position,
+        `Invalid position ${position}. List size is ${size}`,
+        true,
+        87,
+        [],
+      )
+      setInputError(`Position must be less than list size (${size})`)
+      return
+    }
+
+    setInputError("")
+
+    if (position === 0) {
+      deleteFromBeginning()
+      setPositionInput("")
+      return
+    }
+
+    if (position === size - 1) {
+      deleteFromEnd()
+      setPositionInput("")
+      return
+    }
+
+    // Find the node at position-1 and the node at position
+    let current = head
+    let previous: number | null = null
+    const traversalPath: number[] = []
+
+    for (let i = 0; i < position; i++) {
+      const currentNode = nodes.find((n) => n.id === current)
+      traversalPath.push(current!)
+      previous = current
+      current = currentNode?.next || null
+    }
+
+    const nodeToDelete = nodes.find((n) => n.id === current)
+    const deletedValue = nodeToDelete?.value
+
+    addStep(
+      nodes,
+      head,
+      tail,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Traversing to position ${position}: ${traversalPath.join(" → ")} → ${current}`,
+      false,
+      88,
+      [...traversalPath, ...(current !== null ? [current] : [])],
+    )
+
+    const updatedNodes = nodes
+      .filter((n) => n.id !== current)
+      .map((node) => (node.id === previous ? { ...node, next: nodeToDelete?.next || null } : node))
+
+    addStep(
+      updatedNodes,
+      head,
+      tail,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Deleted ${deletedValue} from position ${position}. Maintaining circular structure`,
+      false,
+      91,
+      [],
+    )
+
+    setNodes(updatedNodes)
+    setPositionInput("")
+  }
+
   const searchElement = () => {
     const value = validateInput()
     if (value === null) return
@@ -1083,6 +1173,7 @@ export default function CircularLinkedListVisualizer() {
                   <SelectItem value="insertPosition">Insert at Position</SelectItem>
                   <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
                   <SelectItem value="deleteEnd">Delete from End</SelectItem>
+                  <SelectItem value="deletePosition">Delete at Position</SelectItem>
                   <SelectItem value="search">Search Element</SelectItem>
                   <SelectItem value="traverse">Traverse List</SelectItem>
                 </SelectContent>
@@ -1102,7 +1193,7 @@ export default function CircularLinkedListVisualizer() {
                 />
               )}
 
-              {operation === "insertPosition" && (
+              {(operation === "insertPosition" || operation === "deletePosition") && (
                 <Input
                   placeholder="Position"
                   value={positionInput}
@@ -1140,6 +1231,12 @@ export default function CircularLinkedListVisualizer() {
                   <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
                     <Minus className="mr-1 h-4 w-4" />
                     Delete from End
+                  </Button>
+                )}
+                {operation === "deletePosition" && (
+                  <Button onClick={deleteAtPosition} className="bg-red-600 hover:bg-red-700">
+                    <Minus className="mr-1 h-4 w-4" />
+                    Delete at Position
                   </Button>
                 )}
                 {operation === "search" && (

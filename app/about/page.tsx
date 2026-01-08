@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Footer from "../footer"
+import { useSession, signOut } from "next-auth/react"
 
 // Animation variants for staggered animations
 const containerVariants = {
@@ -42,6 +43,7 @@ const itemVariants = {
 }
 
 export default function AboutPage() {
+  const { data: session } = useSession();
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -92,9 +94,9 @@ export default function AboutPage() {
   const teamMembers = [
     {
       name: "Raunak Kumar Gupta",
-      role: "Founder & Lead Developer",
+      role: "Software Architect",
       bio: "Algorithm enthusiast with a passion for making complex concepts accessible through visualization. Created Algo-Sim as a solo project to help students understand algorithms through interactive learning.",
-      image: "/placeholder.svg?height=200&width=200",
+      image: "/rKG.jpg",
       social: {
         github: "https://github.com/Raunakg2005",
         linkedin: "https://www.linkedin.com/in/raunak-kumar-gupta-7b3503270",
@@ -136,7 +138,7 @@ export default function AboutPage() {
             <Link href="/" className="text-xl font-bold text-purple-700">
               Algo-Sim
             </Link>
-            <nav className="hidden md:flex space-x-6">
+            <nav className="hidden md:flex space-x-6 items-center">
               <Link href="/" className="text-gray-600 hover:text-purple-700 transition-colors">
                 Home
               </Link>
@@ -146,6 +148,28 @@ export default function AboutPage() {
               <Link href="/about" className="text-purple-700 font-medium">
                 About
               </Link>
+              <Link href="/feedback" className="text-gray-600 hover:text-purple-700 transition-colors">
+                Feedback
+              </Link>
+              {session ? (
+                <>
+                  <span className="text-sm text-gray-600">{session.user?.email}</span>
+                  {session.user?.isAdmin && (
+                    <Link href="/admin" className="text-gray-600 hover:text-purple-700 transition-colors">
+                      Admin
+                    </Link>
+                  )}
+                  <Button onClick={() => signOut()} variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Link href="/auth/signin">
+                  <Button variant="default" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              )}
             </nav>
             <div className="md:hidden">
               <button className="text-gray-600">

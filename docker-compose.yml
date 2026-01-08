@@ -1,0 +1,40 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: algo-sim-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: algo-sim
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - algo-sim-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: algo-sim-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/algo-sim
+      - NEXTAUTH_URL=http://localhost:3000
+    env_file:
+      - .env.local
+    depends_on:
+      - mongodb
+    networks:
+      - algo-sim-network
+
+networks:
+  algo-sim-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

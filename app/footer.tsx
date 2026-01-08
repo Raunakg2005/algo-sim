@@ -78,7 +78,7 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="mt-2 text-center text-white/80">
         <p className="text-sm">
-          © {new Date().getFullYear()} Algo-Sim. All rights reserved.
+          © 2026 Algo-Sim. All rights reserved. | Developed by SwDC-KJSCE
         </p>
       </div>
     </footer>

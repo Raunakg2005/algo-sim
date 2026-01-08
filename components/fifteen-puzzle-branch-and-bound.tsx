@@ -68,6 +68,7 @@ export default function FifteenPuzzleBranchAndBound() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
   const [algorithmStarted, setAlgorithmStarted] = useState(false)
+  const [activeTab, setActiveTab] = useState("input")
   const animationRef = useRef<NodeJS.Timeout | null>(null)
 
   const goalGrid = [
@@ -95,7 +96,7 @@ export default function FifteenPuzzleBranchAndBound() {
 
       const validNumbers = values.every((num) => num >= 0 && num <= 15)
       if (!validNumbers) {
-        setInputError("Numbers must be between 0 and 15")
+        setInputError("Numbers must be between 0 and 15 (0 represents the blank space)")
         return null
       }
 
@@ -211,6 +212,7 @@ export default function FifteenPuzzleBranchAndBound() {
     }
 
     setAlgorithmStarted(true)
+    setActiveTab("visualization")
 
     const algorithmSteps: AlgorithmStep[] = []
 
@@ -412,6 +414,7 @@ export default function FifteenPuzzleBranchAndBound() {
     setSteps([])
     setCurrentStep(0)
     setIsPlaying(false)
+    setActiveTab("input")
     if (animationRef.current) {
       clearTimeout(animationRef.current)
     }
@@ -628,7 +631,7 @@ export default function FifteenPuzzleBranchAndBound() {
     <div className="flex flex-col items-center w-full max-w-6xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold text-center">15 Puzzle Problem - Branch and Bound</h1>
 
-      <Tabs defaultValue="input" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
           <TabsTrigger value="input">Input</TabsTrigger>
           <TabsTrigger value="visualization" disabled={!algorithmStarted}>
@@ -653,7 +656,7 @@ export default function FifteenPuzzleBranchAndBound() {
                   <Button onClick={applyCustomGrid}>Apply</Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Enter 16 numbers (0-15) separated by commas. The numbers should be in row-major order.
+                  Enter 16 unique numbers (0-15) separated by commas, where 0 represents the blank space and 1-15 are the tiles. Numbers should be in row-major order (left to right, top to bottom).
                 </p>
               </div>
 

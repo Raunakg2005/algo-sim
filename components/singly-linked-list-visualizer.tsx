@@ -534,6 +534,87 @@ export default function SinglyLinkedListVisualizer() {
     setNodes(updatedNodes)
   }
 
+  const deleteAtPosition = () => {
+    const position = Number.parseInt(positionInput)
+
+    if (Number.isNaN(position) || position < 0) {
+      setInputError("Please enter a valid position (0 or greater)")
+      return
+    }
+
+    const size = nodes.length
+
+    if (position >= size) {
+      addStep(
+        nodes,
+        head,
+        "deletePosition",
+        undefined,
+        position,
+        `Invalid position ${position}. List size is ${size}`,
+        true,
+        77,
+        [],
+      )
+      setInputError(`Position must be less than list size (${size})`)
+      return
+    }
+
+    setInputError("")
+
+    if (position === 0) {
+      deleteFromBeginning()
+      setPositionInput("")
+      return
+    }
+
+    // Find the node at position-1 and the node at position
+    let current = head
+    let previous: number | null = null
+    const traversalPath: number[] = []
+
+    for (let i = 0; i < position; i++) {
+      const currentNode = nodes.find((n) => n.id === current)
+      traversalPath.push(current!)
+      previous = current
+      current = currentNode?.next || null
+    }
+
+    const nodeToDelete = nodes.find((n) => n.id === current)
+    const deletedValue = nodeToDelete?.value
+
+    addStep(
+      nodes,
+      head,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Traversing to position ${position}: ${traversalPath.join(" → ")} → ${current}`,
+      false,
+      78,
+      [...traversalPath, ...(current !== null ? [current] : [])],
+    )
+
+    const updatedNodes = nodes
+      .filter((n) => n.id !== current)
+      .map((node) => (node.id === previous ? { ...node, next: nodeToDelete?.next || null } : node))
+
+    addStep(
+      updatedNodes,
+      head,
+      "deletePosition",
+      deletedValue,
+      position,
+      `Deleted ${deletedValue} from position ${position}`,
+      false,
+      81,
+      [],
+    )
+
+    setNodes(updatedNodes)
+    setPositionInput("")
+  }
+
   const searchElement = () => {
     const value = validateInput()
     if (value === null) return
@@ -886,20 +967,26 @@ export default function SinglyLinkedListVisualizer() {
                   <SelectItem value="insertPosition">Insert at Position</SelectItem>
                   <SelectItem value="deleteBeginning">Delete from Beginning</SelectItem>
                   <SelectItem value="deleteEnd">Delete from End</SelectItem>
+                  <SelectItem value="deletePosition">Delete at Position</SelectItem>
                   <SelectItem value="search">Search Element</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              <Input
-                placeholder="Enter value"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="flex-grow"
-              />
+              {(operation === "insertBeginning" ||
+                operation === "insertEnd" ||
+                operation === "insertPosition" ||
+                operation === "search") && (
+                <Input
+                  placeholder="Enter value"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className="flex-grow"
+                />
+              )}
 
-              {operation === "insertPosition" && (
+              {(operation === "insertPosition" || operation === "deletePosition") && (
                 <Input
                   placeholder="Position"
                   value={positionInput}
@@ -937,6 +1024,12 @@ export default function SinglyLinkedListVisualizer() {
                   <Button onClick={deleteFromEnd} className="bg-red-600 hover:bg-red-700">
                     <Minus className="mr-1 h-4 w-4" />
                     Delete from End
+                  </Button>
+                )}
+                {operation === "deletePosition" && (
+                  <Button onClick={deleteAtPosition} className="bg-red-600 hover:bg-red-700">
+                    <Minus className="mr-1 h-4 w-4" />
+                    Delete at Position
                   </Button>
                 )}
                 {operation === "search" && (
