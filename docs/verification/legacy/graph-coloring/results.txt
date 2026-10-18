@@ -1,0 +1,9 @@
+UI random graph: runs=20000 {"wrongVerdict":0,"improper":0,"tooMany":0,"badFrame":0,"badCaption":7598,"undefinedColour":0,"any":0,"colourable":15206} 
+Typed graph n 2..10, m 1..10 (integers), density 0.1..0.9: runs=20000 {"wrongVerdict":0,"improper":0,"tooMany":0,"badFrame":0,"badCaption":12533,"undefinedColour":0,"any":0,"colourable":15154} 
+triangle, numColors=2.5: "Solution found! All nodes colored successfully using 2.5 colors." colours used=[0,1,2] classes=["bg-red-500","bg-blue-500","bg-green-500"] undefinedCaption=false
+triangle, numColors=11: "Solution found! All nodes colored successfully using 11 colors." colours used=[0,1,2] classes=["bg-red-500","bg-blue-500","bg-green-500"] undefinedCaption=false
+triangle, numColors=12: "Solution found! All nodes colored successfully using 12 colors." colours used=[0,1,2] classes=["bg-red-500","bg-blue-500","bg-green-500"] undefinedCaption=false
+triangle, numColors=0: "No solution found with 0 colors. Try increasing the number of colors." colours used=[] classes=[] undefinedCaption=false
+triangle, numColors=-1: "No solution found with -1 colors. Try increasing the number of colors." colours used=[] classes=[] undefinedCaption=false
+path P10 with 11 colours: Solution found! All nodes colored successfully using 11 colors. names tried: 10
+caption check, A-B edge + isolated C, m=3: "Solution found! All nodes colored successfully using 3 colors." colours actually used=2

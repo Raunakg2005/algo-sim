@@ -1,0 +1,21 @@
+{
+  'ui-random:runs': 5000,
+  'default:runs': 1,
+  'custom:runs': 3000,
+  'edited-list:runs': 2981,
+  'edited-list:runs whose captions use row index while cards show a different id': 1697,
+  'edited-list:selected id ambiguous/missing': 675,
+  'edited-list:backtracked set value != optimum': 408,
+  'edited-list:backtracked weight wrong': 384
+}
+edited lists: 762/2981 end with duplicate item ids; 518 of those highlight an unselected item as selected
+shortest duplicate-id sequence found: remove 2, remove 3, add(w=2,v=8), add(w=4,v=10) -> ids [1,4,3,4]
+caption/id mismatch example: items=[{"id":1,"weight":2,"value":3},{"id":3,"weight":4,"value":5}] caption: "Starting row 1: considering item 1 (weight: 2, value: 3)"
+n=4 W=8: {"frames":114,"cells":5130}
+n=10 W=50: {"frames":1542,"cells":865062}
+n=10 W=200: {"frames":6042,"cells":13358862}
+n=10 W=1000: {"frames":30042,"cells":330792462}
+check frame formula n=2 W=50 (actual vs formula): 310 310
+remove Item 1, add (w=1,v=10) -> ids [2,3,4,4]
+selectedItems [4,3,2] cards highlighted: [{"id":2,"weight":3,"value":4},{"id":3,"weight":4,"value":5},{"id":4,"weight":5,"value":6},{"id":4,"weight":1,"value":10}]
+Start on the default 4 items, then 'Random Items': row-header render throws TypeError in 1014/3000 trials

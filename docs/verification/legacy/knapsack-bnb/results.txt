@@ -1,0 +1,27 @@
+default (cap 10): {
+  wrongOpt: false,
+  invalidBound: false,
+  unsafePrune: false,
+  bestShownPruned: false,
+  prunedBeforeItsFrame: true,
+  noSolutionCaption: false
+} optimum 55 engine: Algorithm complete. Best solution: Value = 55, Weight = 10, Items = [3, 1, 2]
+Random Items button: runs=20000 {"wrongOpt":0,"invalidBound":0,"unsafePrune":0,"bestShownPruned":9932,"prunedBeforeItsFrame":20000,"noSolutionCaption":0}
+   shortest example prunedBeforeItsFrame: {"wv":[[5,7],[4,12],[1,7],[2,12],[5,10]],"cap":13}
+   shortest example bestShownPruned: {"wv":[[3,5],[4,12],[1,11]],"cap":11}
+Typed small ints (n 1..8, w 1..20, v 1..30, cap 1..40): runs=20000 {"wrongOpt":0,"invalidBound":0,"unsafePrune":0,"bestShownPruned":5209,"prunedBeforeItsFrame":20000,"noSolutionCaption":2042}
+   shortest example prunedBeforeItsFrame: {"wv":[[9,9]],"cap":17}
+   shortest example noSolutionCaption: {"wv":[[19,8]],"cap":18}
+   shortest example bestShownPruned: {"wv":[[20,19],[7,19]],"cap":34}
+Typed wide ints (n 1..8, w 1..1000, v 1..1000, cap 1..2000): runs=20000 {"wrongOpt":0,"invalidBound":0,"unsafePrune":0,"bestShownPruned":5457,"prunedBeforeItsFrame":20000,"noSolutionCaption":2194}
+   shortest example prunedBeforeItsFrame: {"wv":[[218,252]],"cap":1808}
+   shortest example noSolutionCaption: {"wv":[[933,194],[960,569],[750,494]],"cap":174}
+   shortest example bestShownPruned: {"wv":[[659,581],[286,841]],"cap":989}
+Typed near-tie ratios (n 2..8, v = round(w*r), r in {0.33,0.334,...}): runs=20000 {"wrongOpt":0,"invalidBound":457,"unsafePrune":0,"bestShownPruned":7226,"prunedBeforeItsFrame":20000,"noSolutionCaption":2436}
+   shortest example prunedBeforeItsFrame: {"wv":[[884,292],[954,636],[23,15],[854,569],[323,107],[69,46],[506,169]],"cap":163}
+   shortest example noSolutionCaption: {"wv":[[321,214],[894,298],[386,129],[901,300],[191,63],[608,404]],"cap":101}
+   shortest example bestShownPruned: {"wv":[[848,280],[159,106]],"cap":1331}
+   shortest example invalidBound: {"wv":[[610,407],[173,58],[281,94],[702,234],[821,275],[265,176],[510,168],[644,215]],"cap":1541}
+minimal bestShownPruned: {"wv":[[1,1]],"cap":1}
+minimal prunedBeforeItsFrame: {"wv":[[1,1]],"cap":1}
+minimal noSolutionCaption: {"wv":[[2,1]],"cap":1}

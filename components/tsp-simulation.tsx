@@ -12,8 +12,9 @@ import { ChevronRight, ChevronLeft, Play, Pause, RotateCcw, Shuffle } from "luci
 import GraphVisualization from "./tsp-graph-visualization"
 import DPTableVisualization from "./dp-table-visualization"
 import { generateRandomCities, type City, calculateDistances } from "@/lib/tsp-utils"
-import { solveTSP, type TSPStep } from "@/lib/tsp-solver"
+import { solveTSP, type TSPStep } from "@/lib/engines/tsp"
 import CoordinateInput from "./coordinate-input"
+import DistanceMatrixInput from "./distance-matrix-input"
 import StepExplanation from "./tsp-step-explanation"
 
 export default function TSPSimulation() {
@@ -80,8 +81,23 @@ export default function TSPSimulation() {
     setIsPlaying(false)
     setCurrentStepIndex(0)
 
-    const newSteps = solveTSP(newDistances, newStartCity)
-    setSteps(newSteps)
+    // the coordinates tab has no upper limit of its own; the bitmask DP (and its frames) grows as 2^n
+    if (newDistances.length > 8) {
+      setSteps([])
+      setError("For clarity, please limit to 8 cities or fewer")
+      return
+    }
+
+    // a start city chosen before cities were removed may no longer exist
+    const start = newStartCity < newDistances.length ? newStartCity : 0
+    if (start !== newStartCity) setStartCity(start)
+    const names = newCities.length === newDistances.length ? newCities.map((city) => city.name) : undefined
+    try {
+      setSteps(solveTSP(newDistances, start, names))
+    } catch (e) {
+      setSteps([])
+      setError(e instanceof Error ? e.message : "Could not solve this instance")
+    }
   }
 
   useEffect(() => {
@@ -123,12 +139,14 @@ export default function TSPSimulation() {
 
   const handleCoordinatesChange = (newCities: City[]) => {
     setCities(newCities)
+    if (startCity >= newCities.length) setStartCity(0)
     const newDistances = calculateDistances(newCities)
     setDistances(newDistances)
   }
 
   const handleMatrixChange = (newDistances: number[][]) => {
     setDistances(newDistances)
+    if (startCity >= newDistances.length) setStartCity(0)
 
     const cityCount = newDistances.length
     const newCities: City[] = []
@@ -214,6 +232,7 @@ export default function TSPSimulation() {
                   size="icon"
                   onClick={stepBackward}
                   disabled={currentStepIndex === 0 || isPlaying}
+                  aria-label="Previous step"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -228,6 +247,7 @@ export default function TSPSimulation() {
                   size="icon"
                   onClick={stepForward}
                   disabled={currentStepIndex >= steps.length - 1 || isPlaying}
+                  aria-label="Next step"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

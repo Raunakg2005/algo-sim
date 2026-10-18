@@ -10,6 +10,15 @@ import { Label } from "@/components/ui/label"
 import { Play, Pause, RotateCcw, StepForward, Plus, Minus, BookOpen } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  MAX_NODES_PER_STAGE,
+  MAX_STAGES,
+  MULTISTAGE_EXAMPLE,
+  buildMultistageGraph,
+  generateMultistageSteps,
+  validateStageConfig,
+  type MultistageStep,
+} from "@/lib/engines/multistage"
 
 type Node = {
   id: string
@@ -33,17 +42,6 @@ type Graph = {
   stages: number
 }
 
-type AlgorithmStep = {
-  phase: "init" | "compute" | "backtrack" | "complete"
-  description: string
-  currentStage: number
-  currentNode?: string
-  updatedNodes?: string[]
-  optimalPath?: string[]
-  costs: { [key: string]: number }
-  prevNodes: { [key: string]: string | null }
-}
-
 export default function MultistageGraphOptimization() {
   const [graph, setGraph] = useState<Graph>({
     nodes: [],
@@ -57,7 +55,7 @@ export default function MultistageGraphOptimization() {
   const [inputError, setInputError] = useState("")
   const [showNodeLabels, setShowNodeLabels] = useState(true)
 
-  const [steps, setSteps] = useState<AlgorithmStep[]>([])
+  const [steps, setSteps] = useState<MultistageStep[]>([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
@@ -84,7 +82,8 @@ export default function MultistageGraphOptimization() {
   }, [])
 
   useEffect(() => {
-    if (numStages > 0) {
+    // ignore values typed into the stage-count box that cannot be a stage count (0, 2.5, 1000, ...)
+    if (Number.isInteger(numStages) && numStages > 0 && numStages <= MAX_STAGES) {
       const newNodesPerStage = [...nodesPerStage]
 
       if (numStages > nodesPerStage.length) {
@@ -103,64 +102,43 @@ export default function MultistageGraphOptimization() {
     }
   }, [numStages])
 
-  const generateGraph = () => {
-    if (numStages < 2) {
-      setInputError("Please specify at least 2 stages")
+  // The configuration is passed explicitly so that "Load Example" / "Random Example" build the graph they
+  // just configured (state set in the same click is only visible in the next render).
+  const generateGraph = (
+    stages: number = numStages,
+    perStage: number[] = nodesPerStage,
+    costs: { [key: string]: number } = edgeCosts,
+  ) => {
+    const error = validateStageConfig(stages, perStage)
+    if (error) {
+      setInputError(error)
       return
     }
 
     setInputError("")
 
-    const nodes: Node[] = []
-    const edges: Edge[] = []
-    const newEdgeCosts: { [key: string]: number } = {}
-
-    const nodeIndex = 0
-    for (let stage = 0; stage < numStages; stage++) {
-      const nodesInStage = nodesPerStage[stage] || 1
-      const stageWidth = canvasWidth - 100
-      const stageX = 50 + (stage * stageWidth) / (numStages - 1)
-
-      for (let i = 0; i < nodesInStage; i++) {
-        const stageHeight = canvasHeight - 100
-        const nodeSpacing = stageHeight / (nodesInStage + 1)
-        const nodeY = 50 + nodeSpacing * (i + 1)
-
-        const nodeId = `node-${stage}-${i}`
-        const nodeLabel = stage === 0 ? "S" : stage === numStages - 1 ? "T" : `${stage},${i}`
-
-        nodes.push({
-          id: nodeId,
-          label: nodeLabel,
-          stage,
-          x: stageX,
-          y: nodeY,
-        })
-
-        if (stage < numStages - 1) {
-          const nextStageNodes = nodesPerStage[stage + 1] || 1
-
-          for (let j = 0; j < nextStageNodes; j++) {
-            const targetId = `node-${stage + 1}-${j}`
-            const edgeId = `${nodeId}-${targetId}`
-
-            const cost = edgeCosts[edgeId] || Math.floor(Math.random() * 20) + 1
-            newEdgeCosts[edgeId] = cost
-
-            edges.push({
-              source: nodeId,
-              target: targetId,
-              cost,
-            })
-          }
-        }
+    // "??" keeps a cost of 0 that the user typed ("||" replaced it by a random cost)
+    const structure = buildMultistageGraph(stages, perStage, (edgeId) => costs[edgeId] ?? Math.floor(Math.random() * 20) + 1)
+    const stageWidth = canvasWidth - 100
+    const stageHeight = canvasHeight - 100
+    const indexInStage: number[] = []
+    const nodes: Node[] = structure.nodes.map((node) => {
+      const i = (indexInStage[node.stage] = (indexInStage[node.stage] ?? -1) + 1)
+      const nodesInStage = structure.nodes.filter((n) => n.stage === node.stage).length
+      return {
+        ...node,
+        x: 50 + (node.stage * stageWidth) / (stages - 1),
+        y: 50 + (stageHeight / (nodesInStage + 1)) * (i + 1),
       }
-    }
+    })
+
+    const newEdgeCosts: { [key: string]: number } = {}
+    for (const edge of structure.edges) newEdgeCosts[`${edge.source}-${edge.target}`] = edge.cost
 
     setGraph({
       nodes,
-      edges,
-      stages: numStages,
+      edges: structure.edges,
+      stages,
     })
 
     setEdgeCosts(newEdgeCosts)
@@ -195,110 +173,7 @@ export default function MultistageGraphOptimization() {
     setInputError("")
     setAlgorithmStarted(true)
 
-    const algorithmSteps: AlgorithmStep[] = []
-
-    const costs: { [key: string]: number } = {}
-    const prevNodes: { [key: string]: string | null } = {}
-
-    graph.nodes.forEach((node) => {
-      if (node.stage === graph.stages - 1) {
-        costs[node.id] = 0 
-      } else {
-        costs[node.id] = Number.POSITIVE_INFINITY
-      }
-      prevNodes[node.id] = null
-    })
-
-    algorithmSteps.push({
-      phase: "init",
-      description: "Initialize costs: terminal node = 0, all others = ∞",
-      currentStage: graph.stages - 1,
-      costs: { ...costs },
-      prevNodes: { ...prevNodes },
-    })
-
-    for (let stage = graph.stages - 2; stage >= 0; stage--) {
-      const nodesInStage = graph.nodes.filter((node) => node.stage === stage)
-
-      algorithmSteps.push({
-        phase: "compute",
-        description: `Computing optimal costs for Stage ${stage + 1}`,
-        currentStage: stage,
-        costs: { ...costs },
-        prevNodes: { ...prevNodes },
-      })
-
-      for (const node of nodesInStage) {
-        const outgoingEdges = graph.edges.filter((edge) => edge.source === node.id)
-
-        let minCost = Number.POSITIVE_INFINITY
-        let bestNextNode = null
-
-        for (const edge of outgoingEdges) {
-          const targetNode = graph.nodes.find((n) => n.id === edge.target)
-          if (!targetNode) continue
-
-          const pathCost = edge.cost + costs[edge.target]
-
-          if (pathCost < minCost) {
-            minCost = pathCost
-            bestNextNode = edge.target
-          }
-        }
-
-        costs[node.id] = minCost
-        prevNodes[node.id] = bestNextNode
-
-        algorithmSteps.push({
-          phase: "compute",
-          description: `Update node ${node.label}: min cost = ${minCost}`,
-          currentStage: stage,
-          currentNode: node.id,
-          updatedNodes: [node.id],
-          costs: { ...costs },
-          prevNodes: { ...prevNodes },
-        })
-      }
-    }
-
-    const optimalPath: string[] = []
-    let currentNode = graph.nodes.find((node) => node.stage === 0)?.id
-
-    while (currentNode) {
-      optimalPath.push(currentNode)
-      currentNode = prevNodes[currentNode] ?? undefined
-    }
-
-    for (let i = 0; i < optimalPath.length; i++) {
-      const pathSoFar = optimalPath.slice(0, i + 1)
-
-      algorithmSteps.push({
-        phase: "backtrack",
-        description:
-          i === 0
-            ? "Backtracking to find optimal path: Start at source node"
-            : `Backtracking: Follow best edge to node ${graph.nodes.find((n) => n.id === optimalPath[i])?.label}`,
-        currentStage: graph.nodes.find((n) => n.id === optimalPath[i])?.stage || 0,
-        currentNode: optimalPath[i],
-        optimalPath: pathSoFar,
-        costs: { ...costs },
-        prevNodes: { ...prevNodes },
-      })
-    }
-
-    const sourceNode = graph.nodes.find((node) => node.stage === 0)
-    const optimalCost = sourceNode ? costs[sourceNode.id] : Number.POSITIVE_INFINITY
-
-    algorithmSteps.push({
-      phase: "complete",
-      description: `Algorithm complete: Optimal cost from source to terminal = ${optimalCost}`,
-      currentStage: -1,
-      optimalPath,
-      costs: { ...costs },
-      prevNodes: { ...prevNodes },
-    })
-
-    setSteps(algorithmSteps)
+    setSteps(generateMultistageSteps(graph))
     setCurrentStep(0)
   }
 
@@ -444,43 +319,19 @@ export default function MultistageGraphOptimization() {
 
     setNumStages(stages)
     setNodesPerStage(nodes)
-
-    setTimeout(() => {
-      generateGraph()
-    }, 0)
+    generateGraph(stages, nodes)
   }
 
   const loadExample = () => {
-    setNumStages(4)
-    setNodesPerStage([1, 3, 2, 1])
-
-    setTimeout(() => {
-      generateGraph()
-
-      const edgeCosts: { [key: string]: number } = {
-        "node-0-0-node-1-0": 2,
-        "node-0-0-node-1-1": 3,
-        "node-0-0-node-1-2": 7,
-        "node-1-0-node-2-0": 5,
-        "node-1-0-node-2-1": 8,
-        "node-1-1-node-2-0": 4,
-        "node-1-1-node-2-1": 6,
-        "node-1-2-node-2-0": 3,
-        "node-1-2-node-2-1": 2,
-        "node-2-0-node-3-0": 6,
-        "node-2-1-node-3-0": 4,
-      }
-
-      Object.entries(edgeCosts).forEach(([edgeId, cost]) => {
-        const [source, target] = edgeId.split("-")
-        updateEdgeCost(source, target, cost)
-      })
-    }, 0)
+    setNumStages(MULTISTAGE_EXAMPLE.nodesPerStage.length)
+    setNodesPerStage(MULTISTAGE_EXAMPLE.nodesPerStage)
+    generateGraph(MULTISTAGE_EXAMPLE.nodesPerStage.length, MULTISTAGE_EXAMPLE.nodesPerStage, MULTISTAGE_EXAMPLE.costs)
   }
 
   const updateNodesPerStage = (index: number, value: number) => {
+    value = Math.trunc(value) || 1
     if (value < 1) value = 1
-    if (value > 5) value = 5
+    if (value > MAX_NODES_PER_STAGE) value = MAX_NODES_PER_STAGE
 
     const newNodesPerStage = [...nodesPerStage]
     newNodesPerStage[index] = value
@@ -512,10 +363,10 @@ export default function MultistageGraphOptimization() {
                   value={numStages}
                   onChange={(e) => setNumStages(Number(e.target.value))}
                 />
-                <Button variant="outline" size="icon" onClick={() => setNumStages(Math.max(2, numStages - 1))}>
+                <Button aria-label="Fewer stages" variant="outline" size="icon" onClick={() => setNumStages(Math.max(2, numStages - 1))}>
                   <Minus className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => setNumStages(Math.min(10, numStages + 1))}>
+                <Button aria-label="More stages" variant="outline" size="icon" onClick={() => setNumStages(Math.min(10, numStages + 1))}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -550,7 +401,7 @@ export default function MultistageGraphOptimization() {
               <Button variant="outline" onClick={generateRandomExample}>
                 Random Example
               </Button>
-              <Button onClick={generateGraph}>Generate Graph</Button>
+              <Button onClick={() => generateGraph()}>Generate Graph</Button>
             </div>
           </div>
 

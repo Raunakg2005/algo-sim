@@ -1,0 +1,6 @@
+differential legacy vs engine, 5000 random sequences per module (frames compared except activeCodeLine / min-heap wording):
+  stack: 0 sequences differ
+  linear-queue: 0 sequences differ
+  circular-queue: 0 sequences differ
+  deque: 0 sequences differ
+  priority-queue: 0 sequences differ

@@ -11,44 +11,17 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 
-interface StackStep {
-  stack: number[]
-  operation: string
-  element?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-}
-
-const stackCode = [
-  "class Stack {",
-  "  constructor() {",
-  "    this.items = [];",
-  "    this.top = -1;",
-  "  }",
-  "",
-  "  push(element) {",
-  "    this.top++;",
-  "    this.items[this.top] = element;",
-  "  }",
-  "",
-  "  pop() {",
-  "    if (this.isEmpty()) return null;",
-  "    const element = this.items[this.top];",
-  "    this.top--;",
-  "    return element;",
-  "  }",
-  "",
-  "  peek() {",
-  "    if (this.isEmpty()) return null;",
-  "    return this.items[this.top];",
-  "  }",
-  "",
-  "  isEmpty() {",
-  "    return this.top === -1;",
-  "  }",
-  "}",
-]
+import {
+  STACK_CODE as stackCode,
+  STACK_MAX_SIZE,
+  parseIntegerInput,
+  peek,
+  playbackAfterOperation,
+  pop,
+  push,
+  type StackResult,
+  type StackStep,
+} from "@/lib/engines/stack"
 
 export default function StackOperationsVisualizer() {
   const [stack, setStack] = useState<number[]>([])
@@ -59,89 +32,36 @@ export default function StackOperationsVisualizer() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
   const [activeView, setActiveView] = useState<string>("split")
-  const [maxSize] = useState<number>(10)
+  const maxSize = STACK_MAX_SIZE
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newStack: number[],
-    operation: string,
-    element: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-  ) => {
-    const newStep: StackStep = {
-      stack: [...newStack],
-      operation,
-      element,
-      description,
-      isError,
-      activeCodeLine,
-    }
-    setSteps((prev) => [...prev, newStep])
-  }
-
-  const validateInput = (value: string): number | null => {
-    const trimmed = value.trim()
-    if (!trimmed) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(trimmed, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
-    }
-    setInputError("")
-    return num
+  // append an operation's frames to the history and show them
+  const applyResult = (result: StackResult) => {
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setStack(result.state.items)
+    setSteps([...steps, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
   }
 
   const pushElement = () => {
-    const element = validateInput(inputValue)
-    if (element === null) return
-
-    if (stack.length >= maxSize) {
-      addStep(stack, "push", element, `Cannot push ${element}. Stack is full (max size: ${maxSize})`, true, 7)
-      setInputValue("")
+    const parsed = parseIntegerInput(inputValue)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
       return
     }
-
-    const newStack = [...stack, element]
-    setStack(newStack)
-    addStep(newStack, "push", element, `Pushed ${element} onto the stack. Stack size: ${newStack.length}`, false, 7)
+    setInputError("")
+    applyResult(push({ items: stack, maxSize }, parsed.value))
     setInputValue("")
   }
 
   const popElement = () => {
-    if (stack.length === 0) {
-      addStep(stack, "pop", undefined, "Cannot pop from empty stack", true, 12)
-      return
-    }
-
-    const poppedElement = stack[stack.length - 1]
-    const newStack = stack.slice(0, -1)
-    setStack(newStack)
-    addStep(
-      newStack,
-      "pop",
-      poppedElement,
-      `Popped ${poppedElement} from the stack. Stack size: ${newStack.length}`,
-      false,
-      12,
-    )
-    // Don't set the input value - just leave it empty or as is
+    applyResult(pop({ items: stack, maxSize }))
   }
 
   const peekElement = () => {
-    if (stack.length === 0) {
-      addStep(stack, "peek", undefined, "Cannot peek empty stack", true, 19)
-      return
-    }
-
-    const topElement = stack[stack.length - 1]
-    addStep(stack, "peek", topElement, `Top element is ${topElement}. Stack size: ${stack.length}`, false, 19)
-    // Don't modify input field for peek operation
+    applyResult(peek({ items: stack, maxSize }))
   }
 
   const clearStack = () => {
@@ -412,11 +332,12 @@ export default function StackOperationsVisualizer() {
                     variant="outline"
                     size="icon"
                     className="h-10 w-10"
+                    aria-label="Previous step"
                   >
                     <Minus className="h-5 w-5" />
                   </Button>
 
-                  <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+                  <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
                     {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                   </Button>
 
@@ -426,11 +347,12 @@ export default function StackOperationsVisualizer() {
                     variant="outline"
                     size="icon"
                     className="h-10 w-10"
+                    aria-label="Next step"
                   >
                     <Plus className="h-5 w-5" />
                   </Button>
 
-                  <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+                  <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
                     <RotateCcw className="h-5 w-5" />
                   </Button>
                 </div>

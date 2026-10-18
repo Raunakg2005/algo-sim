@@ -1,0 +1,2 @@
+legacy K8, m=7: frames=219201 time=228ms heapUsed=76MB final="No solution found with 7 colors. Try increasing the number of colors."
+legacy K9, m=8: frames=1972819 time=2804ms heapUsed=689MB final="No solution found with 8 colors. Try increasing the number of colors."

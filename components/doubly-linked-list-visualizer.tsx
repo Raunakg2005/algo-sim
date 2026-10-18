@@ -12,163 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface DoublyListNode {
-  value: number
-  next: number | null
-  prev: number | null
-  id: number
-}
-
-interface DoublyLinkedListStep {
-  nodes: DoublyListNode[]
-  head: number | null
-  tail: number | null
-  operation: string
-  element?: number
-  position?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-  highlightedNodes?: number[]
-}
-
-const doublyLinkedListCode = [
-  "class DoublyNode {",
-  "  constructor(data) {",
-  "    this.data = data;",
-  "    this.next = null;",
-  "    this.prev = null;",
-  "  }",
-  "}",
-  "",
-  "class DoublyLinkedList {",
-  "  constructor() {",
-  "    this.head = null;",
-  "    this.tail = null;",
-  "    this.size = 0;",
-  "  }",
-  "",
-  "  // Insert at beginning",
-  "  insertAtBeginning(data) {",
-  "    const newNode = new DoublyNode(data);",
-  "    if (!this.head) {",
-  "      this.head = this.tail = newNode;",
-  "    } else {",
-  "      newNode.next = this.head;",
-  "      this.head.prev = newNode;",
-  "      this.head = newNode;",
-  "    }",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Insert at end",
-  "  insertAtEnd(data) {",
-  "    const newNode = new DoublyNode(data);",
-  "    if (!this.tail) {",
-  "      this.head = this.tail = newNode;",
-  "    } else {",
-  "      this.tail.next = newNode;",
-  "      newNode.prev = this.tail;",
-  "      this.tail = newNode;",
-  "    }",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Insert at position",
-  "  insertAtPosition(data, position) {",
-  "    if (position < 0 || position > this.size) {",
-  "      throw new Error('Invalid position');",
-  "    }",
-  "    if (position === 0) {",
-  "      this.insertAtBeginning(data);",
-  "      return;",
-  "    }",
-  "    if (position === this.size) {",
-  "      this.insertAtEnd(data);",
-  "      return;",
-  "    }",
-  "    const newNode = new DoublyNode(data);",
-  "    let current = this.head;",
-  "    for (let i = 0; i < position; i++) {",
-  "      current = current.next;",
-  "    }",
-  "    newNode.next = current;",
-  "    newNode.prev = current.prev;",
-  "    current.prev.next = newNode;",
-  "    current.prev = newNode;",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Delete from beginning",
-  "  deleteFromBeginning() {",
-  "    if (!this.head) return null;",
-  "    const deletedData = this.head.data;",
-  "    if (this.head === this.tail) {",
-  "      this.head = this.tail = null;",
-  "    } else {",
-  "      this.head = this.head.next;",
-  "      this.head.prev = null;",
-  "    }",
-  "    this.size--;",
-  "    return deletedData;",
-  "  }",
-  "",
-  "  // Delete from end",
-  "  deleteFromEnd() {",
-  "    if (!this.tail) return null;",
-  "    const deletedData = this.tail.data;",
-  "    if (this.head === this.tail) {",
-  "      this.head = this.tail = null;",
-  "    } else {",
-  "      this.tail = this.tail.prev;",
-  "      this.tail.next = null;",
-  "    }",
-  "    this.size--;",
-  "    return deletedData;",
-  "  }",
-  "",
-  "  // Search for element",
-  "  search(data) {",
-  "    let current = this.head;",
-  "    let position = 0;",
-  "    while (current) {",
-  "      if (current.data === data) {",
-  "        return position;",
-  "      }",
-  "      current = current.next;",
-  "      position++;",
-  "    }",
-  "    return -1;",
-  "  }",
-  "",
-  "  // Traverse forward",
-  "  traverseForward() {",
-  "    const elements = [];",
-  "    let current = this.head;",
-  "    while (current) {",
-  "      elements.push(current.data);",
-  "      current = current.next;",
-  "    }",
-  "    return elements;",
-  "  }",
-  "",
-  "  // Traverse backward",
-  "  traverseBackward() {",
-  "    const elements = [];",
-  "    let current = this.tail;",
-  "    while (current) {",
-  "      elements.push(current.data);",
-  "      current = current.prev;",
-  "    }",
-  "    return elements;",
-  "  }",
-  "}",
-]
+import * as ll from "@/lib/engines/doubly-linked-list"
+import { doublyLinkedListCode, type DoublyListNode, type DoublyLinkedListStep, type DoublyListState } from "@/lib/engines/doubly-linked-list"
+import { playbackAfterOperation } from "@/lib/engines/stack"
 
 export default function DoublyLinkedListVisualizer() {
-  const [nodes, setNodes] = useState<DoublyListNode[]>([])
-  const [head, setHead] = useState<number | null>(null)
-  const [tail, setTail] = useState<number | null>(null)
+  const [list, setList] = useState<DoublyListState>(ll.EMPTY_DOUBLY_LIST)
+  const { nodes, head, tail } = list
   const [inputValue, setInputValue] = useState<string>("")
   const [positionInput, setPositionInput] = useState<string>("")
   const [inputError, setInputError] = useState<string>("")
@@ -177,612 +27,88 @@ export default function DoublyLinkedListVisualizer() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
   const [activeView, setActiveView] = useState<string>("split")
-  const [nextId, setNextId] = useState<number>(1)
   const [operation, setOperation] = useState<string>("insertEnd")
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newNodes: DoublyListNode[],
-    newHead: number | null,
-    newTail: number | null,
-    operation: string,
-    element: number | undefined,
-    position: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-    highlightedNodes: number[] = [],
-  ) => {
-    const newStep: DoublyLinkedListStep = {
-      nodes: [...newNodes],
-      head: newHead,
-      tail: newTail,
-      operation,
-      element,
-      position,
-      description,
-      isError,
-      activeCodeLine,
-      highlightedNodes,
-    }
-    setSteps((prev) => [...prev, newStep])
+  // Every operation is computed by the pure engine (lib/engines); the component only stores the result.
+  const run = (result: ll.OpResult<DoublyListState, DoublyLinkedListStep>): boolean => {
+    // show the new operation's frames instead of leaving the view on an older state
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setList(result.state)
+    setSteps((prev) => [...prev, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
+    return result.ok
   }
 
-  const validateInput = (): number | null => {
-    const value = inputValue.trim()
-    if (!value) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(value, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
-    }
-    setInputError("")
-    return num
+  const readValue = (): number | null => {
+    const parsed = ll.parseValueInput(inputValue)
+    setInputError(parsed.ok ? "" : parsed.error)
+    return parsed.ok ? parsed.value : null
   }
 
-  const validatePosition = (): number | null => {
-    const pos = positionInput.trim()
-    if (!pos) {
-      setInputError("Please enter a position")
-      return null
-    }
-    const num = Number.parseInt(pos, 10)
-    if (isNaN(num) || num < 0) {
-      setInputError("Please enter a valid position (≥ 0)")
-      return null
-    }
-    setInputError("")
-    return num
+  const readPosition = (): number | null => {
+    const parsed = ll.parsePositionInput(positionInput)
+    setInputError(parsed.ok ? "" : parsed.error)
+    return parsed.ok ? parsed.value : null
   }
 
   const insertAtBeginning = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    const newNode: DoublyListNode = {
-      value,
-      next: head,
-      prev: null,
-      id: nextId,
-    }
-
-    let newNodes = [...nodes, newNode]
-    const newHead = nextId
-    let newTail = tail
-
-    if (head === null) {
-      // First node
-      newTail = nextId
-      addStep(
-        newNodes,
-        null,
-        null,
-        "insertBeginning",
-        value,
-        undefined,
-        "List is empty, creating first node",
-        false,
-        16,
-        [],
-      )
-      addStep(
-        newNodes,
-        newHead,
-        newTail,
-        "insertBeginning",
-        value,
-        undefined,
-        `Inserted ${value} as first node. Both head and tail point to node ${nextId}`,
-        false,
-        18,
-        [nextId],
-      )
-    } else {
-      // Update existing head's prev pointer
-      newNodes = newNodes.map((node) => (node.id === head ? { ...node, prev: nextId } : node))
-      addStep(
-        newNodes,
-        head,
-        tail,
-        "insertBeginning",
-        value,
-        undefined,
-        "Creating new node and linking to current head",
-        false,
-        20,
-        [],
-      )
-      addStep(
-        newNodes,
-        newHead,
-        newTail,
-        "insertBeginning",
-        value,
-        undefined,
-        `Inserted ${value} at beginning. New head points to node ${nextId}`,
-        false,
-        23,
-        [nextId],
-      )
-    }
-
-    setNodes(newNodes)
-    setHead(newHead)
-    setTail(newTail)
-    setNextId(nextId + 1)
+    run(ll.insertAtBeginning(list, value))
     setInputValue("")
   }
 
   const insertAtEnd = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    const newNode: DoublyListNode = {
-      value,
-      next: null,
-      prev: tail,
-      id: nextId,
-    }
-
-    let newNodes = [...nodes, newNode]
-    let newHead = head
-    const newTail = nextId
-
-    if (tail === null) {
-      // First node
-      newHead = nextId
-      addStep(newNodes, null, null, "insertEnd", value, undefined, "List is empty, creating first node", false, 29, [])
-      addStep(
-        newNodes,
-        newHead,
-        newTail,
-        "insertEnd",
-        value,
-        undefined,
-        `Inserted ${value} as first node. Both head and tail point to node ${nextId}`,
-        false,
-        31,
-        [nextId],
-      )
-    } else {
-      // Update existing tail's next pointer
-      newNodes = newNodes.map((node) => (node.id === tail ? { ...node, next: nextId } : node))
-      addStep(
-        newNodes,
-        head,
-        tail,
-        "insertEnd",
-        value,
-        undefined,
-        "Creating new node and linking to current tail",
-        false,
-        33,
-        [],
-      )
-      addStep(
-        newNodes,
-        newHead,
-        newTail,
-        "insertEnd",
-        value,
-        undefined,
-        `Inserted ${value} at end. New tail points to node ${nextId}`,
-        false,
-        36,
-        [nextId],
-      )
-    }
-
-    setNodes(newNodes)
-    setHead(newHead)
-    setTail(newTail)
-    setNextId(nextId + 1)
+    run(ll.insertAtEnd(list, value))
     setInputValue("")
   }
 
   const insertAtPosition = () => {
-    const value = validateInput()
-    const position = validatePosition()
-    if (value === null || position === null) return
-
-    const listSize = nodes.filter((n) => {
-      let current = head
-      while (current !== null) {
-        if (current === n.id) return true
-        const node = nodes.find((node) => node.id === current)
-        current = node?.next || null
-      }
-      return false
-    }).length
-
-    if (position > listSize) {
-      addStep(
-        nodes,
-        head,
-        tail,
-        "insertPosition",
-        value,
-        position,
-        `Invalid position ${position}. List size is ${listSize}`,
-        true,
-        41,
-        [],
-      )
-      return
+    // the value is validated first, so a valid position no longer hides the value's error message
+    const value = readValue()
+    if (value === null) return
+    const position = readPosition()
+    if (position === null) return
+    if (run(ll.insertAtPosition(list, value, position))) {
+      setInputValue("")
+      setPositionInput("")
     }
-
-    if (position === 0) {
-      insertAtBeginning()
-      return
-    }
-
-    if (position === listSize) {
-      insertAtEnd()
-      return
-    }
-
-    const newNode: DoublyListNode = {
-      value,
-      next: null,
-      prev: null,
-      id: nextId,
-    }
-
-    // Traverse to position
-    let current = head
-    const traversalPath: number[] = []
-
-    for (let i = 0; i < position && current !== null; i++) {
-      traversalPath.push(current)
-      const node = nodes.find((n) => n.id === current)
-      current = node?.next || null
-    }
-
-    if (current === null) {
-      addStep(nodes, head, tail, "insertPosition", value, position, `Invalid position ${position}`, true, 41, [])
-      return
-    }
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "insertPosition",
-      value,
-      position,
-      `Traversing to position ${position}: ${traversalPath.join(" → ")}`,
-      false,
-      52,
-      traversalPath,
-    )
-
-    const currentNode = nodes.find((n) => n.id === current)
-    const prevNode = nodes.find((n) => n.id === currentNode?.prev)
-
-    newNode.next = current
-    newNode.prev = currentNode?.prev || null
-
-    let newNodes = [...nodes, newNode]
-    newNodes = newNodes.map((node) => {
-      if (node.id === current) {
-        return { ...node, prev: nextId }
-      }
-      if (node.id === currentNode?.prev) {
-        return { ...node, next: nextId }
-      }
-      return node
-    })
-
-    addStep(
-      newNodes,
-      head,
-      tail,
-      "insertPosition",
-      value,
-      position,
-      `Inserted ${value} at position ${position}`,
-      false,
-      58,
-      [nextId],
-    )
-
-    setNodes(newNodes)
-    setNextId(nextId + 1)
-    setInputValue("")
-    setPositionInput("")
   }
 
   const deleteFromBeginning = () => {
-    if (head === null) {
-      addStep(nodes, head, tail, "deleteBeginning", undefined, undefined, "Cannot delete from empty list", true, 62, [])
-      return
-    }
-
-    const headNode = nodes.find((n) => n.id === head)
-    const deletedValue = headNode?.value
-    const newHead = headNode?.next || null
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "deleteBeginning",
-      deletedValue,
-      undefined,
-      `Deleting head node with value ${deletedValue}`,
-      false,
-      63,
-      [head],
-    )
-
-    if (head === tail) {
-      // Only one node
-      addStep(
-        [],
-        null,
-        null,
-        "deleteBeginning",
-        deletedValue,
-        undefined,
-        `Deleted ${deletedValue} from beginning. List is now empty`,
-        false,
-        65,
-        [],
-      )
-      setNodes([])
-      setHead(null)
-      setTail(null)
-    } else {
-      // Update new head's prev pointer
-      const updatedNodes = nodes
-        .filter((n) => n.id !== head)
-        .map((node) => (node.id === newHead ? { ...node, prev: null } : node))
-
-      addStep(
-        updatedNodes,
-        newHead,
-        tail,
-        "deleteBeginning",
-        deletedValue,
-        undefined,
-        `Deleted ${deletedValue} from beginning. New head: node ${newHead}`,
-        false,
-        68,
-        [],
-      )
-
-      setNodes(updatedNodes)
-      setHead(newHead)
-    }
+    run(ll.deleteFromBeginning(list))
   }
 
   const deleteFromEnd = () => {
-    if (tail === null) {
-      addStep(nodes, head, tail, "deleteEnd", undefined, undefined, "Cannot delete from empty list", true, 74, [])
-      return
-    }
-
-    const tailNode = nodes.find((n) => n.id === tail)
-    const deletedValue = tailNode?.value
-    const newTail = tailNode?.prev || null
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "deleteEnd",
-      deletedValue,
-      undefined,
-      `Deleting tail node with value ${deletedValue}`,
-      false,
-      75,
-      [tail],
-    )
-
-    if (head === tail) {
-      // Only one node
-      addStep(
-        [],
-        null,
-        null,
-        "deleteEnd",
-        deletedValue,
-        undefined,
-        `Deleted ${deletedValue} from end. List is now empty`,
-        false,
-        77,
-        [],
-      )
-      setNodes([])
-      setHead(null)
-      setTail(null)
-    } else {
-      // Update new tail's next pointer
-      const updatedNodes = nodes
-        .filter((n) => n.id !== tail)
-        .map((node) => (node.id === newTail ? { ...node, next: null } : node))
-
-      addStep(
-        updatedNodes,
-        head,
-        newTail,
-        "deleteEnd",
-        deletedValue,
-        undefined,
-        `Deleted ${deletedValue} from end. New tail: node ${newTail}`,
-        false,
-        80,
-        [],
-      )
-
-      setNodes(updatedNodes)
-      setTail(newTail)
-    }
+    run(ll.deleteFromEnd(list))
   }
 
   const searchElement = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    let current = head
-    let position = 0
-    const searchPath: number[] = []
-
-    while (current !== null) {
-      const currentNode = nodes.find((n) => n.id === current)
-      searchPath.push(current)
-
-      addStep(
-        nodes,
-        head,
-        tail,
-        "search",
-        value,
-        position,
-        `Searching for ${value}. Checking node ${current} with value ${currentNode?.value}`,
-        false,
-        87,
-        searchPath,
-      )
-
-      if (currentNode?.value === value) {
-        addStep(nodes, head, tail, "search", value, position, `Found ${value} at position ${position}`, false, 88, [
-          current,
-        ])
-        setInputValue("")
-        return
-      }
-
-      current = currentNode?.next || null
-      position++
-    }
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "search",
-      value,
-      undefined,
-      `Element ${value} not found in the list`,
-      false,
-      93,
-      searchPath,
-    )
+    run(ll.search(list, value))
     setInputValue("")
   }
 
   const traverseForward = () => {
-    if (head === null) {
-      addStep(nodes, head, tail, "traverseForward", undefined, undefined, "Cannot traverse empty list", true, 96, [])
-      return
-    }
-
-    let current = head
-    const traversalPath: number[] = []
-    const values: number[] = []
-
-    while (current !== null) {
-      const currentNode = nodes.find((n) => n.id === current)
-      if (currentNode) {
-        traversalPath.push(current)
-        values.push(currentNode.value)
-
-        addStep(
-          nodes,
-          head,
-          tail,
-          "traverseForward",
-          undefined,
-          undefined,
-          `Forward traversal: ${values.join(" → ")}`,
-          false,
-          99,
-          [...traversalPath],
-        )
-
-        current = currentNode.next
-      } else {
-        break
-      }
-    }
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "traverseForward",
-      undefined,
-      undefined,
-      `Forward traversal complete: ${values.join(" → ")}`,
-      false,
-      103,
-      traversalPath,
-    )
+    run(ll.traverseForward(list))
   }
 
   const traverseBackward = () => {
-    if (tail === null) {
-      addStep(nodes, head, tail, "traverseBackward", undefined, undefined, "Cannot traverse empty list", true, 106, [])
-      return
-    }
-
-    let current = tail
-    const traversalPath: number[] = []
-    const values: number[] = []
-
-    while (current !== null) {
-      const currentNode = nodes.find((n) => n.id === current)
-      if (currentNode) {
-        traversalPath.push(current)
-        values.push(currentNode.value)
-
-        addStep(
-          nodes,
-          head,
-          tail,
-          "traverseBackward",
-          undefined,
-          undefined,
-          `Backward traversal: ${values.join(" ← ")}`,
-          false,
-          109,
-          [...traversalPath],
-        )
-
-        current = currentNode.prev
-      } else {
-        break
-      }
-    }
-
-    addStep(
-      nodes,
-      head,
-      tail,
-      "traverseBackward",
-      undefined,
-      undefined,
-      `Backward traversal complete: ${values.join(" ← ")}`,
-      false,
-      113,
-      traversalPath,
-    )
+    run(ll.traverseBackward(list))
   }
 
   const clearList = () => {
-    setNodes([])
-    setHead(null)
-    setTail(null)
+    setList(ll.EMPTY_DOUBLY_LIST)
     setSteps([])
     setCurrentStepIndex(0)
     setIsPlaying(false)
     setInputError("")
-    setNextId(1)
   }
 
   const togglePlay = () => {
@@ -864,27 +190,16 @@ export default function DoublyLinkedListVisualizer() {
     const displayTail = steps.length > 0 ? currentStep.tail : tail
     const highlightedNodes = currentStep.highlightedNodes || []
 
-    // Build the linked list order
-    const orderedNodes: DoublyListNode[] = []
-    let current = displayHead
-
-    while (current !== null) {
-      const node = displayNodes.find((n) => n.id === current)
-      if (node) {
-        orderedNodes.push(node)
-        current = node.next
-      } else {
-        break
-      }
-    }
+    // Build the linked list order (cycle-safe walk along next pointers)
+    const orderedNodes: DoublyListNode[] = ll.orderFrom(displayNodes, displayHead)
 
     return (
       <div className="flex flex-col items-center min-h-[400px] mb-4">
         <div className="mb-4 text-center">
           <h3 className="text-lg font-semibold mb-2">Doubly Linked List Visualization</h3>
           <p className="text-sm text-gray-600">
-            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"} | Tail:{" "}
-            {displayTail ? `Node ${displayTail}` : "null"}
+            Size: {orderedNodes.length} | Head: {displayHead !== null ? `Node ${displayHead}` : "null"} | Tail:{" "}
+            {displayTail !== null ? `Node ${displayTail}` : "null"}
           </p>
         </div>
 
@@ -931,7 +246,7 @@ export default function DoublyLinkedListVisualizer() {
                           {/* Prev pointer part */}
                           <div className="px-3 py-3 border-r border-gray-300">
                             <div className="text-xs text-gray-500">Prev</div>
-                            <div className="text-xs font-mono">{node.prev ? `${node.prev}←` : "null"}</div>
+                            <div className="text-xs font-mono">{node.prev !== null ? `${node.prev}←` : "null"}</div>
                           </div>
 
                           {/* Data part */}
@@ -943,7 +258,7 @@ export default function DoublyLinkedListVisualizer() {
                           {/* Next pointer part */}
                           <div className="px-3 py-3">
                             <div className="text-xs text-gray-500">Next</div>
-                            <div className="text-xs font-mono">{node.next ? `→${node.next}` : "null"}</div>
+                            <div className="text-xs font-mono">{node.next !== null ? `→${node.next}` : "null"}</div>
                           </div>
                         </motion.div>
 
@@ -1010,11 +325,12 @@ export default function DoublyLinkedListVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -1024,11 +340,12 @@ export default function DoublyLinkedListVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>

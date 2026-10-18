@@ -1,0 +1,30 @@
+circular queue: 20000 random sequences (size 2-12, length 1-40, values -20..20); 8565 of them wrap rear past the end
+  code-line highlight wrong on 580031/580031 frames (100.0%)
+  highlighted code line wrong (enqueue set-front-rear: shows "if (this.isEmpty()) {"): 19489/20000 sequences (97.4%)
+    minimal example: size=7: enqueue(7)
+  highlighted code line wrong (enqueue store: shows "}"): 19489/20000 sequences (97.4%)
+    minimal example: size=7: enqueue(7)
+  visualization shows a stale frame, not the state after the operation: 19489/20000 sequences (97.4%)
+    minimal example: size=7: enqueue(7)
+  highlighted code line wrong (dequeue to-empty: shows "this.items[this.front] = undefined;"): 13149/20000 sequences (65.7%)
+    minimal example: size=8: enqueue(5), dequeue
+  highlighted code line wrong (dequeue error: shows ""): 13870/20000 sequences (69.3%)
+    minimal example: size=7: dequeue
+  highlighted code line wrong (peek error: shows "return element;"): 8560/20000 sequences (42.8%)
+    minimal example: size=6: peek
+  highlighted code line wrong (enqueue move-rear: shows "} else {"): 17680/20000 sequences (88.4%)
+    minimal example: size=5: enqueue(9), enqueue(5)
+  highlighted code line wrong (enqueue error: shows "enqueue(element) {"): 5956/20000 sequences (29.8%)
+    minimal example: size=2: enqueue(0), enqueue(7), enqueue(5)
+  highlighted code line wrong (peek: shows ""): 14489/20000 sequences (72.4%)
+    minimal example: size=6: enqueue(2), peek
+  highlighted code line wrong (dequeue move-front: shows "if (this.isEmpty()) {"): 16099/20000 sequences (80.5%)
+    minimal example: size=8: enqueue(2), enqueue(2), dequeue
+queue-size input (type=number, accepted when 2 <= n <= 12):
+  "2" -> queueSize 2, array length 2
+  "12" -> queueSize 12, array length 12
+  "13" -> queueSize 8, array length 8
+  "1" -> queueSize 8, array length 8
+  "2.5" -> CRASH: RangeError: Invalid array length
+  "7.5" -> CRASH: RangeError: Invalid array length
+  "11.9" -> CRASH: RangeError: Invalid array length

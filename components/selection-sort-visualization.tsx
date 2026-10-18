@@ -10,16 +10,10 @@ import { BookOpen, Play, Pause, RotateCcw, StepForward, StepBack } from "lucide-
 import { motion, AnimatePresence } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+import { generateSelectionSortSteps, type SelectionSortStep } from "@/lib/engines/selection-sort"
+
 // Define the types for our sorting steps
-interface SortingStep {
-  array: number[]
-  currentIndex: number
-  minIndex: number
-  comparingIndex: number | null
-  sortedUpTo: number
-  description: string
-  isSwapping: boolean
-}
+type SortingStep = SelectionSortStep
 
 export default function SelectionSortVisualization() {
   const [array, setArray] = useState<number[]>([])
@@ -66,111 +60,7 @@ export default function SelectionSortVisualization() {
 
   // Generate all steps for the selection sort algorithm
   const generateSortingSteps = (inputArray: number[]) => {
-    const steps: SortingStep[] = []
-    const arr = [...inputArray]
-
-    // Initial state
-    steps.push({
-      array: [...arr],
-      currentIndex: 0,
-      minIndex: 0,
-      comparingIndex: null,
-      sortedUpTo: -1,
-      description: "Starting Selection Sort. We'll find the minimum element and place it at the beginning.",
-      isSwapping: false,
-    })
-
-    // Selection sort algorithm
-    for (let i = 0; i < arr.length - 1; i++) {
-      let minIndex = i
-
-      // Start looking for minimum
-      steps.push({
-        array: [...arr],
-        currentIndex: i,
-        minIndex: minIndex,
-        comparingIndex: null,
-        sortedUpTo: i - 1,
-        description: `Looking for the minimum element in the unsorted portion starting at index ${i}.`,
-        isSwapping: false,
-      })
-
-      // Find the minimum element
-      for (let j = i + 1; j < arr.length; j++) {
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          minIndex: minIndex,
-          comparingIndex: j,
-          sortedUpTo: i - 1,
-          description: `Comparing ${arr[j]} with current minimum ${arr[minIndex]}.`,
-          isSwapping: false,
-        })
-
-        if (arr[j] < arr[minIndex]) {
-          minIndex = j
-
-          steps.push({
-            array: [...arr],
-            currentIndex: i,
-            minIndex: minIndex,
-            comparingIndex: null,
-            sortedUpTo: i - 1,
-            description: `Found a new minimum: ${arr[minIndex]} at index ${minIndex}.`,
-            isSwapping: false,
-          })
-        }
-      }
-
-      // Swap if needed
-      if (minIndex !== i) {
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          minIndex: minIndex,
-          comparingIndex: null,
-          sortedUpTo: i - 1,
-          description: `Swapping ${arr[i]} with the minimum value ${arr[minIndex]}.`,
-          isSwapping: true,
-        })
-
-        // Perform the swap
-        ;[arr[i], arr[minIndex]] = [arr[minIndex], arr[i]]
-
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          minIndex: i,
-          comparingIndex: null,
-          sortedUpTo: i,
-          description: `Placed ${arr[i]} at position ${i}. This element is now in its correct sorted position.`,
-          isSwapping: false,
-        })
-      } else {
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          minIndex: i,
-          comparingIndex: null,
-          sortedUpTo: i,
-          description: `${arr[i]} is already the minimum, so it stays at position ${i}.`,
-          isSwapping: false,
-        })
-      }
-    }
-
-    // Final state
-    steps.push({
-      array: [...arr],
-      currentIndex: arr.length - 1,
-      minIndex: arr.length - 1,
-      comparingIndex: null,
-      sortedUpTo: arr.length - 1,
-      description: "Array is now sorted using Selection Sort!",
-      isSwapping: false,
-    })
-
-    setSortingSteps(steps)
+    setSortingSteps(generateSelectionSortSteps(inputArray))
   }
 
   // Handle play/pause
@@ -376,11 +266,12 @@ export default function SelectionSortVisualization() {
                 variant="outline"
                 size="icon"
                 className="h-10 w-10"
+                aria-label="Previous step"
               >
                 <StepBack className="h-5 w-5" />
               </Button>
 
-              <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+              <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
               </Button>
 
@@ -390,11 +281,12 @@ export default function SelectionSortVisualization() {
                 variant="outline"
                 size="icon"
                 className="h-10 w-10"
+                aria-label="Next step"
               >
                 <StepForward className="h-5 w-5" />
               </Button>
 
-              <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+              <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
                 <RotateCcw className="h-5 w-5" />
               </Button>
             </div>

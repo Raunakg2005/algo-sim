@@ -10,17 +10,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import HeapTree from "./heap-tree"
 import { motion } from "framer-motion"
 
-type SortingStep = {
-  type: "initial" | "build-heap" | "heapify" | "extract-max" | "sorted"
-  array: number[]
-  heapSize: number
-  comparing?: [number, number]
-  swapping?: [number, number]
-  currentNodeIndex?: number
-  extractedIndex?: number
-  sortedIndices?: number[]
-  description: string
-}
+import { generateHeapSortSteps, type HeapSortStep } from "@/lib/engines/heap-sort"
+
+type SortingStep = HeapSortStep
 
 export default function HeapSortVisualization() {
   const [array, setArray] = useState<number[]>([8, 3, 5, 4, 7, 6, 1, 2])
@@ -93,158 +85,6 @@ export default function HeapSortVisualization() {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1)
     }
-  }
-
-  const generateHeapSortSteps = (arr: number[]) => {
-    const steps: SortingStep[] = []
-    const arrCopy = [...arr]
-    const n = arrCopy.length
-
-    steps.push({
-      type: "initial",
-      array: [...arrCopy],
-      heapSize: n,
-      description: "Initial unsorted array",
-    })
-
-    const getParentIndex = (i: number) => Math.floor((i - 1) / 2)
-    const getLeftChildIndex = (i: number) => 2 * i + 1
-    const getRightChildIndex = (i: number) => 2 * i + 2
-
-    const heapify = (arr: number[], n: number, i: number, sortedIndices: number[] = []) => {
-      let largest = i
-      const left = getLeftChildIndex(i)
-      const right = getRightChildIndex(i)
-
-      if (left < n) {
-        steps.push({
-          type: "heapify",
-          array: [...arr],
-          heapSize: n,
-          comparing: [largest, left],
-          currentNodeIndex: i,
-          sortedIndices: [...sortedIndices],
-          description: `Compare node ${arr[largest]} with its left child ${arr[left]}`,
-        })
-
-        if (arr[left] > arr[largest]) {
-          largest = left
-        }
-      }
-
-      if (right < n) {
-        steps.push({
-          type: "heapify",
-          array: [...arr],
-          heapSize: n,
-          comparing: [largest, right],
-          currentNodeIndex: i,
-          sortedIndices: [...sortedIndices],
-          description: `Compare node ${arr[largest]} with its right child ${arr[right]}`,
-        })
-
-        if (arr[right] > arr[largest]) {
-          largest = right
-        }
-      }
-
-      if (largest !== i) {
-        steps.push({
-          type: "heapify",
-          array: [...arr],
-          heapSize: n,
-          swapping: [i, largest],
-          currentNodeIndex: i,
-          sortedIndices: [...sortedIndices],
-          description: `Swap ${arr[i]} with ${arr[largest]} to maintain max-heap property`,
-        })
-
-        ;[arr[i], arr[largest]] = [arr[largest], arr[i]]
-
-        steps.push({
-          type: "heapify",
-          array: [...arr],
-          heapSize: n,
-          currentNodeIndex: largest,
-          sortedIndices: [...sortedIndices],
-          description: `Continue heapify at node ${arr[largest]}`,
-        })
-
-        heapify(arr, n, largest, sortedIndices)
-      }
-    }
-
-    steps.push({
-      type: "build-heap",
-      array: [...arrCopy],
-      heapSize: n,
-      description: "Start building max heap",
-    })
-
-    for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-      steps.push({
-        type: "build-heap",
-        array: [...arrCopy],
-        heapSize: n,
-        currentNodeIndex: i,
-        description: `Heapify starting from node at index ${i}`,
-      })
-
-      heapify(arrCopy, n, i)
-    }
-
-    steps.push({
-      type: "build-heap",
-      array: [...arrCopy],
-      heapSize: n,
-      description: "Max heap built successfully",
-    })
-
-    const sortedIndices: number[] = []
-    for (let i = n - 1; i > 0; i--) {
-      steps.push({
-        type: "extract-max",
-        array: [...arrCopy],
-        heapSize: i + 1,
-        swapping: [0, i],
-        sortedIndices: [...sortedIndices],
-        description: `Extract max element ${arrCopy[0]} and place it at the end`,
-      })
-      ;[arrCopy[0], arrCopy[i]] = [arrCopy[i], arrCopy[0]]
-      sortedIndices.push(i)
-
-      steps.push({
-        type: "extract-max",
-        array: [...arrCopy],
-        heapSize: i,
-        extractedIndex: i,
-        sortedIndices: [...sortedIndices],
-        description: `Element ${arrCopy[i]} is now in its sorted position`,
-      })
-
-      steps.push({
-        type: "extract-max",
-        array: [...arrCopy],
-        heapSize: i,
-        currentNodeIndex: 0,
-        sortedIndices: [...sortedIndices],
-        description: "Re-heapify the reduced heap",
-      })
-
-      heapify(arrCopy, i, 0, sortedIndices)
-    }
-
-    sortedIndices.push(0)
-
-    steps.push({
-      type: "sorted",
-      array: [...arrCopy],
-      heapSize: 0,
-      sortedIndices: sortedIndices,
-      description: "Array is now fully sorted",
-    })
-
-    return steps
   }
 
   useEffect(() => {
@@ -387,6 +227,7 @@ export default function HeapSortVisualization() {
           onClick={resetVisualization}
           className="bg-white"
           title="Reset to first step"
+          aria-label="Reset"
         >
           <RotateCcw className="h-4 w-4" />
         </Button>
@@ -398,6 +239,7 @@ export default function HeapSortVisualization() {
           disabled={currentStepIndex === 0}
           className="bg-white"
           title="Previous step"
+          aria-label="Previous step"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -408,6 +250,7 @@ export default function HeapSortVisualization() {
           onClick={togglePlayback}
           className="bg-white"
           title={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
@@ -419,6 +262,7 @@ export default function HeapSortVisualization() {
           disabled={currentStepIndex === steps.length - 1}
           className="bg-white"
           title="Next step"
+          aria-label="Next step"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

@@ -1,0 +1,26 @@
+priority queue: 20000 random sequences (max/min, length 1-30, values -20..20, priorities -3..6)
+  code-line highlight wrong on 446935/701903 frames (63.7%)
+  highlighted code line wrong (dequeue error: shows "dequeue() {"): 9680/20000 sequences (48.4%)
+    minimal example: min: dequeue
+  highlighted code line wrong (enqueue last frame: shows "}"): 19600/20000 sequences (98.0%)
+    minimal example: min: enqueue(8,p=3)
+  visualization shows a stale frame, not the state after the operation: 19104/20000 sequences (95.5%)
+    minimal example: min: peek, enqueue(8,p=4)
+  "Next Priority" statistic shows N/A when the next priority is 0: 8179/20000 sequences (40.9%)
+    minimal example: max: enqueue(7,p=0)
+  min-heap caption says "highest priority" for the lowest-priority element: 8160/20000 sequences (40.8%)
+    minimal example: min: enqueue(7,p=1), peek
+  highlighted code line wrong (dequeue first frame: shows "const root = this.heap[0];"): 15317/20000 sequences (76.6%)
+    minimal example: min: enqueue(8,p=3), enqueue(8,p=3), dequeue
+  highlighted code line wrong (heapifyUp: shows "const parentIndex = Math.floor((index - 1) / 2);"): 16359/20000 sequences (81.8%)
+    minimal example: min: enqueue(8,p=5), enqueue(7,p=4)
+  highlighted code line wrong (peek first frame: shows "peek() {"): 12335/20000 sequences (61.7%)
+    minimal example: min: enqueue(7,p=1), peek
+  highlighted code line wrong (heapifyDown: shows "if (rightChild < this.heap.length &&"): 11645/20000 sequences (58.2%)
+    minimal example: min: enqueue(-15,p=1), enqueue(1,p=1), enqueue(6,p=6), dequeue
+  displayed queue order (front to end) differs from the actual dequeue order among equal priorities: 11202/20000 sequences (56.0%)
+    minimal example: min: enqueue(3,p=1), enqueue(2,p=2), enqueue(-9,p=2)
+  highlighted code line wrong (peek error: shows ""): 4758/20000 sequences (23.8%)
+    minimal example: min: peek
+  [info] equal priorities not served in arrival (FIFO) order: 2278/20000 sequences (11.4%)
+    minimal example: min: enqueue(12,p=1), enqueue(-4,p=-2), enqueue(17,p=1), dequeue, dequeue

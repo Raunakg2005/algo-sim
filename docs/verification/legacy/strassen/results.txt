@@ -1,0 +1,54 @@
+{
+  'ui-random n=2:runs': 2000,
+  'ui-random n=2:runs with highlight pointing at no displayed matrix': 2000,
+  'ui-random n=2:frames with dangling highlight (total)': 28000,
+  'ui-random n=2:combine frame for C11 does not display C11': 2000,
+  'ui-random n=2:combine frame for C22 does not display C22': 2000,
+  'ui-random n=2:frames!=19': 2000,
+  'ui-random n=4:runs': 2000,
+  'ui-random n=4:runs with highlight pointing at no displayed matrix': 2000,
+  'ui-random n=4:frames with dangling highlight (total)': 28000,
+  'ui-random n=4:combine frame for C11 does not display C11': 2000,
+  'ui-random n=4:combine frame for C22 does not display C22': 2000,
+  'ui-random n=4:frames!=19': 2000,
+  'ui-random n=8:runs': 2000,
+  'ui-random n=8:runs with highlight pointing at no displayed matrix': 2000,
+  'ui-random n=8:frames with dangling highlight (total)': 28000,
+  'ui-random n=8:combine frame for C11 does not display C11': 2000,
+  'ui-random n=8:combine frame for C22 does not display C22': 2000,
+  'ui-random n=8:frames!=19': 2000,
+  'default:runs': 1,
+  'default:runs with highlight pointing at no displayed matrix': 1,
+  'default:frames with dangling highlight (total)': 14,
+  'default:combine frame for C11 does not display C11': 1,
+  'default:combine frame for C22 does not display C22': 1,
+  'default:frames!=19': 1,
+  'custom-int n=2:runs': 2000,
+  'custom-int n=2:runs with highlight pointing at no displayed matrix': 2000,
+  'custom-int n=2:frames with dangling highlight (total)': 28000,
+  'custom-int n=2:combine frame for C11 does not display C11': 2000,
+  'custom-int n=2:combine frame for C22 does not display C22': 2000,
+  'custom-int n=2:frames!=19': 2000,
+  'custom-int n=4:runs': 2000,
+  'custom-int n=4:runs with highlight pointing at no displayed matrix': 2000,
+  'custom-int n=4:frames with dangling highlight (total)': 28000,
+  'custom-int n=4:combine frame for C11 does not display C11': 2000,
+  'custom-int n=4:combine frame for C22 does not display C22': 2000,
+  'custom-int n=4:frames!=19': 2000,
+  'custom-int n=8:runs': 2000,
+  'custom-int n=8:runs with highlight pointing at no displayed matrix': 2000,
+  'custom-int n=8:frames with dangling highlight (total)': 28000,
+  'custom-int n=8:combine frame for C11 does not display C11': 2000,
+  'custom-int n=8:combine frame for C22 does not display C22': 2000,
+  'custom-int n=8:frames!=19': 2000
+}
+first dangling highlight: frame 2 "Compute P1 = (A11 + A22) * (B11 + B22)": highlighted ["S1","S2"] but displayed names ["A11","A22","B11","B22","S1 = A11 + A22","S2 = B11 + B22"]
+decimal custom input: 5945/6000 results differ bitwise from naive product (max abs diff 1.936228954946273e-13); e.g. {"A":[[6.5,0.1],[3.6,-3.2]],"B":[[-3.4,-9.5],[-9.9,7.8]],"strassen":[[-23.09,-60.970000000000006],[19.44,-59.16000000000001]],"naive":[[-23.089999999999996,-60.97],[19.440000000000005,-59.160000000000004]]}
+",1\n2 3" -> [[0,1],[2,3]]
+"1,\n2 3" -> [[1,0],[2,3]]
+"Infinity 1\n1 1" -> [[null,1],[1,1]]
+"1e400 1\n1 1" -> [[null,1],[1,1]]
+"1\t2\n3 4" -> null
+"0x10 1\n1 1" -> [[16,1],[1,1]]
+"1 2\n3 4" -> [[1,2],[3,4]]
+Infinity input result: [[null,null],[2,null]] naive: [[null,null],[2,2]]

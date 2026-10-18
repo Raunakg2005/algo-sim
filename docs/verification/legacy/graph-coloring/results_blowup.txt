@@ -1,0 +1,8 @@
+K4, m=3: attempts=48 assignments=15 ~frames>=78
+K5, m=4: attempts=260 assignments=64 ~frames>=388
+K6, m=5: attempts=1630 assignments=325 ~frames>=2280
+K7, m=6: attempts=11742 assignments=1956 ~frames>=15654
+K8, m=7: attempts=95900 assignments=13699 ~frames>=123298
+K9, m=8: attempts=876808 assignments=109600 ~frames>=1096008
+K10, m=9: attempts=8877690 assignments=986409 ~frames>=10850508
+random typed graphs: worst frames ~ 3960 runs over 20000 frames: 0 / 20000

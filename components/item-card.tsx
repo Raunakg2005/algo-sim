@@ -45,7 +45,7 @@ export default function ItemCard({ item, onRemove, disabled = false }: ItemCardP
           <div className="flex justify-between items-center mb-2">
             <h4 className="font-medium">{item.name}</h4>
             {!disabled && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemove(item.id)}>
+              <Button aria-label="Remove item" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemove(item.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}

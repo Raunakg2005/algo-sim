@@ -1,0 +1,3 @@
+import { generateQuickSortSteps, type QuickSortStep } from "@/lib/engines/quick-sort"
+
+type SortingStep = QuickSortStep

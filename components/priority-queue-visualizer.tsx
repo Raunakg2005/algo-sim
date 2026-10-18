@@ -12,93 +12,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface PriorityQueueElement {
-  value: number
-  priority: number
-  id: number
-}
-
-interface PriorityQueueStep {
-  queue: PriorityQueueElement[]
-  operation: string
-  element?: PriorityQueueElement
-  description: string
-  isError: boolean
-  activeCodeLine: number
-}
-
-const priorityQueueCode = [
-  "class PriorityQueue {",
-  "  constructor(isMaxHeap = true) {",
-  "    this.heap = [];",
-  "    this.isMaxHeap = isMaxHeap;",
-  "  }",
-  "",
-  "  enqueue(value, priority) {",
-  "    const element = { value, priority };",
-  "    this.heap.push(element);",
-  "    this.heapifyUp(this.heap.length - 1);",
-  "  }",
-  "",
-  "  dequeue() {",
-  "    if (this.isEmpty()) return null;",
-  "    if (this.heap.length === 1) return this.heap.pop();",
-  "    ",
-  "    const root = this.heap[0];",
-  "    this.heap[0] = this.heap.pop();",
-  "    this.heapifyDown(0);",
-  "    return root;",
-  "  }",
-  "",
-  "  peek() {",
-  "    return this.isEmpty() ? null : this.heap[0];",
-  "  }",
-  "",
-  "  heapifyUp(index) {",
-  "    if (index === 0) return;",
-  "    const parentIndex = Math.floor((index - 1) / 2);",
-  "    if (this.compare(index, parentIndex)) {",
-  "      this.swap(index, parentIndex);",
-  "      this.heapifyUp(parentIndex);",
-  "    }",
-  "  }",
-  "",
-  "  heapifyDown(index) {",
-  "    const leftChild = 2 * index + 1;",
-  "    const rightChild = 2 * index + 2;",
-  "    let targetIndex = index;",
-  "",
-  "    if (leftChild < this.heap.length && ",
-  "        this.compare(leftChild, targetIndex)) {",
-  "      targetIndex = leftChild;",
-  "    }",
-  "",
-  "    if (rightChild < this.heap.length && ",
-  "        this.compare(rightChild, targetIndex)) {",
-  "      targetIndex = rightChild;",
-  "    }",
-  "",
-  "    if (targetIndex !== index) {",
-  "      this.swap(index, targetIndex);",
-  "      this.heapifyDown(targetIndex);",
-  "    }",
-  "  }",
-  "",
-  "  compare(i, j) {",
-  "    return this.isMaxHeap ? ",
-  "      this.heap[i].priority > this.heap[j].priority :",
-  "      this.heap[i].priority < this.heap[j].priority;",
-  "  }",
-  "",
-  "  swap(i, j) {",
-  "    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];",
-  "  }",
-  "",
-  "  isEmpty() {",
-  "    return this.heap.length === 0;",
-  "  }",
-  "}",
-]
+import {
+  PRIORITY_QUEUE_CODE as priorityQueueCode,
+  dequeue,
+  enqueue,
+  nextPriorityLabel,
+  parsePriorityQueueInput,
+  peek,
+  playbackAfterOperation,
+  serviceOrder,
+  type PriorityQueueElement,
+  type PriorityQueueResult,
+  type PriorityQueueState,
+  type PriorityQueueStep,
+} from "@/lib/engines/priority-queue"
 
 export default function PriorityQueueVisualizer() {
   const [queue, setQueue] = useState<PriorityQueueElement[]>([])
@@ -115,201 +42,36 @@ export default function PriorityQueueVisualizer() {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newQueue: PriorityQueueElement[],
-    operation: string,
-    element: PriorityQueueElement | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-  ) => {
-    const newStep: PriorityQueueStep = {
-      queue: [...newQueue],
-      operation,
-      element,
-      description,
-      isError,
-      activeCodeLine,
-    }
-    setSteps((prev) => [...prev, newStep])
-  }
+  const current = (): PriorityQueueState => ({ heap: queue, isMaxHeap, nextId })
 
-  const validateInput = (): { value: number; priority: number } | null => {
-    const value = valueInput.trim()
-    const priority = priorityInput.trim()
-
-    if (!value || !priority) {
-      setInputError("Please enter both value and priority")
-      return null
-    }
-
-    const numValue = Number.parseInt(value, 10)
-    const numPriority = Number.parseInt(priority, 10)
-
-    if (isNaN(numValue) || isNaN(numPriority)) {
-      setInputError("Please enter valid numbers")
-      return null
-    }
-
-    setInputError("")
-    return { value: numValue, priority: numPriority }
-  }
-
-  const compare = (i: number, j: number, heap: PriorityQueueElement[]): boolean => {
-    return isMaxHeap ? heap[i].priority > heap[j].priority : heap[i].priority < heap[j].priority
-  }
-
-  const swap = (heap: PriorityQueueElement[], i: number, j: number) => {
-    ;[heap[i], heap[j]] = [heap[j], heap[i]]
-  }
-
-  const heapifyUp = (heap: PriorityQueueElement[], index: number): PriorityQueueElement[] => {
-    if (index === 0) return heap
-
-    const parentIndex = Math.floor((index - 1) / 2)
-    if (compare(index, parentIndex, heap)) {
-      swap(heap, index, parentIndex)
-      addStep(
-        heap,
-        "heapifyUp",
-        undefined,
-        `Swapped elements at positions ${index} and ${parentIndex} to maintain heap property`,
-        false,
-        28,
-      )
-      return heapifyUp(heap, parentIndex)
-    }
-    return heap
-  }
-
-  const heapifyDown = (heap: PriorityQueueElement[], index: number): PriorityQueueElement[] => {
-    const leftChild = 2 * index + 1
-    const rightChild = 2 * index + 2
-    let targetIndex = index
-
-    if (leftChild < heap.length && compare(leftChild, targetIndex, heap)) {
-      targetIndex = leftChild
-    }
-
-    if (rightChild < heap.length && compare(rightChild, targetIndex, heap)) {
-      targetIndex = rightChild
-    }
-
-    if (targetIndex !== index) {
-      swap(heap, index, targetIndex)
-      addStep(
-        heap,
-        "heapifyDown",
-        undefined,
-        `Swapped elements at positions ${index} and ${targetIndex} to maintain heap property`,
-        false,
-        45,
-      )
-      return heapifyDown(heap, targetIndex)
-    }
-    return heap
+  // append an operation's frames to the history and show them
+  const applyResult = (result: PriorityQueueResult) => {
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setQueue(result.state.heap)
+    setNextId(result.state.nextId)
+    setSteps([...steps, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
   }
 
   const enqueueElement = () => {
-    const input = validateInput()
-    if (input === null) return
-
-    const newElement: PriorityQueueElement = {
-      value: input.value,
-      priority: input.priority,
-      id: nextId,
+    const input = parsePriorityQueueInput(valueInput, priorityInput)
+    if ("error" in input) {
+      setInputError(input.error)
+      return
     }
-
-    const newQueue = [...queue, newElement]
-    setNextId(nextId + 1)
-
-    addStep(
-      newQueue,
-      "enqueue",
-      newElement,
-      `Added element ${input.value} with priority ${input.priority} to the end of heap`,
-      false,
-      8,
-    )
-
-    const heapifiedQueue = heapifyUp(newQueue, newQueue.length - 1)
-
-    setQueue(heapifiedQueue)
-    addStep(
-      heapifiedQueue,
-      "enqueue",
-      newElement,
-      `Enqueued element ${input.value} with priority ${input.priority}. Heap property maintained.`,
-      false,
-      10,
-    )
-
+    setInputError("")
+    applyResult(enqueue(current(), input.value, input.priority))
     setValueInput("")
     setPriorityInput("")
   }
 
   const dequeueElement = () => {
-    if (queue.length === 0) {
-      addStep(queue, "dequeue", undefined, "Cannot dequeue from empty priority queue", true, 12)
-      return
-    }
-
-    if (queue.length === 1) {
-      const dequeuedElement = queue[0]
-      const newQueue: PriorityQueueElement[] = []
-      setQueue(newQueue)
-      addStep(
-        newQueue,
-        "dequeue",
-        dequeuedElement,
-        `Dequeued element ${dequeuedElement.value} with priority ${dequeuedElement.priority}. Queue is now empty.`,
-        false,
-        14,
-      )
-      return
-    }
-
-    const dequeuedElement = queue[0]
-    const newQueue = [...queue]
-    newQueue[0] = newQueue.pop()!
-
-    addStep(
-      newQueue,
-      "dequeue",
-      dequeuedElement,
-      `Moved last element to root position and removed the highest priority element`,
-      false,
-      16,
-    )
-
-    const heapifiedQueue = heapifyDown(newQueue, 0)
-
-    setQueue(heapifiedQueue)
-    addStep(
-      heapifiedQueue,
-      "dequeue",
-      dequeuedElement,
-      `Dequeued element ${dequeuedElement.value} with priority ${dequeuedElement.priority}. Heap property restored.`,
-      false,
-      18,
-    )
+    applyResult(dequeue(current()))
   }
 
   const peekElement = () => {
-    if (queue.length === 0) {
-      addStep(queue, "peek", undefined, "Cannot peek empty priority queue", true, 21)
-      return
-    }
-
-    const frontElement = queue[0]
-    addStep(
-      queue,
-      "peek",
-      frontElement,
-      `Highest priority element is ${frontElement.value} with priority ${frontElement.priority}`,
-      false,
-      22,
-    )
+    applyResult(peek(current()))
   }
 
   const clearQueue = () => {
@@ -400,10 +162,8 @@ export default function PriorityQueueVisualizer() {
     const displayQueue = steps.length > 0 ? currentStep.queue : queue
     const isVertical = activeView === "split"
 
-    // Sort queue by priority for display (but keep internal heap structure)
-    const sortedForDisplay = [...displayQueue].sort((a, b) =>
-      isMaxHeap ? b.priority - a.priority : a.priority - b.priority,
-    )
+    // Elements in the order dequeue will actually remove them (equal priorities included); the heap is unchanged
+    const sortedForDisplay = serviceOrder(displayQueue, isMaxHeap)
 
     // Calculate element size based on queue size
     const getElementSize = (queueSize: number) => {
@@ -534,7 +294,7 @@ export default function PriorityQueueVisualizer() {
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-gray-700">Next Priority</div>
-                  <div className="text-lg font-bold text-purple-600">{sortedForDisplay[0]?.priority || "N/A"}</div>
+                  <div className="text-lg font-bold text-purple-600">{nextPriorityLabel(displayQueue)}</div>
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-gray-700">Priority Range</div>
@@ -567,11 +327,12 @@ export default function PriorityQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -581,11 +342,12 @@ export default function PriorityQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>

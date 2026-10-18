@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import clientPromise from "@/lib/mongodb"
+import { getMongoClient } from "@/lib/mongodb"
+import { feedbackSchema } from "@/lib/feedback-schema"
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,8 +12,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await req.json()
-    const client = await clientPromise
+    const parsed = feedbackSchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid feedback", issues: parsed.error.issues.map((i) => i.path.join(".")) }, { status: 400 })
+    }
+    const body = parsed.data
+    const client = await getMongoClient()
     const db = client.db()
 
     const feedback = {
@@ -42,7 +47,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const client = await clientPromise
+    const client = await getMongoClient()
     const db = client.db()
 
     const feedbacks = await db

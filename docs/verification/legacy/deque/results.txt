@@ -1,0 +1,32 @@
+deque: 20000 random sequences (size 2-12, length 1-40, values -20..20)
+  code-line highlight wrong on 278322/586124 frames (47.5%)
+  highlighted code line wrong (removeRear error: shows ""): 10362/20000 sequences (51.8%)
+    minimal example: size=6: removeRear
+  highlighted code line wrong (removeFront error: shows "removeFront() {"): 10441/20000 sequences (52.2%)
+    minimal example: size=6: removeFront
+  highlighted code line wrong (addFront set-front-rear: shows "if (this.isEmpty()) {"): 14726/20000 sequences (73.6%)
+    minimal example: size=9: addFront(4)
+  visualization shows a stale frame, not the state after the operation: 19499/20000 sequences (97.5%)
+    minimal example: size=4: addRear(3)
+  highlighted code line wrong (removeFront move-pointer: shows "} else {"): 13939/20000 sequences (69.7%)
+    minimal example: size=6: addRear(9), addRear(6), removeFront
+  highlighted code line wrong (peekRear error: shows "}"): 5582/20000 sequences (27.9%)
+    minimal example: size=6: peekRear
+  highlighted code line wrong (addRear set-front-rear: shows "if (this.isEmpty()) {"): 14609/20000 sequences (73.0%)
+    minimal example: size=4: addRear(3)
+  highlighted code line wrong (peekRear: shows "peekRear() {"): 11431/20000 sequences (57.2%)
+    minimal example: size=4: addRear(2), peekRear
+  highlighted code line wrong (removeFront to-empty: shows "this.count--;"): 9450/20000 sequences (47.3%)
+    minimal example: size=3: addRear(7), removeFront
+  highlighted code line wrong (removeRear to-empty: shows "this.items[this.rear] = undefined;"): 9496/20000 sequences (47.5%)
+    minimal example: size=6: addRear(2), removeRear
+  highlighted code line wrong (peekFront: shows "peekFront() {"): 11368/20000 sequences (56.8%)
+    minimal example: size=7: addRear(6), peekFront
+  highlighted code line wrong (removeRear move-pointer: shows "this.front = this.rear = -1;"): 13946/20000 sequences (69.7%)
+    minimal example: size=8: addRear(7), addFront(6), removeRear
+  highlighted code line wrong (addFront error: shows "addFront(element) {"): 4750/20000 sequences (23.8%)
+    minimal example: size=2: addRear(7), addRear(8), addFront(-12)
+  highlighted code line wrong (addRear error: shows "addRear(element) {"): 4722/20000 sequences (23.6%)
+    minimal example: size=2: addFront(9), addRear(-15), addRear(18)
+  highlighted code line wrong (peekFront error: shows "}"): 5586/20000 sequences (27.9%)
+    minimal example: size=5: peekFront

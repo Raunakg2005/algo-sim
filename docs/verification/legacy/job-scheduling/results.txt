@@ -1,0 +1,24 @@
+{
+  'default:runs': 1,
+  "default:'Sort Jobs' frame shows an empty job list": 1,
+  "default:runs where header 'Job k of n' and timeline 'Current Job' name the next job, not the one the caption describes": 1,
+  'default:such frames (total)': 4,
+  "default:auto-play stalls before 'Final Result' (still playing)": 1,
+  'custom (deadline 1..10):runs': 5000,
+  "custom (deadline 1..10):'Sort Jobs' frame shows an empty job list": 5000,
+  'custom (deadline 1..10):such frames (total)': 22565,
+  "custom (deadline 1..10):auto-play stalls before 'Final Result' (still playing)": 5000,
+  "custom (deadline 1..10):runs where header 'Job k of n' and timeline 'Current Job' name the next job, not the one the caption describes": 4496,
+  'custom ties:runs': 3000,
+  "custom ties:'Sort Jobs' frame shows an empty job list": 3000,
+  "custom ties:runs where header 'Job k of n' and timeline 'Current Job' name the next job, not the one the caption describes": 2704,
+  'custom ties:such frames (total)': 13636,
+  "custom ties:auto-play stalls before 'Final Result' (still playing)": 3000,
+  'seq:runs': 4000,
+  'seq:a job occupies two slots': 1559,
+  'seq:final total profit != optimum': 1552
+}
+{ seq: 'next,next,next,back,next,next,next,next,next,next' }
+default jobs, Next x3, Back, Next, then Next to end -> schedule ["Job 1","Job 1","Job 5"] profit 260 (optimum 240)
+deadline 10000000: schedule length 10000000
+deadline 5000000000: THROWS RangeError: Invalid array length

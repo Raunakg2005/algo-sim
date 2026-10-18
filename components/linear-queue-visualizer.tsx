@@ -10,60 +10,18 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 
-interface QueueStep {
-  queue: (number | undefined)[]
-  front: number
-  rear: number
-  operation: string
-  element?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-}
-
-const queueCode = [
-  "class LinearQueue {",
-  "  constructor(size) {",
-  "    this.items = new Array(size);",
-  "    this.front = -1;",
-  "    this.rear = -1;",
-  "    this.maxSize = size;",
-  "  }",
-  "",
-  "  enqueue(element) {",
-  "    if (this.isFull()) return false;",
-  "    if (this.isEmpty()) this.front = 0;",
-  "    this.rear++;",
-  "    this.items[this.rear] = element;",
-  "    return true;",
-  "  }",
-  "",
-  "  dequeue() {",
-  "    if (this.isEmpty()) return null;",
-  "    const element = this.items[this.front];",
-  "    this.items[this.front] = undefined;",
-  "    if (this.front === this.rear) {",
-  "      this.front = this.rear = -1;",
-  "    } else {",
-  "      this.front++;",
-  "    }",
-  "    return element;",
-  "  }",
-  "",
-  "  peek() {",
-  "    if (this.isEmpty()) return null;",
-  "    return this.items[this.front];",
-  "  }",
-  "",
-  "  isEmpty() {",
-  "    return this.front === -1;",
-  "  }",
-  "",
-  "  isFull() {",
-  "    return this.rear === this.maxSize - 1;",
-  "  }",
-  "}",
-]
+import {
+  LINEAR_QUEUE_CODE as queueCode,
+  dequeue,
+  enqueue,
+  parseIntegerInput,
+  parseQueueSize,
+  peek,
+  playbackAfterOperation,
+  type LinearQueueResult,
+  type LinearQueueState,
+  type QueueStep,
+} from "@/lib/engines/linear-queue"
 
 export default function LinearQueueVisualizer() {
   const [queueSize, setQueueSize] = useState<number>(8)
@@ -82,50 +40,26 @@ export default function LinearQueueVisualizer() {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newQueue: (number | undefined)[],
-    newFront: number,
-    newRear: number,
-    operation: string,
-    element: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-  ) => {
-    const newStep: QueueStep = {
-      queue: [...newQueue],
-      front: newFront,
-      rear: newRear,
-      operation,
-      element,
-      description,
-      isError,
-      activeCodeLine,
-    }
-    setSteps((prev) => [...prev, newStep])
-  }
+  const current = (): LinearQueueState => ({ items: queue, front, rear, size: queueSize })
 
-  const validateInput = (value: string): number | null => {
-    const trimmed = value.trim()
-    if (!trimmed) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(trimmed, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
-    }
-    setInputError("")
-    return num
+  // append an operation's frames to the history and show them
+  const applyResult = (result: LinearQueueResult) => {
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setQueue(result.state.items)
+    setFront(result.state.front)
+    setRear(result.state.rear)
+    setSteps([...steps, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
   }
 
   const updateQueueSize = () => {
-    const size = Number.parseInt(sizeInput.trim())
-    if (isNaN(size) || size < 1 || size > 20) {
-      setSizeError("Queue size must be between 1 and 20")
+    const parsed = parseQueueSize(sizeInput)
+    if ("error" in parsed) {
+      setSizeError(parsed.error)
       return
     }
+    const size = parsed.value
     setSizeError("")
     setQueueSize(size)
     setQueue(new Array(size).fill(undefined))
@@ -137,111 +71,22 @@ export default function LinearQueueVisualizer() {
   }
 
   const enqueueElement = () => {
-    const element = validateInput(inputValue)
-    if (element === null) return
-
-    // Check if queue is full
-    if (rear === queueSize - 1) {
-      addStep(queue, front, rear, "enqueue", element, `Cannot enqueue ${element}. Queue is full!`, true, 9)
-      setInputValue("")
+    const parsed = parseIntegerInput(inputValue)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
       return
     }
-
-    const newQueue = [...queue]
-    let newFront = front
-    let newRear = rear
-
-    // If queue is empty, set front to 0
-    if (front === -1) {
-      newFront = 0
-      addStep(newQueue, newFront, newRear, "enqueue", element, `Queue is empty. Setting front to 0.`, false, 10)
-    }
-
-    // Increment rear and add element
-    newRear++
-    newQueue[newRear] = element
-
-    setQueue(newQueue)
-    setFront(newFront)
-    setRear(newRear)
-
-    addStep(
-      newQueue,
-      newFront,
-      newRear,
-      "enqueue",
-      element,
-      `Enqueued ${element} at position ${newRear}. Queue size: ${newRear - newFront + 1}`,
-      false,
-      12,
-    )
+    setInputError("")
+    applyResult(enqueue(current(), parsed.value))
     setInputValue("")
   }
 
   const dequeueElement = () => {
-    // Check if queue is empty
-    if (front === -1) {
-      addStep(queue, front, rear, "dequeue", undefined, "Cannot dequeue from empty queue", true, 16)
-      return
-    }
-
-    const dequeuedElement = queue[front]
-    const newQueue = [...queue]
-    newQueue[front] = undefined
-
-    let newFront = front
-    let newRear = rear
-
-    // If this was the last element, reset front and rear
-    if (front === rear) {
-      newFront = -1
-      newRear = -1
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        "dequeue",
-        dequeuedElement,
-        `Dequeued ${dequeuedElement}. Queue is now empty.`,
-        false,
-        20,
-      )
-    } else {
-      newFront++
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        "dequeue",
-        dequeuedElement,
-        `Dequeued ${dequeuedElement}. New front is at position ${newFront}. Queue size: ${newRear - newFront + 1}`,
-        false,
-        23,
-      )
-    }
-
-    setQueue(newQueue)
-    setFront(newFront)
-    setRear(newRear)
+    applyResult(dequeue(current()))
   }
 
   const peekElement = () => {
-    if (front === -1) {
-      addStep(queue, front, rear, "peek", undefined, "Cannot peek empty queue", true, 27)
-      return
-    }
-
-    const frontElement = queue[front]
-    addStep(
-      queue,
-      front,
-      rear,
-      "peek",
-      frontElement,
-      `Front element is ${frontElement} at position ${front}. Queue size: ${rear - front + 1}`,
-      false,
-      29,
-    )
+    applyResult(peek(current()))
   }
 
   const clearQueue = () => {
@@ -438,11 +283,12 @@ export default function LinearQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -452,11 +298,12 @@ export default function LinearQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>

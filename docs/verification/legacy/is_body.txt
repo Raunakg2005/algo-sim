@@ -1,0 +1,3 @@
+  const generateSortingSteps = (inputArray: number[]) => {
+    setSortingSteps(generateInsertionSortSteps(inputArray))
+  }

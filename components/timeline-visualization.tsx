@@ -4,45 +4,33 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock } from "lucide-react"
 
-interface Job {
-  id: string
-  name: string
-  profit: number
-  deadline: number
-  scheduled: boolean
-  timeSlot?: number
-  highlighted?: boolean
-}
+import type { Job, JobOutcome } from "@/lib/engines/job-scheduling"
 
 interface TimelineVisualizationProps {
   maxDeadline: number
   schedule: (Job | null)[]
   currentStep: number
-  currentJobIndex: number
-  sortedJobs: Job[]
+  /** job considered in the current frame and what happened to it (from the engine frame) */
+  currentJob: Job | null
+  outcome: JobOutcome | null
 }
 
 export default function TimelineVisualization({
   maxDeadline,
   schedule,
   currentStep,
-  currentJobIndex,
-  sortedJobs,
+  currentJob,
+  outcome,
 }: TimelineVisualizationProps) {
   const timeSlots = Array.from({ length: maxDeadline }, (_, i) => i + 1)
-
-  const currentJob = currentStep === 2 && currentJobIndex < sortedJobs.length ? sortedJobs[currentJobIndex] : null
 
   const getSlotStatus = (slotIndex: number) => {
     if (currentStep < 2) return "empty"
 
     if (schedule[slotIndex]) return "filled"
 
-    if (
-      currentJob &&
-      slotIndex < currentJob.deadline &&
-      currentJobIndex === sortedJobs.findIndex((j) => j.id === currentJob.id)
-    ) {
+    // free slots the current job could still use (shown while it is being placed)
+    if (currentJob && outcome === "trying" && slotIndex < currentJob.deadline) {
       return "valid"
     }
 
@@ -129,9 +117,9 @@ export default function TimelineVisualization({
                   <strong>${currentJob.profit}</strong> and deadline <strong>{currentJob.deadline}</strong>.
                 </p>
                 <p className="mt-1">
-                  {currentJob.scheduled
+                  {outcome === "scheduled"
                     ? `Successfully scheduled at slot ${currentJob.timeSlot}.`
-                    : currentJobIndex > sortedJobs.findIndex((j) => j.id === currentJob.id)
+                    : outcome === "skipped"
                       ? "Could not schedule this job. All slots before deadline are filled."
                       : "Looking for the latest available slot before deadline..."}
                 </p>

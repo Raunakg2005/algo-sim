@@ -11,32 +11,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-interface SortingStep {
-  array: number[]
-  currentIndex: number
-  comparingIndex: number | null
-  sortedUpTo: number
-  description: string
-  isSwapping: boolean
-  activeCodeLine: number
-}
+import { generateInsertionSortSteps, INSERTION_SORT_CODE, type InsertionSortStep } from "@/lib/engines/insertion-sort"
 
-const algorithmCode = [
-  "function insertionSort(arr):",
-  "  // Start from the second element (index 1)",
-  "  for i = 1 to arr.length - 1:",
-  "    // Element to be inserted into sorted portion",
-  "    current = arr[i]",
-  "    // Start comparing with previous elements",
-  "    j = i - 1",
-  "    // Move elements greater than current to one position ahead",
-  "    while j >= 0 and arr[j] > current:",
-  "      arr[j + 1] = arr[j]",
-  "      j = j - 1",
-  "    // Place current element at its correct position",
-  "    arr[j + 1] = current",
-  "  return arr",
-]
+type SortingStep = InsertionSortStep
+
+const algorithmCode = INSERTION_SORT_CODE
 
 export default function InsertionSortVisualization() {
   const [array, setArray] = useState<number[]>([])
@@ -81,119 +60,7 @@ export default function InsertionSortVisualization() {
   }
 
   const generateSortingSteps = (inputArray: number[]) => {
-    const steps: SortingStep[] = []
-    const arr = [...inputArray]
-
-    steps.push({
-      array: [...arr],
-      currentIndex: 1,
-      comparingIndex: null,
-      sortedUpTo: 0,
-      description: "Starting with the first element as sorted.",
-      isSwapping: false,
-      activeCodeLine: 2, 
-    })
-
-    for (let i = 1; i < arr.length; i++) {
-      const key = arr[i]
-
-      steps.push({
-        array: [...arr],
-        currentIndex: i,
-        comparingIndex: null,
-        sortedUpTo: i - 1,
-        description: `Taking element ${key} to insert into the sorted portion.`,
-        isSwapping: false,
-        activeCodeLine: 4,
-      })
-
-      let j = i - 1
-
-      steps.push({
-        array: [...arr],
-        currentIndex: i,
-        comparingIndex: j,
-        sortedUpTo: i - 1,
-        description: `Setting j = ${j} (position before current element).`,
-        isSwapping: false,
-        activeCodeLine: 6, 
-      })
-
-      if (arr[j] <= key) {
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          comparingIndex: j,
-          sortedUpTo: i,
-          description: `Comparing ${key} with ${arr[j]}. ${key} is already in the correct position.`,
-          isSwapping: false,
-          activeCodeLine: 8, 
-        })
-        continue
-      }
-
-      while (j >= 0 && arr[j] > key) {
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          comparingIndex: j,
-          sortedUpTo: i - 1,
-          description: `Comparing ${key} with ${arr[j]}. ${arr[j]} is greater, so we need to shift it right.`,
-          isSwapping: false,
-          activeCodeLine: 8, 
-        })
-
-        arr[j + 1] = arr[j]
-
-        steps.push({
-          array: [...arr],
-          currentIndex: i,
-          comparingIndex: j,
-          sortedUpTo: i - 1,
-          description: `Shifted ${arr[j]} one position to the right.`,
-          isSwapping: true,
-          activeCodeLine: 9, 
-        })
-
-        j--
-
-        if (j >= 0) {
-          steps.push({
-            array: [...arr],
-            currentIndex: i,
-            comparingIndex: j,
-            sortedUpTo: i - 1,
-            description: `Decremented j to ${j}.`,
-            isSwapping: false,
-            activeCodeLine: 10, 
-          })
-        }
-      }
-
-      arr[j + 1] = key
-
-      steps.push({
-        array: [...arr],
-        currentIndex: i,
-        comparingIndex: null,
-        sortedUpTo: i,
-        description: `Inserted ${key} at position ${j + 1}.`,
-        isSwapping: false,
-        activeCodeLine: 12, 
-      })
-    }
-
-    steps.push({
-      array: [...arr],
-      currentIndex: arr.length,
-      comparingIndex: null,
-      sortedUpTo: arr.length - 1,
-      description: "Array is now sorted using Insertion Sort!",
-      isSwapping: false,
-      activeCodeLine: 13, 
-    })
-
-    setSortingSteps(steps)
+    setSortingSteps(generateInsertionSortSteps(inputArray))
   }
 
   const togglePlay = () => {
@@ -441,11 +308,12 @@ export default function InsertionSortVisualization() {
                     variant="outline"
                     size="icon"
                     className="h-10 w-10"
+                    aria-label="Previous step"
                   >
                     <StepBack className="h-5 w-5" />
                   </Button>
 
-                  <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+                  <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
                     {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                   </Button>
 
@@ -455,11 +323,12 @@ export default function InsertionSortVisualization() {
                     variant="outline"
                     size="icon"
                     className="h-10 w-10"
+                    aria-label="Next step"
                   >
                     <StepForward className="h-5 w-5" />
                   </Button>
 
-                  <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+                  <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
                     <RotateCcw className="h-5 w-5" />
                   </Button>
                 </div>

@@ -58,7 +58,7 @@ export default function JobCard({ job, onRemove, disabled = false, highlighted =
           <div className="flex justify-between items-center mb-2">
             <h4 className="font-medium">{job.name}</h4>
             {!disabled && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemove(job.id)}>
+              <Button aria-label="Remove job" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemove(job.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}

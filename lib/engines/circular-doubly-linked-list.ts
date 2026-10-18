@@ -1,0 +1,463 @@
+// Operation model for the Circular Doubly Linked List visualizer (pure; see singly-linked-list.ts).
+// Invariant of every resulting state: empty, or following `next` from head visits every node once,
+// `prev` is the exact inverse of `next`, tail.next === head and head.prev === tail.
+// Pointer updates are applied one after another (`patch`), so updates that hit the same node
+// (1-node and 2-node lists, where head and tail coincide or are neighbours both ways) are not lost.
+import { codeLineFinder, orderFrom, type OpResult } from "./singly-linked-list"
+
+export type { OpResult } from "./singly-linked-list"
+
+export { parseValueInput, parsePositionInput, parseDeletePositionInput, orderFrom } from "./singly-linked-list"
+
+export interface CircularDoublyListNode {
+  value: number
+  next: number | null
+  prev: number | null
+  id: number
+}
+
+export interface CircularDoublyLinkedListStep {
+  nodes: CircularDoublyListNode[]
+  head: number | null
+  tail: number | null
+  operation: string
+  element?: number
+  position?: number
+  description: string
+  isError: boolean
+  activeCodeLine: number
+  highlightedNodes?: number[]
+}
+
+export interface CircularDoublyListState {
+  nodes: CircularDoublyListNode[]
+  head: number | null
+  tail: number | null
+  nextId: number
+}
+
+export const EMPTY_CIRCULAR_DOUBLY_LIST: CircularDoublyListState = { nodes: [], head: null, tail: null, nextId: 1 }
+
+export const circularDoublyLinkedListCode: readonly string[] = [
+  "class CircularDoublyNode {",
+  "  constructor(data) {",
+  "    this.data = data;",
+  "    this.next = null;",
+  "    this.prev = null;",
+  "  }",
+  "}",
+  "",
+  "class CircularDoublyLinkedList {",
+  "  constructor() {",
+  "    this.head = null;",
+  "    this.tail = null;",
+  "    this.size = 0;",
+  "  }",
+  "",
+  "  // Insert at beginning",
+  "  insertAtBeginning(data) {",
+  "    const newNode = new CircularDoublyNode(data);",
+  "    if (!this.head) {",
+  "      this.head = this.tail = newNode;",
+  "      newNode.next = newNode.prev = newNode;",
+  "    } else {",
+  "      newNode.next = this.head;",
+  "      newNode.prev = this.tail;",
+  "      this.head.prev = newNode;",
+  "      this.tail.next = newNode;",
+  "      this.head = newNode;",
+  "    }",
+  "    this.size++;",
+  "  }",
+  "",
+  "  // Insert at end",
+  "  insertAtEnd(data) {",
+  "    const newNode = new CircularDoublyNode(data);",
+  "    if (!this.head) {",
+  "      this.head = this.tail = newNode;",
+  "      newNode.next = newNode.prev = newNode;",
+  "    } else {",
+  "      newNode.next = this.head;",
+  "      newNode.prev = this.tail;",
+  "      this.tail.next = newNode;",
+  "      this.head.prev = newNode;",
+  "      this.tail = newNode;",
+  "    }",
+  "    this.size++;",
+  "  }",
+  "",
+  "  // Insert at position",
+  "  insertAtPosition(data, position) {",
+  "    if (position < 0 || position > this.size) {",
+  "      throw new Error('Invalid position');",
+  "    }",
+  "    if (position === 0) {",
+  "      this.insertAtBeginning(data);",
+  "      return;",
+  "    }",
+  "    if (position === this.size) {",
+  "      this.insertAtEnd(data);",
+  "      return;",
+  "    }",
+  "    const newNode = new CircularDoublyNode(data);",
+  "    let current = this.head;",
+  "    for (let i = 0; i < position; i++) {",
+  "      current = current.next;",
+  "    }",
+  "    newNode.next = current;",
+  "    newNode.prev = current.prev;",
+  "    current.prev.next = newNode;",
+  "    current.prev = newNode;",
+  "    this.size++;",
+  "  }",
+  "",
+  "  // Delete from beginning",
+  "  deleteFromBeginning() {",
+  "    if (!this.head) return null;",
+  "    const deletedData = this.head.data;",
+  "    if (this.head === this.tail) {",
+  "      this.head = this.tail = null;",
+  "    } else {",
+  "      this.tail.next = this.head.next;",
+  "      this.head.next.prev = this.tail;",
+  "      this.head = this.head.next;",
+  "    }",
+  "    this.size--;",
+  "    return deletedData;",
+  "  }",
+  "",
+  "  // Delete from end",
+  "  deleteFromEnd() {",
+  "    if (!this.head) return null;",
+  "    const deletedData = this.tail.data;",
+  "    if (this.head === this.tail) {",
+  "      this.head = this.tail = null;",
+  "    } else {",
+  "      this.head.prev = this.tail.prev;",
+  "      this.tail.prev.next = this.head;",
+  "      this.tail = this.tail.prev;",
+  "    }",
+  "    this.size--;",
+  "    return deletedData;",
+  "  }",
+  "",
+  "  // Delete at position",
+  "  deleteAtPosition(position) {",
+  "    if (position < 0 || position >= this.size) {",
+  "      throw new Error('Invalid position');",
+  "    }",
+  "    if (position === 0) return this.deleteFromBeginning();",
+  "    if (position === this.size - 1) return this.deleteFromEnd();",
+  "    let current = this.head;",
+  "    for (let i = 0; i < position; i++) {",
+  "      current = current.next;",
+  "    }",
+  "    current.prev.next = current.next;",
+  "    current.next.prev = current.prev;",
+  "    this.size--;",
+  "    return current.data;",
+  "  }",
+  "",
+  "  // Search for element",
+  "  search(data) {",
+  "    if (!this.head) return -1;",
+  "    let current = this.head;",
+  "    let position = 0;",
+  "    do {",
+  "      if (current.data === data) {",
+  "        return position;",
+  "      }",
+  "      current = current.next;",
+  "      position++;",
+  "    } while (current !== this.head);",
+  "    return -1;",
+  "  }",
+  "",
+  "  // Traverse forward",
+  "  traverseForward() {",
+  "    if (!this.head) return [];",
+  "    const elements = [];",
+  "    let current = this.head;",
+  "    do {",
+  "      elements.push(current.data);",
+  "      current = current.next;",
+  "    } while (current !== this.head);",
+  "    return elements;",
+  "  }",
+  "",
+  "  // Traverse backward",
+  "  traverseBackward() {",
+  "    if (!this.head) return [];",
+  "    const elements = [];",
+  "    let current = this.tail;",
+  "    do {",
+  "      elements.push(current.data);",
+  "      current = current.prev;",
+  "    } while (current !== this.tail);",
+  "    return elements;",
+  "  }",
+  "}",
+]
+
+const L = codeLineFinder(circularDoublyLinkedListCode)
+const LINE = {
+  insB: {
+    empty: L("insertAtBeginning", "if (!this.head) {"),
+    self: L("insertAtBeginning", "newNode.next = newNode.prev = newNode;"),
+    link: L("insertAtBeginning", "this.tail.next = newNode;"),
+    done: L("insertAtBeginning", "this.head = newNode;"),
+  },
+  insE: {
+    empty: L("insertAtEnd", "if (!this.head) {"),
+    self: L("insertAtEnd", "newNode.next = newNode.prev = newNode;"),
+    link: L("insertAtEnd", "this.head.prev = newNode;"),
+    done: L("insertAtEnd", "this.tail = newNode;"),
+  },
+  insP: {
+    invalid: L("insertAtPosition", "throw new Error('Invalid position');"),
+    walk: L("insertAtPosition", "for (let i = 0; i < position; i++) {"),
+    link: L("insertAtPosition", "current.prev = newNode;"),
+  },
+  delB: {
+    empty: L("deleteFromBeginning", "if (!this.head) return null;"),
+    read: L("deleteFromBeginning", "const deletedData = this.head.data;"),
+    clear: L("deleteFromBeginning", "this.head = this.tail = null;"),
+    unlink: L("deleteFromBeginning", "this.head = this.head.next;"),
+  },
+  delE: {
+    empty: L("deleteFromEnd", "if (!this.head) return null;"),
+    read: L("deleteFromEnd", "const deletedData = this.tail.data;"),
+    clear: L("deleteFromEnd", "this.head = this.tail = null;"),
+    unlink: L("deleteFromEnd", "this.tail = this.tail.prev;"),
+  },
+  delP: {
+    invalid: L("deleteAtPosition", "throw new Error('Invalid position');"),
+    walk: L("deleteAtPosition", "for (let i = 0; i < position; i++) {"),
+    unlink: L("deleteAtPosition", "current.next.prev = current.prev;"),
+  },
+  search: {
+    empty: L("search", "if (!this.head) return -1;"),
+    check: L("search", "if (current.data === data) {"),
+    found: L("search", "return position;"),
+    missing: L("search", "return -1;"),
+  },
+  fwd: { empty: L("traverseForward", "if (!this.head) return [];"), visit: L("traverseForward", "elements.push(current.data);"), done: L("traverseForward", "return elements;") },
+  bwd: { empty: L("traverseBackward", "if (!this.head) return [];"), visit: L("traverseBackward", "elements.push(current.data);"), done: L("traverseBackward", "return elements;") },
+}
+
+type Node = CircularDoublyListNode
+type Step = CircularDoublyLinkedListStep
+type State = CircularDoublyListState
+type Result = OpResult<State, Step>
+
+const frame = (
+  nodes: Node[],
+  head: number | null,
+  tail: number | null,
+  operation: string,
+  element: number | undefined,
+  position: number | undefined,
+  description: string,
+  isError: boolean,
+  activeCodeLine: number,
+  highlightedNodes: number[],
+): Step => ({
+  nodes: nodes.map((n) => ({ ...n })),
+  head,
+  tail,
+  operation,
+  element,
+  position,
+  description,
+  isError,
+  activeCodeLine,
+  highlightedNodes: [...highlightedNodes],
+})
+
+/** Applies pointer updates one after another, so two updates of the same node both take effect. */
+function patch(nodes: Node[], updates: [number, Partial<Node>][]): Node[] {
+  let out = nodes
+  for (const [id, change] of updates) out = out.map((n) => (n.id === id ? { ...n, ...change } : n))
+  return out
+}
+
+export function circularDoublySize(state: State): number {
+  return orderFrom(state.nodes, state.head).length
+}
+
+function insertEdge(state: State, value: number, atEnd: boolean): Result {
+  const op = atEnd ? "insertEnd" : "insertBeginning"
+  const lines = atEnd ? LINE.insE : LINE.insB
+  const id = state.nextId
+  const { head, tail } = state
+  if (head === null || tail === null) {
+    const nodes = [...state.nodes, { value, next: id, prev: id, id }]
+    const steps = [
+      frame(nodes, null, null, op, value, undefined, "List is empty, creating first node", false, lines.empty, []),
+      frame(nodes, id, id, op, value, undefined, `Inserted ${value} as first node. Node points to itself in both directions`, false, lines.self, [id]),
+    ]
+    return { state: { nodes, head: id, tail: id, nextId: id + 1 }, steps, ok: true }
+  }
+  // new node sits between tail and head; with one node, head === tail gets both updates
+  const nodes = patch([...state.nodes, { value, next: head, prev: tail, id }], [
+    [head, { prev: id }],
+    [tail, { next: id }],
+  ])
+  const newHead = atEnd ? head : id
+  const newTail = atEnd ? id : tail
+  const steps = [
+    frame(nodes, head, tail, op, value, undefined, "Creating new node and updating circular links", false, lines.link, []),
+    frame(nodes, newHead, newTail, op, value, undefined, `Inserted ${value} at ${atEnd ? "end" : "beginning"}. Updated all circular links`, false, lines.done, [id]),
+  ]
+  return { state: { nodes, head: newHead, tail: newTail, nextId: id + 1 }, steps, ok: true }
+}
+
+export const insertAtBeginning = (state: State, value: number): Result => insertEdge(state, value, false)
+export const insertAtEnd = (state: State, value: number): Result => insertEdge(state, value, true)
+
+export function insertAtPosition(state: State, value: number, position: number): Result {
+  const order = orderFrom(state.nodes, state.head)
+  const size = order.length
+  if (position < 0 || position > size) {
+    const steps = [frame(state.nodes, state.head, state.tail, "insertPosition", value, position, `Invalid position ${position}. List size is ${size}`, true, LINE.insP.invalid, [])]
+    return { state, steps, ok: false }
+  }
+  if (position === 0) return insertAtBeginning(state, value)
+  if (position === size) return insertAtEnd(state, value)
+  const id = state.nextId
+  const current = order[position]
+  const before = order[position - 1]
+  const path = order.slice(0, position).map((n) => n.id)
+  const nodes = patch([...state.nodes, { value, next: current.id, prev: before.id, id }], [
+    [before.id, { next: id }],
+    [current.id, { prev: id }],
+  ])
+  const steps = [
+    frame(state.nodes, state.head, state.tail, "insertPosition", value, position, `Traversing to position ${position}: ${path.join(" → ")}`, false, LINE.insP.walk, path),
+    frame(nodes, state.head, state.tail, "insertPosition", value, position, `Inserted ${value} at position ${position}`, false, LINE.insP.link, [id]),
+  ]
+  return { state: { nodes, head: state.head, tail: state.tail, nextId: id + 1 }, steps, ok: true }
+}
+
+export function deleteFromBeginning(state: State): Result {
+  const { head, tail } = state
+  const order = orderFrom(state.nodes, head)
+  if (head === null || tail === null || order.length === 0) {
+    return { state, steps: [frame(state.nodes, head, tail, "deleteBeginning", undefined, undefined, "Cannot delete from empty list", true, LINE.delB.empty, [])], ok: false }
+  }
+  const v = order[0].value
+  const steps = [frame(state.nodes, head, tail, "deleteBeginning", v, undefined, `Deleting head node with value ${v}`, false, LINE.delB.read, [head])]
+  if (order.length === 1) {
+    steps.push(frame([], null, null, "deleteBeginning", v, undefined, `Deleted ${v} from beginning. List is now empty`, false, LINE.delB.clear, []))
+    return { state: { nodes: [], head: null, tail: null, nextId: state.nextId }, steps, ok: true }
+  }
+  const newHead = order[1].id
+  const nodes = patch(state.nodes.filter((n) => n.id !== head), [
+    [tail, { next: newHead }],
+    [newHead, { prev: tail }],
+  ])
+  steps.push(frame(nodes, newHead, tail, "deleteBeginning", v, undefined, `Deleted ${v} from beginning. Updated circular links`, false, LINE.delB.unlink, []))
+  return { state: { nodes, head: newHead, tail, nextId: state.nextId }, steps, ok: true }
+}
+
+export function deleteFromEnd(state: State): Result {
+  const { head, tail } = state
+  const order = orderFrom(state.nodes, head)
+  if (head === null || tail === null || order.length === 0) {
+    return { state, steps: [frame(state.nodes, head, tail, "deleteEnd", undefined, undefined, "Cannot delete from empty list", true, LINE.delE.empty, [])], ok: false }
+  }
+  const v = order[order.length - 1].value
+  const steps = [frame(state.nodes, head, tail, "deleteEnd", v, undefined, `Deleting tail node with value ${v}`, false, LINE.delE.read, [tail])]
+  if (order.length === 1) {
+    steps.push(frame([], null, null, "deleteEnd", v, undefined, `Deleted ${v} from end. List is now empty`, false, LINE.delE.clear, []))
+    return { state: { nodes: [], head: null, tail: null, nextId: state.nextId }, steps, ok: true }
+  }
+  const newTail = order[order.length - 2].id
+  const nodes = patch(state.nodes.filter((n) => n.id !== tail), [
+    [head, { prev: newTail }],
+    [newTail, { next: head }],
+  ])
+  steps.push(frame(nodes, head, newTail, "deleteEnd", v, undefined, `Deleted ${v} from end. Updated circular links`, false, LINE.delE.unlink, []))
+  return { state: { nodes, head, tail: newTail, nextId: state.nextId }, steps, ok: true }
+}
+
+export function deleteAtPosition(state: State, position: number): Result {
+  const order = orderFrom(state.nodes, state.head)
+  const size = order.length
+  if (position < 0 || position >= size) {
+    const steps = [frame(state.nodes, state.head, state.tail, "deletePosition", undefined, position, `Invalid position ${position}. List size is ${size}`, true, LINE.delP.invalid, [])]
+    return { state, steps, ok: false, inputError: `Position must be less than list size (${size})` }
+  }
+  if (position === 0) return deleteFromBeginning(state)
+  if (position === size - 1) return deleteFromEnd(state)
+  const target = order[position]
+  const before = order[position - 1]
+  const after = order[position + 1]
+  const path = order.slice(0, position).map((n) => n.id)
+  const nodes = patch(state.nodes.filter((n) => n.id !== target.id), [
+    [before.id, { next: after.id }],
+    [after.id, { prev: before.id }],
+  ])
+  const steps = [
+    frame(state.nodes, state.head, state.tail, "deletePosition", target.value, position, `Traversing to position ${position}: ${path.join(" → ")} → ${target.id}`, false, LINE.delP.walk, [...path, target.id]),
+    frame(nodes, state.head, state.tail, "deletePosition", target.value, position, `Deleted ${target.value} from position ${position}. Updated bidirectional circular links`, false, LINE.delP.unlink, []),
+  ]
+  return { state: { nodes, head: state.head, tail: state.tail, nextId: state.nextId }, steps, ok: true }
+}
+
+export function search(state: State, value: number): Result {
+  const order = orderFrom(state.nodes, state.head)
+  if (order.length === 0) {
+    return { state, steps: [frame(state.nodes, state.head, state.tail, "search", value, undefined, "Cannot search in empty list", true, LINE.search.empty, [])], ok: false }
+  }
+  const steps: Step[] = []
+  const path: number[] = []
+  for (let position = 0; position < order.length; position++) {
+    const node = order[position]
+    path.push(node.id)
+    steps.push(frame(state.nodes, state.head, state.tail, "search", value, position, `Searching for ${value}. Checking node ${node.id} with value ${node.value}`, false, LINE.search.check, path))
+    if (node.value === value) {
+      steps.push(frame(state.nodes, state.head, state.tail, "search", value, position, `Found ${value} at position ${position}`, false, LINE.search.found, [node.id]))
+      return { state, steps, ok: true }
+    }
+  }
+  steps.push(frame(state.nodes, state.head, state.tail, "search", value, undefined, `Element ${value} not found in the list`, false, LINE.search.missing, path))
+  return { state, steps, ok: true }
+}
+
+function traverse(state: State, backward: boolean): Result {
+  const op = backward ? "traverseBackward" : "traverseForward"
+  const lines = backward ? LINE.bwd : LINE.fwd
+  const start = backward ? state.tail : state.head
+  if (start === null || state.head === null) {
+    return { state, steps: [frame(state.nodes, state.head, state.tail, op, undefined, undefined, "Cannot traverse empty list", true, lines.empty, [])], ok: false }
+  }
+  const byId = new Map<number, Node>()
+  for (const n of state.nodes) byId.set(n.id, n)
+  const steps: Step[] = []
+  const path: number[] = []
+  const values: number[] = []
+  let cur: number | null = start
+  // do { ... } while (current !== start), bounded by the visited set so a corrupt state cannot loop forever
+  while (cur !== null && !path.includes(cur)) {
+    const node = byId.get(cur)
+    if (!node) break
+    path.push(cur)
+    values.push(node.value)
+    steps.push(
+      frame(state.nodes, state.head, state.tail, op, undefined, undefined,
+        backward ? `Backward traversal: ${values.join(" ← ")} ← (back to tail)` : `Forward traversal: ${values.join(" → ")} → (back to head)`,
+        false, lines.visit, path),
+    )
+    cur = backward ? node.prev : node.next
+  }
+  steps.push(
+    frame(state.nodes, state.head, state.tail, op, undefined, undefined,
+      backward ? `Complete backward traversal: ${values.join(" ← ")} ← ${values[0]} (circular)` : `Complete forward traversal: ${values.join(" → ")} → ${values[0]} (circular)`,
+      false, lines.done, path),
+  )
+  return { state, steps, ok: true }
+}
+
+export const traverseForward = (state: State): Result => traverse(state, false)
+export const traverseBackward = (state: State): Result => traverse(state, true)

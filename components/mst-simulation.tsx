@@ -12,7 +12,7 @@ import { ChevronRight, ChevronLeft, Play, Pause, RotateCcw, Plus, Minus, Shuffle
 import GraphVisualization from "./graph-visualization"
 import AlgorithmExplanation from "./algorithm-explanation"
 import { generateRandomGraph, Edge, Node, Graph } from "@/lib/graph-utils"
-import { runKruskalsAlgorithm, runPrimsAlgorithm, AlgorithmStep } from "@/lib/mst-algorithms"
+import { runKruskalsAlgorithm, runPrimsAlgorithm, type AlgorithmStep } from "@/lib/engines/mst"
 
 export default function MSTSimulation() {
   const [algorithm, setAlgorithm] = useState<"kruskal" | "prim">("kruskal")
@@ -177,6 +177,7 @@ export default function MSTSimulation() {
                 size="icon" 
                 onClick={stepBackward}
                 disabled={currentStepIndex === 0 || isPlaying}
+                aria-label="Previous step"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -194,6 +195,7 @@ export default function MSTSimulation() {
                 size="icon" 
                 onClick={stepForward}
                 disabled={currentStepIndex >= steps.length - 1 || isPlaying}
+                aria-label="Next step"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -257,7 +259,7 @@ export default function MSTSimulation() {
                 <Label htmlFor="node-count">Number of Nodes: {nodeCount}</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Button 
+                <Button aria-label="Fewer nodes" 
                   variant="outline" 
                   size="icon" 
                   onClick={() => setNodeCount(prev => Math.max(4, prev - 1))}
@@ -275,7 +277,7 @@ export default function MSTSimulation() {
                   disabled={isPlaying}
                   className="flex-1"
                 />
-                <Button 
+                <Button aria-label="More nodes" 
                   variant="outline" 
                   size="icon" 
                   onClick={() => setNodeCount(prev => Math.min(12, prev + 1))}

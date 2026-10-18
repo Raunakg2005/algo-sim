@@ -1157,37 +1157,45 @@ function heapify(arr, heapSize, i) {
                       <div>
                         <h3 className="text-lg font-semibold mb-4">Strassen's Implementation</h3>
                         <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto">
-                          <code>{`function strassenMultiply(A, B) {
-  // Base case for 2x2 matrix
-  if (A.length === 2) {
-    return [
-      [
-        A[0][0] * B[0][0] + A[0][1] * B[1][0],
-        A[0][0] * B[0][1] + A[0][1] * B[1][1]
-      ],
-      [
-        A[1][0] * B[0][0] + A[1][1] * B[1][0],
-        A[1][0] * B[0][1] + A[1][1] * B[1][1]
-      ]
-    ];
-  }
+                          <code>{`// Strassen's algorithm for n x n matrices, n a power of two.
+// Same numbering of P1..P7 as the visualization.
+function strassenMultiply(A, B) {
+  const n = A.length;
+  if (n === 1) return [[A[0][0] * B[0][0]]];
 
-  // Split matrices into quadrants
-  const [A11, A12, A21, A22] = splitMatrix(A);
-  const [B11, B12, B21, B22] = splitMatrix(B);
+  const [A11, A12, A21, A22] = split(A);
+  const [B11, B12, B21, B22] = split(B);
 
-  // Compute 7 products recursively
-  const P1 = strassenMultiply(A11, matrixSubtract(B12, B22));
-  const P2 = strassenMultiply(matrixAdd(A11, A12), B22);
-  // ... other products
+  // seven recursive products instead of eight
+  const P1 = strassenMultiply(add(A11, A22), add(B11, B22));
+  const P2 = strassenMultiply(add(A21, A22), B11);
+  const P3 = strassenMultiply(A11, sub(B12, B22));
+  const P4 = strassenMultiply(A22, sub(B21, B11));
+  const P5 = strassenMultiply(add(A11, A12), B22);
+  const P6 = strassenMultiply(sub(A21, A11), add(B11, B12));
+  const P7 = strassenMultiply(sub(A12, A22), add(B21, B22));
 
-  // Combine results (this is an example and may need adjustment)
-  return combineMatrix(
-    matrixAdd(matrixSubtract(matrixAdd(P5, P4), P2), P6),
-    matrixAdd(P1, P2),
-    matrixAdd(P3, P4),
-    matrixSubtract(matrixSubtract(matrixAdd(P5, P1), P3), P7)
-  );
+  const C11 = add(sub(add(P1, P4), P5), P7);
+  const C12 = add(P3, P5);
+  const C21 = add(P2, P4);
+  const C22 = add(sub(add(P1, P3), P2), P6);
+  return join(C11, C12, C21, C22);
+}
+
+const add = (X, Y) => X.map((row, i) => row.map((x, j) => x + Y[i][j]));
+const sub = (X, Y) => X.map((row, i) => row.map((x, j) => x - Y[i][j]));
+
+function split(M) {
+  const h = M.length / 2;
+  const block = (r, c) => M.slice(r, r + h).map((row) => row.slice(c, c + h));
+  return [block(0, 0), block(0, h), block(h, 0), block(h, h)];
+}
+
+function join(C11, C12, C21, C22) {
+  return [
+    ...C11.map((row, i) => [...row, ...C12[i]]),
+    ...C21.map((row, i) => [...row, ...C22[i]]),
+  ];
 }`}</code>
                         </pre>
                       </div>

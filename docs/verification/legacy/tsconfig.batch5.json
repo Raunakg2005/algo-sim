@@ -1,0 +1,11 @@
+{
+  "extends": "tsconfig.json",
+  "compilerOptions": { "incremental": false, "noEmit": true, "plugins": [], "types": ["node"], "typeRoots": ["node_modules/@types"], "baseUrl": "" },
+  "include": [
+    "next-env.d.ts",
+    "lib/engines/quick-sort.ts", "lib/engines/heap-sort.ts", "lib/engines/max-min.ts", "lib/engines/selection-sort.ts", "lib/engines/insertion-sort.ts",
+    "tests/reference/quick-sort.ts", "tests/reference/heap-sort.ts", "tests/reference/max-min.ts", "tests/reference/selection-sort.ts", "tests/reference/insertion-sort.ts",
+    "tests/engines/quick-sort.test.ts", "tests/engines/heap-sort.test.ts", "tests/engines/max-min.test.ts", "tests/engines/selection-sort.test.ts", "tests/engines/insertion-sort.test.ts",
+    "components/quick-sort-visualization.tsx", "components/heap-sort-visualizer.tsx", "components/divide-conquer-maxmin.tsx", "components/selection-sort-visualization.tsx", "components/insertion-sort-visualization.tsx"
+  ]
+}

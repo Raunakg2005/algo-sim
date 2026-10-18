@@ -1,0 +1,10 @@
+linear queue: 20000 random sequences (size 1-20, length 1-30, values -20..20)
+  code-line highlight wrong on 80315/347245 frames (23.1%)
+  highlighted code line wrong (peek error: shows ""): 9243/20000 sequences (46.2%)
+    minimal example: size=2: peek
+  highlighted code line wrong (dequeue error: shows "dequeue() {"): 12513/20000 sequences (62.6%)
+    minimal example: size=6: dequeue
+  visualization shows a stale frame, not the state after the operation: 19305/20000 sequences (96.5%)
+    minimal example: size=8: enqueue(2)
+  highlighted code line wrong (peek: shows "if (this.isEmpty()) return null;"): 14210/20000 sequences (71.0%)
+    minimal example: size=6: enqueue(7), peek

@@ -51,3 +51,8 @@ docker-compose.yml
 # README
 README.md
 README_AUTH.md
+
+# verification records, tests and benchmarks are not needed in the image
+docs
+bench
+audit-out

@@ -1,0 +1,5 @@
+import { generateInsertionSortSteps, INSERTION_SORT_CODE, type InsertionSortStep } from "@/lib/engines/insertion-sort"
+
+type SortingStep = InsertionSortStep
+
+const algorithmCode = INSERTION_SORT_CODE

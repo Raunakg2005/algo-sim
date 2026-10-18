@@ -1,0 +1,9 @@
+default [2,4,6,8,10] t=16: { missed: true, extra: false, badPrune: true } found: [] oracle: ["2,4,10","2,6,8","6,10"]
+Random button: runs=20000 anyFail=16324 (81.6%) missedSolutions=16324 extra=0 prunedFeasibleBranch=16324 | inputs with >=1 solution=20000, of which missed>=1 = 16324
+Typed, positive 1..20, n 1..10, target 0..80: runs=20000 anyFail=9189 (45.9%) missedSolutions=9189 extra=0 prunedFeasibleBranch=9189 | inputs with >=1 solution=9364, of which missed>=1 = 9189
+Typed, with zeros 0..6, n 1..10, target 0..20: runs=10000 anyFail=5921 (59.2%) missedSolutions=5921 extra=0 prunedFeasibleBranch=5921 | inputs with >=1 solution=6230, of which missed>=1 = 5921
+Typed, with negatives -10..10, n 1..10, target -20..20: runs=10000 anyFail=4403 (44.0%) missedSolutions=4403 extra=0 prunedFeasibleBranch=4403 | inputs with >=1 solution=4728, of which missed>=1 = 4403
+minimal positive: numbers=[1] target=0 { missed: true, extra: false, badPrune: true }
+minimal any integer: numbers=[1] target=0 { missed: true, extra: false, badPrune: true }
+Typed '1, 2' target '3' then Start: engine ran on [2,4,6,8,10] target used in captions: Initialize with empty subset. Target sum: 16 | target state shown: 3 | input box now: "2, 4, 6, 8, 10"
+Typed input on first Start: ran on stale numbers/target in 10000/10000

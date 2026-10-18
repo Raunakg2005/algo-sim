@@ -1,0 +1,14 @@
+== circular-doubly-linked-list: 20000 random click sequences (length 1..20, values -20..20, positions 0..size+1, 5% malformed input)
+sequences with >=1 defect: 19807 (99.0%)
+  codeLine: 19515 sequences (97.6%); failing clicks by op: {"insertPosition":8160,"insertEnd":10090,"deleteBeginning":22576,"deleteEnd":22128,"deletePosition":20495,"traverseBackward":20874,"traverseForward":19796,"search":19606}
+  structure: 12118 sequences (60.6%); failing clicks by op: {"insertPosition":4943,"insertEnd":5909,"deleteEnd":3099,"insertBeginning":7074,"traverseBackward":2130,"deleteBeginning":2319,"search":1846,"traverseForward":2320,"deletePosition":2815}
+  hang: 2338 sequences (11.7%); failing clicks by op: {"search":967,"traverseForward":589,"traverseBackward":782}
+  frame: 5419 sequences (27.1%); failing clicks by op: {"deleteEnd":4167,"deleteBeginning":3575,"search":586,"traverseForward":1640,"traverseBackward":1259,"deletePosition":2328,"insertEnd":388,"insertBeginning":676,"insertPosition":1157}
+  validation: 491 sequences (2.5%); failing clicks by op: {"insertPosition":588}
+  clicks per op: {"insertPosition":23196,"insertEnd":22579,"deleteBeginning":22576,"deleteEnd":22128,"deletePosition":21654,"traverseBackward":21656,"traverseForward":20385,"search":21834,"insertBeginning":23092}
+exhaustive: all 8420 click sequences of length 1..3 over 20 clicks (values 1,2; positions 0..2; one empty-value insertPosition)
+  codeLine: 7905 failing sequences; minimal: insertEnd("1")  =>  insertEnd frame "List is empty, creating first node" highlights line 31 "  // Insert at end" outside insertAtEnd() [32..45]
+  validation: 1181 failing sequences; minimal: insertPosition("", pos 0)  =>  invalid value "" silently ignored (no error message)
+  structure: 2112 failing sequences; minimal: insertBeginning("1") ; insertBeginning("1")  =>  forward: next-cycle not through start at node 1
+  frame: 192 failing sequences; minimal: insertBeginning("1") ; insertBeginning("1") ; deleteBeginning()  =>  deleteBeginning: node 1.prev -> missing 2
+  hang: 60 failing sequences; minimal: insertBeginning("1") ; insertBeginning("1") ; search("2")  =>  one click produced more than 500 frames (infinite loop)

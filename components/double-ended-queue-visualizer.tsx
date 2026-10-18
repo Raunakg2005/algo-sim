@@ -11,96 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 
-interface DequeStep {
-  deque: (number | undefined)[]
-  front: number
-  rear: number
-  operation: string
-  element?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-}
-
-const dequeCode = [
-  "class DoubleEndedQueue {",
-  "  constructor(size) {",
-  "    this.items = new Array(size);",
-  "    this.front = -1;",
-  "    this.rear = -1;",
-  "    this.maxSize = size;",
-  "    this.count = 0;",
-  "  }",
-  "",
-  "  addFront(element) {",
-  "    if (this.isFull()) return false;",
-  "    if (this.isEmpty()) {",
-  "      this.front = this.rear = 0;",
-  "    } else {",
-  "      this.front = (this.front - 1 + this.maxSize) % this.maxSize;",
-  "    }",
-  "    this.items[this.front] = element;",
-  "    this.count++;",
-  "    return true;",
-  "  }",
-  "",
-  "  addRear(element) {",
-  "    if (this.isFull()) return false;",
-  "    if (this.isEmpty()) {",
-  "      this.front = this.rear = 0;",
-  "    } else {",
-  "      this.rear = (this.rear + 1) % this.maxSize;",
-  "    }",
-  "    this.items[this.rear] = element;",
-  "    this.count++;",
-  "    return true;",
-  "  }",
-  "",
-  "  removeFront() {",
-  "    if (this.isEmpty()) return null;",
-  "    const element = this.items[this.front];",
-  "    this.items[this.front] = undefined;",
-  "    this.count--;",
-  "    if (this.isEmpty()) {",
-  "      this.front = this.rear = -1;",
-  "    } else {",
-  "      this.front = (this.front + 1) % this.maxSize;",
-  "    }",
-  "    return element;",
-  "  }",
-  "",
-  "  removeRear() {",
-  "    if (this.isEmpty()) return null;",
-  "    const element = this.items[this.rear];",
-  "    this.items[this.rear] = undefined;",
-  "    this.count--;",
-  "    if (this.isEmpty()) {",
-  "      this.front = this.rear = -1;",
-  "    } else {",
-  "      this.rear = (this.rear - 1 + this.maxSize) % this.maxSize;",
-  "    }",
-  "    return element;",
-  "  }",
-  "",
-  "  peekFront() {",
-  "    if (this.isEmpty()) return null;",
-  "    return this.items[this.front];",
-  "  }",
-  "",
-  "  peekRear() {",
-  "    if (this.isEmpty()) return null;",
-  "    return this.items[this.rear];",
-  "  }",
-  "",
-  "  isEmpty() {",
-  "    return this.count === 0;",
-  "  }",
-  "",
-  "  isFull() {",
-  "    return this.count === this.maxSize;",
-  "  }",
-  "}",
-]
+import * as dequeEngine from "@/lib/engines/deque"
+import { DEQUE_CODE as dequeCode, type DequeResult, type DequeState, type DequeStep } from "@/lib/engines/deque"
 
 export default function DoubleEndedQueueVisualizer() {
   const [dequeSize, setDequeSize] = useState<number>(8)
@@ -120,51 +32,38 @@ export default function DoubleEndedQueueVisualizer() {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newDeque: (number | undefined)[],
-    newFront: number,
-    newRear: number,
-    newCount: number,
-    operation: string,
-    element: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-  ) => {
-    const newStep: DequeStep = {
-      deque: [...newDeque],
-      front: newFront,
-      rear: newRear,
-      operation,
-      element,
-      description,
-      isError,
-      activeCodeLine,
-    }
-    setSteps((prev) => [...prev, newStep])
+  const current = (): DequeState => ({ items: deque, front, rear, count, size: dequeSize })
+
+  // append an operation's frames to the history and show them
+  const applyResult = (result: DequeResult) => {
+    const playback = dequeEngine.playbackAfterOperation(steps.length, result.steps.length)
+    setDeque(result.state.items)
+    setFront(result.state.front)
+    setRear(result.state.rear)
+    setCount(result.state.count)
+    setSteps([...steps, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
   }
 
-  const validateInput = (value: string): number | null => {
-    const trimmed = value.trim()
-    if (!trimmed) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(trimmed, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
+  const addWith = (op: (state: DequeState, element: number) => DequeResult) => {
+    const parsed = dequeEngine.parseIntegerInput(inputValue)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
+      return
     }
     setInputError("")
-    return num
+    applyResult(op(current(), parsed.value))
+    setInputValue("")
   }
 
   const updateDequeSize = () => {
-    const size = Number.parseInt(sizeInput.trim())
-    if (isNaN(size) || size < 2 || size > 12) {
-      setSizeError("Deque size must be between 2 and 12")
+    const parsed = dequeEngine.parseDequeSize(sizeInput)
+    if ("error" in parsed) {
+      setSizeError(parsed.error)
       return
     }
+    const size = parsed.value
     setSizeError("")
     setDequeSize(size)
     setDeque(new Array(size).fill(undefined))
@@ -176,275 +75,12 @@ export default function DoubleEndedQueueVisualizer() {
     setIsPlaying(false)
   }
 
-  const addFront = () => {
-    const element = validateInput(inputValue)
-    if (element === null) return
-
-    if (count === dequeSize) {
-      addStep(deque, front, rear, count, "addFront", element, `Cannot add ${element} to front. Deque is full!`, true, 9)
-      setInputValue("")
-      return
-    }
-
-    const newDeque = [...deque]
-    let newFront = front
-    let newRear = rear
-    let newCount = count
-
-    if (count === 0) {
-      newFront = 0
-      newRear = 0
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "addFront",
-        element,
-        `Deque is empty. Setting front and rear to 0.`,
-        false,
-        11,
-      )
-    } else {
-      newFront = (front - 1 + dequeSize) % dequeSize
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "addFront",
-        element,
-        `Moving front circularly: (${front} - 1 + ${dequeSize}) % ${dequeSize} = ${newFront}`,
-        false,
-        14,
-      )
-    }
-
-    newDeque[newFront] = element
-    newCount++
-
-    setDeque(newDeque)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
-
-    addStep(
-      newDeque,
-      newFront,
-      newRear,
-      newCount,
-      "addFront",
-      element,
-      `Added ${element} to front at position ${newFront}. Deque size: ${newCount}/${dequeSize}`,
-      false,
-      16,
-    )
-    setInputValue("")
-  }
-
-  const addRear = () => {
-    const element = validateInput(inputValue)
-    if (element === null) return
-
-    if (count === dequeSize) {
-      addStep(deque, front, rear, count, "addRear", element, `Cannot add ${element} to rear. Deque is full!`, true, 21)
-      setInputValue("")
-      return
-    }
-
-    const newDeque = [...deque]
-    let newFront = front
-    let newRear = rear
-    let newCount = count
-
-    if (count === 0) {
-      newFront = 0
-      newRear = 0
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "addRear",
-        element,
-        `Deque is empty. Setting front and rear to 0.`,
-        false,
-        23,
-      )
-    } else {
-      newRear = (rear + 1) % dequeSize
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "addRear",
-        element,
-        `Moving rear circularly: (${rear} + 1) % ${dequeSize} = ${newRear}`,
-        false,
-        26,
-      )
-    }
-
-    newDeque[newRear] = element
-    newCount++
-
-    setDeque(newDeque)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
-
-    addStep(
-      newDeque,
-      newFront,
-      newRear,
-      newCount,
-      "addRear",
-      element,
-      `Added ${element} to rear at position ${newRear}. Deque size: ${newCount}/${dequeSize}`,
-      false,
-      28,
-    )
-    setInputValue("")
-  }
-
-  const removeFront = () => {
-    if (count === 0) {
-      addStep(deque, front, rear, count, "removeFront", undefined, "Cannot remove from empty deque", true, 33)
-      return
-    }
-
-    const removedElement = deque[front]
-    const newDeque = [...deque]
-    newDeque[front] = undefined
-
-    let newFront = front
-    let newRear = rear
-    const newCount = count - 1
-
-    if (newCount === 0) {
-      newFront = -1
-      newRear = -1
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "removeFront",
-        removedElement,
-        `Removed ${removedElement} from front. Deque is now empty.`,
-        false,
-        37,
-      )
-    } else {
-      newFront = (front + 1) % dequeSize
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "removeFront",
-        removedElement,
-        `Removed ${removedElement} from front. Moving front circularly: (${front} + 1) % ${dequeSize} = ${newFront}. Deque size: ${newCount}/${dequeSize}`,
-        false,
-        40,
-      )
-    }
-
-    setDeque(newDeque)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
-  }
-
-  const removeRear = () => {
-    if (count === 0) {
-      addStep(deque, front, rear, count, "removeRear", undefined, "Cannot remove from empty deque", true, 45)
-      return
-    }
-
-    const removedElement = deque[rear]
-    const newDeque = [...deque]
-    newDeque[rear] = undefined
-
-    let newFront = front
-    let newRear = rear
-    const newCount = count - 1
-
-    if (newCount === 0) {
-      newFront = -1
-      newRear = -1
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "removeRear",
-        removedElement,
-        `Removed ${removedElement} from rear. Deque is now empty.`,
-        false,
-        49,
-      )
-    } else {
-      newRear = (rear - 1 + dequeSize) % dequeSize
-      addStep(
-        newDeque,
-        newFront,
-        newRear,
-        newCount,
-        "removeRear",
-        removedElement,
-        `Removed ${removedElement} from rear. Moving rear circularly: (${rear} - 1 + ${dequeSize}) % ${dequeSize} = ${newRear}. Deque size: ${newCount}/${dequeSize}`,
-        false,
-        52,
-      )
-    }
-
-    setDeque(newDeque)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
-  }
-
-  const peekFront = () => {
-    if (count === 0) {
-      addStep(deque, front, rear, count, "peekFront", undefined, "Cannot peek empty deque", true, 57)
-      return
-    }
-
-    const frontElement = deque[front]
-    addStep(
-      deque,
-      front,
-      rear,
-      count,
-      "peekFront",
-      frontElement,
-      `Front element is ${frontElement} at position ${front}. Deque size: ${count}/${dequeSize}`,
-      false,
-      59,
-    )
-  }
-
-  const peekRear = () => {
-    if (count === 0) {
-      addStep(deque, front, rear, count, "peekRear", undefined, "Cannot peek empty deque", true, 62)
-      return
-    }
-
-    const rearElement = deque[rear]
-    addStep(
-      deque,
-      front,
-      rear,
-      count,
-      "peekRear",
-      rearElement,
-      `Rear element is ${rearElement} at position ${rear}. Deque size: ${count}/${dequeSize}`,
-      false,
-      64,
-    )
-  }
+  const addFront = () => addWith(dequeEngine.addFront)
+  const addRear = () => addWith(dequeEngine.addRear)
+  const removeFront = () => applyResult(dequeEngine.removeFront(current()))
+  const removeRear = () => applyResult(dequeEngine.removeRear(current()))
+  const peekFront = () => applyResult(dequeEngine.peekFront(current()))
+  const peekRear = () => applyResult(dequeEngine.peekRear(current()))
 
   const clearDeque = () => {
     setDeque(new Array(dequeSize).fill(undefined))
@@ -721,11 +357,12 @@ export default function DoubleEndedQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -735,11 +372,12 @@ export default function DoubleEndedQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>
