@@ -1,0 +1,2 @@
+default: nodes in frame 0 = 17 nodes in final frame = 17 root children at frame 0: 2
+frame 0 shows nodes not yet explored: 1937 / 2000

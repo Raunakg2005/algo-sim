@@ -107,7 +107,7 @@ export default function CoordinateInput({ cities, onChange, disabled = false }: 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{city.x}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{city.y}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button variant="ghost" size="sm" onClick={() => removeCity(city.id)} disabled={disabled}>
+                    <Button aria-label="Remove city" variant="ghost" size="sm" onClick={() => removeCity(city.id)} disabled={disabled}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </td>

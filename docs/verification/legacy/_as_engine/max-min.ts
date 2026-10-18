@@ -1,0 +1,213 @@
+type AlgorithmStep = any
+export function generateMaxMinSteps(array: number[]): any[] { let captured: any[] = []; const setSteps = (s: any[]) => { captured = s }; const useEffect = (f: () => void, _d: unknown[]) => f()
+  useEffect(() => {
+    const algorithmSteps: AlgorithmStep[] = []
+
+    algorithmSteps.push({
+      segments: [{ start: 0, end: array.length - 1, level: 0 }],
+      description: "We start with the full array and need to find the maximum and minimum values.",
+      phase: "divide",
+    })
+
+    const divideAndConquer = (start: number, end: number, level: number): { max: number; min: number } => {
+      if (start === end) {
+        const currentSegments = [...algorithmSteps[algorithmSteps.length - 1].segments]
+        const segmentIndex = currentSegments.findIndex(
+          (seg) => seg.start === start && seg.end === end && seg.level === level,
+        )
+
+        if (segmentIndex !== -1) {
+          const updatedSegments = [...currentSegments]
+          updatedSegments[segmentIndex] = {
+            ...updatedSegments[segmentIndex],
+            max: array[start],
+            min: array[start],
+            isResult: true,
+          }
+
+          algorithmSteps.push({
+            segments: updatedSegments,
+            description: `Base case: When we have a single element (${array[start]}), it is both the maximum and minimum.`,
+            phase: "compare",
+          })
+        }
+
+        return { max: array[start], min: array[start] }
+      }
+
+      if (start === end - 1) {
+        const currentSegments = [...algorithmSteps[algorithmSteps.length - 1].segments]
+        const segmentIndex = currentSegments.findIndex(
+          (seg) => seg.start === start && seg.end === end && seg.level === level,
+        )
+
+        if (segmentIndex !== -1) {
+          const updatedSegments = [...currentSegments]
+          updatedSegments[segmentIndex] = {
+            ...updatedSegments[segmentIndex],
+            isComparing: true,
+            comparingIndices: [start, end],
+          }
+
+          algorithmSteps.push({
+            segments: updatedSegments,
+            description: `Comparing two elements: ${array[start]} and ${array[end]}`,
+            phase: "compare",
+          })
+
+          const max = Math.max(array[start], array[end])
+          const min = Math.min(array[start], array[end])
+
+          const resultSegments = [...updatedSegments]
+          resultSegments[segmentIndex] = {
+            ...resultSegments[segmentIndex],
+            max,
+            min,
+            isComparing: false,
+            isResult: true,
+          }
+
+          algorithmSteps.push({
+            segments: resultSegments,
+            description: `For these two elements, the maximum is ${max} and the minimum is ${min}.`,
+            phase: "result",
+          })
+        }
+
+        return {
+          max: Math.max(array[start], array[end]),
+          min: Math.min(array[start], array[end]),
+        }
+      }
+
+      const mid = Math.floor((start + end) / 2)
+
+      const currentSegments = [...algorithmSteps[algorithmSteps.length - 1].segments]
+      const segmentIndex = currentSegments.findIndex(
+        (seg) => seg.start === start && seg.end === end && seg.level === level,
+      )
+
+      if (segmentIndex !== -1) {
+        const processingSegments = [...currentSegments]
+        processingSegments[segmentIndex] = {
+          ...processingSegments[segmentIndex],
+          isProcessing: true,
+        }
+
+        algorithmSteps.push({
+          segments: processingSegments,
+          description: `Divide: Splitting the array from index ${start} to ${end} into two halves.`,
+          phase: "divide",
+        })
+
+        const dividedSegments = [...processingSegments]
+        dividedSegments.splice(
+          segmentIndex,
+          1,
+          { start, end: mid, level: level + 1 },
+          { start: mid + 1, end, level: level + 1 },
+        )
+
+        algorithmSteps.push({
+          segments: dividedSegments,
+          description: `The array is now split into two subarrays: from index ${start} to ${mid}, and from index ${mid + 1} to ${end}.`,
+          phase: "divide",
+        })
+      }
+
+      const left = divideAndConquer(start, mid, level + 1)
+      const right = divideAndConquer(mid + 1, end, level + 1)
+
+      const currentSegmentsAfterRecursion = [...algorithmSteps[algorithmSteps.length - 1].segments]
+
+      const leftSegmentIndex = currentSegmentsAfterRecursion.findIndex(
+        (seg) => seg.start === start && seg.end === mid && seg.level === level + 1 && seg.isResult,
+      )
+
+      const rightSegmentIndex = currentSegmentsAfterRecursion.findIndex(
+        (seg) => seg.start === mid + 1 && seg.end === end && seg.level === level + 1 && seg.isResult,
+      )
+
+      if (leftSegmentIndex !== -1 && rightSegmentIndex !== -1) {
+        const comparingSegments = [...currentSegmentsAfterRecursion]
+        comparingSegments[leftSegmentIndex] = {
+          ...comparingSegments[leftSegmentIndex],
+          isComparing: true,
+        }
+        comparingSegments[rightSegmentIndex] = {
+          ...comparingSegments[rightSegmentIndex],
+          isComparing: true,
+        }
+
+        algorithmSteps.push({
+          segments: comparingSegments,
+          description: `Conquer: Comparing results from both halves to find the global maximum and minimum.`,
+          phase: "conquer",
+        })
+
+        const max = Math.max(left.max, right.max)
+        const min = Math.min(left.min, right.min)
+
+        const parentSegmentIndex = comparingSegments.findIndex(
+          (seg) => seg.start === start && seg.end === end && seg.level === level,
+        )
+
+        const resultSegments = [...comparingSegments]
+
+        resultSegments[leftSegmentIndex] = {
+          ...resultSegments[leftSegmentIndex],
+          isComparing: false,
+        }
+        resultSegments[rightSegmentIndex] = {
+          ...resultSegments[rightSegmentIndex],
+          isComparing: false,
+        }
+
+        if (parentSegmentIndex !== -1) {
+          resultSegments[parentSegmentIndex] = {
+            ...resultSegments[parentSegmentIndex],
+            max,
+            min,
+            isResult: true,
+          }
+        } else {
+          resultSegments.push({
+            start,
+            end,
+            level,
+            max,
+            min,
+            isResult: true,
+          })
+        }
+
+        algorithmSteps.push({
+          segments: resultSegments,
+          description: `For the subarray from index ${start} to ${end}, the maximum is ${max} and the minimum is ${min}.`,
+          phase: "result",
+        })
+      }
+
+      return { max: Math.max(left.max, right.max), min: Math.min(left.min, right.min) }
+    }
+
+    if (array.length > 0) {
+      divideAndConquer(0, array.length - 1, 0)
+
+      const finalSegments = [...algorithmSteps[algorithmSteps.length - 1].segments]
+      const resultSegment = finalSegments.find(
+        (seg) => seg.start === 0 && seg.end === array.length - 1 && seg.level === 0 && seg.isResult,
+      )
+
+      if (resultSegment) {
+        algorithmSteps.push({
+          segments: finalSegments,
+          description: `Final result: In the entire array, the maximum value is ${resultSegment.max} and the minimum value is ${resultSegment.min}.`,
+          phase: "result",
+        })
+      }
+    }
+
+    setSteps(algorithmSteps)
+  }, [array])
+return captured }

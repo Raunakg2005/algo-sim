@@ -1,0 +1,20 @@
+BFS table: 61865 boards within 14 moves
+UI random (100 moves): runs=500 solved=107 hitSearchLimit=393 (78.6%) illegalMoves=0 finalNotGoal=0 captionDirectionWrong=500 | within-BFS-depth solved=12 suboptimal=0 | mean frames=2167
+Scrambles with optimal length <= 14: runs=1608 solved=1608 suboptimal=5 hitSearchLimit=0 illegal=0 captionDirectionWrong=1608
+  by optimal depth [runs, suboptimal, limit]: [[1,[150,0,0]],[2,[133,0,0]],[3,[89,0,0]],[4,[113,0,0]],[5,[114,0,0]],[6,[84,0,0]],[7,[116,0,0]],[8,[164,0,0]],[9,[116,0,0]],[10,[91,0,0]],[11,[98,0,0]],[12,[115,5,0]],[13,[139,0,0]],[14,[86,0,0]]]
+  smallest suboptimal example: {"b":[1,2,3,4,5,6,12,0,9,10,15,7,13,14,8,11],"got":14,"opt":12}
+one move from goal (tile 15 must slide LEFT): [
+  'Move tile 11 up. New state 2 with cost 1 + heuristic 2 = 3',
+  'Move tile 14 left. New state 3 with cost 1 + heuristic 2 = 3',
+  'Move tile 15 right. New state 4 with cost 1 + heuristic 0 = 1'
+]
+14/15 swapped solvable? false
+  -> "No solution found within the search limit." after 2487 frames (201 ms)
+custom '1.5,2,...,15,0' accepted? true 
+  -> "No solution found within the search limit.", initial h = Initialize with initial state. Manhattan distance heuristic: 0.5
+random permutations: 88/200 unsolvable; legacy answered "No solution found within the search limit" (no unsolvable verdict) for 88/88
+default board (already solved): [
+  'Initialize with initial state. Manhattan distance heuristic: 0',
+  'Select state 1 with lowest total cost (0)',
+  'Solution found! Total moves: 0'
+]

@@ -18,7 +18,11 @@ yarn-error.log*
 
 # env files
 .env*
-.env.example
+!.env.example
+
+# generated account credentials (scripts/create-users.mjs)
+credentials-out.csv
+*.credentials.csv
 
 # vercel
 .vercel

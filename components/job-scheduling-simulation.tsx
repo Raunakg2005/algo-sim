@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,16 +9,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight, ChevronLeft, Play, Pause, RotateCcw, Plus, Trash2, ArrowDownUp, Clock, DollarSign } from 'lucide-react'
 import JobCard from "./job-card"
 import TimelineVisualization from "./timeline-visualization"
-
-interface Job {
-  id: string
-  name: string
-  profit: number
-  deadline: number
-  scheduled: boolean
-  timeSlot?: number
-  highlighted?: boolean
-}
+import {
+  JOB_STEP_NAMES,
+  JOB_WELCOME,
+  MAX_DEADLINE,
+  generateJobSchedulingFrames,
+  parseJobInteger,
+  type Job,
+} from "@/lib/engines/job-scheduling"
 
 export default function JobSchedulingSimulation() {
   const [jobs, setJobs] = useState<Job[]>([
@@ -28,68 +26,46 @@ export default function JobSchedulingSimulation() {
     { id: "4", name: "Job 4", profit: 80, deadline: 1, scheduled: false },
     { id: "5", name: "Job 5", profit: 60, deadline: 3, scheduled: false },
   ])
-  
-  const [maxDeadline, setMaxDeadline] = useState(3)
-  const [totalProfit, setTotalProfit] = useState(0)
-  const [schedule, setSchedule] = useState<(Job | null)[]>([])
-  
+
   const [newJobName, setNewJobName] = useState("")
   const [newJobProfit, setNewJobProfit] = useState("")
   const [newJobDeadline, setNewJobDeadline] = useState("")
-  
-  const [currentStep, setCurrentStep] = useState(0)
-  const [currentJobIndex, setCurrentJobIndex] = useState(-1)
+
+  // position in the frame list produced by the engine
+  const [frameIndex, setFrameIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [sortedJobs, setSortedJobs] = useState<Job[]>([])
-  const [explanation, setExplanation] = useState("Welcome to the Job Scheduling with Deadlines algorithm simulation. Add jobs or use the default ones, then start the simulation.")
-  
+  // messages for the Initial State frame (welcome text, job added, input errors)
+  const [explanation, setExplanation] = useState(JOB_WELCOME)
+
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  
-  useEffect(() => {
-    const maxD = Math.max(...jobs.map(job => job.deadline), 1)
-    setMaxDeadline(maxD)
-    
-    setSchedule(Array(maxD).fill(null))
-  }, [jobs])
-  
-  const steps = [
-    { name: "Initial State", description: "These are our jobs with their profits and deadlines." },
-    { name: "Sort Jobs", description: "Sort jobs by profit in descending order." },
-    { name: "Schedule Jobs", description: "Schedule each job in the latest available slot before its deadline." },
-    { name: "Final Result", description: "The jobs are now optimally scheduled to maximize profit." }
-  ]
-  
+
+  // every frame comes from the pure engine (lib/engines/job-scheduling.ts)
+  const frames = useMemo(() => generateJobSchedulingFrames(jobs), [jobs])
+  const frame = frames[Math.min(frameIndex, frames.length - 1)]
+  const lastFrame = frames.length - 1
+  const currentStep = frame.phase
+  const steps = JOB_STEP_NAMES.map((name) => ({ name }))
+
   const resetSimulation = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
     setIsPlaying(false)
-    setCurrentStep(0)
-    setCurrentJobIndex(-1)
-    setSortedJobs([])
-    setSchedule(Array(maxDeadline).fill(null))
-    setTotalProfit(0)
-    setExplanation("Welcome to the Job Scheduling with Deadlines algorithm simulation. Add jobs or use the default ones, then start the simulation.")
-    
-    setJobs(prev => prev.map(job => ({
-      ...job,
-      scheduled: false,
-      timeSlot: undefined,
-      highlighted: false
-    })))
+    setFrameIndex(0)
+    setExplanation(JOB_WELCOME)
   }
-  
+
   const addNewJob = () => {
     if (!newJobName || !newJobProfit || !newJobDeadline) return
-    
-    const profit = parseInt(newJobProfit)
-    const deadline = parseInt(newJobDeadline)
-    
-    if (isNaN(profit) || isNaN(deadline) || profit <= 0 || deadline <= 0) {
-      setExplanation("Please enter valid positive numbers for profit and deadline.")
+
+    const profit = parseJobInteger(newJobProfit)
+    const deadline = parseJobInteger(newJobDeadline)
+
+    if (profit === null || deadline === null || deadline > MAX_DEADLINE) {
+      setExplanation(`Please enter a positive whole number for profit and a whole-number deadline from 1 to ${MAX_DEADLINE}.`)
       return
     }
-    
+
     const newJob: Job = {
       id: Date.now().toString(),
       name: newJobName,
@@ -97,105 +73,53 @@ export default function JobSchedulingSimulation() {
       deadline,
       scheduled: false
     }
-    
+
     setJobs(prev => [...prev, newJob])
     setNewJobName("")
     setNewJobProfit("")
     setNewJobDeadline("")
     setExplanation(`Added new job: ${newJobName} with profit ${profit} and deadline ${deadline}.`)
   }
-  
+
   const removeJob = (id: string) => {
     setJobs(prev => prev.filter(job => job.id !== id))
   }
-  
+
   const runStep = () => {
-    if (currentStep === 0) {
-      setExplanation("These are our jobs with their profits and deadlines.")
-      setCurrentStep(1)
-    } 
-    else if (currentStep === 1) {
-      const sorted = [...jobs].sort((a, b) => b.profit - a.profit)
-      setSortedJobs(sorted)
-      setExplanation("Jobs are now sorted by profit in descending order.")
-      setCurrentStep(2)
-      setCurrentJobIndex(0)
-    } 
-    else if (currentStep === 2) {
-      if (currentJobIndex < sortedJobs.length) {
-        const currentJob = sortedJobs[currentJobIndex]
-        
-        setSortedJobs(prev => prev.map(job => ({
-          ...job,
-          highlighted: job.id === currentJob.id
-        })))
-        
-        setExplanation(`Trying to schedule ${currentJob.name} with profit ${currentJob.profit} and deadline ${currentJob.deadline}.`)
-        
-        let slot = -1
-        for (let i = Math.min(currentJob.deadline, maxDeadline) - 1; i >= 0; i--) {
-          if (!schedule[i]) {
-            slot = i
-            break
-          }
-        }
-        
-        if (slot !== -1) {
-          const newSchedule = [...schedule]
-          newSchedule[slot] = currentJob
-          setSchedule(newSchedule)
-          
-          setSortedJobs(prev => prev.map(job => 
-            job.id === currentJob.id 
-              ? { ...job, scheduled: true, timeSlot: slot + 1 } 
-              : job
-          ))
-          
-          setTotalProfit(prev => prev + currentJob.profit)
-          setExplanation(`Scheduled ${currentJob.name} at time slot ${slot + 1}. Total profit: ${totalProfit + currentJob.profit}.`)
-        } else {
-          setExplanation(`Cannot schedule ${currentJob.name}. No available slot before its deadline.`)
-        }
-        
-        setCurrentJobIndex(prev => prev + 1)
-      } else {
-        setCurrentStep(3)
-        setExplanation(`Final schedule complete. Total profit: ${totalProfit}.`)
-      }
-    } 
-    else if (currentStep === 3) {
-      setExplanation(`Final result: Total profit: ${totalProfit}. ${schedule.filter(Boolean).length} jobs scheduled out of ${jobs.length}.`)
+    if (frameIndex < lastFrame) {
+      setFrameIndex(frameIndex + 1)
+    } else {
       setIsPlaying(false)
     }
   }
-  
+
   useEffect(() => {
     if (isPlaying) {
-      if (currentStep < 2 || (currentStep === 2 && currentJobIndex < sortedJobs.length)) {
+      if (frameIndex < lastFrame) {
         timerRef.current = setTimeout(() => {
-          runStep()
+          setFrameIndex(prev => prev + 1)
         }, currentStep === 2 ? 1500 : 2000)
-      } else if (currentStep === 3) {
+      } else {
         setIsPlaying(false)
       }
     }
-    
+
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
     }
-  }, [isPlaying, currentStep, currentJobIndex, sortedJobs.length])
-  
+  }, [isPlaying, frameIndex, lastFrame, currentStep])
+
   const togglePlay = () => {
-    if (currentStep === 3) {
+    if (frameIndex >= lastFrame) {
       resetSimulation()
       setIsPlaying(true)
     } else {
       setIsPlaying(!isPlaying)
     }
   }
-  
+
   return (
     <div className="space-y-8">
       {/* Explanation panel */}
@@ -203,27 +127,20 @@ export default function JobSchedulingSimulation() {
         <CardContent className="p-6">
           <h2 className="text-xl font-semibold mb-2">
             {currentStep < steps.length ? steps[currentStep].name : "Complete"}
-            {currentStep === 2 && currentJobIndex < sortedJobs.length && ` - Job ${currentJobIndex + 1} of ${sortedJobs.length}`}
+            {currentStep === 2 && ` - Job ${frame.currentJobIndex + 1} of ${frame.list.length}`}
           </h2>
-          <p className="text-muted-foreground">{explanation}</p>
+          <p className="text-muted-foreground">{frameIndex === 0 ? explanation : frame.explanation}</p>
         </CardContent>
       </Card>
       
       {/* Controls */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          <Button 
+          <Button aria-label="Previous step" 
             variant="outline" 
             size="icon" 
-            onClick={() => {
-              if (currentStep === 2 && currentJobIndex > 0) {
-                setCurrentJobIndex(prev => prev - 1)
-              } else {
-                setCurrentStep(prev => Math.max(0, prev - 1))
-                if (currentStep === 2) setCurrentJobIndex(0)
-              }
-            }}
-            disabled={currentStep === 0 || isPlaying}
+            onClick={() => setFrameIndex(prev => Math.max(0, prev - 1))}
+            disabled={frameIndex === 0 || isPlaying}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -236,11 +153,11 @@ export default function JobSchedulingSimulation() {
             {isPlaying ? "Pause" : "Play"}
           </Button>
           
-          <Button 
+          <Button aria-label="Next step" 
             variant="outline" 
             size="icon" 
             onClick={runStep}
-            disabled={currentStep === 3 || isPlaying}
+            disabled={frameIndex >= lastFrame || isPlaying}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -257,7 +174,7 @@ export default function JobSchedulingSimulation() {
         
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">
-            Total Profit: <span className="text-primary">{totalProfit}</span>
+            Total Profit: <span className="text-primary">{frame.totalProfit}</span>
           </span>
         </div>
       </div>
@@ -274,7 +191,7 @@ export default function JobSchedulingSimulation() {
                 value={newJobName}
                 onChange={(e) => setNewJobName(e.target.value)}
                 placeholder="Job name"
-                disabled={isPlaying || currentStep > 0}
+                disabled={isPlaying || frameIndex > 0}
               />
             </div>
             <div>
@@ -286,7 +203,7 @@ export default function JobSchedulingSimulation() {
                 placeholder="Profit"
                 type="number"
                 min="1"
-                disabled={isPlaying || currentStep > 0}
+                disabled={isPlaying || frameIndex > 0}
               />
             </div>
             <div>
@@ -299,14 +216,14 @@ export default function JobSchedulingSimulation() {
                 type="number"
                 min="1"
                 max="10"
-                disabled={isPlaying || currentStep > 0}
+                disabled={isPlaying || frameIndex > 0}
               />
             </div>
             <div className="flex items-end">
               <Button 
                 onClick={addNewJob} 
                 className="w-full"
-                disabled={isPlaying || currentStep > 0}
+                disabled={isPlaying || frameIndex > 0}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Job
@@ -332,7 +249,7 @@ export default function JobSchedulingSimulation() {
           
           <div className="space-y-3">
             <AnimatePresence>
-              {(currentStep === 0 ? jobs : sortedJobs).map((job, index) => (
+              {frame.list.map((job, index) => (
                 <motion.div
                   key={job.id}
                   initial={currentStep === 1 ? { opacity: 0, y: 20 } : false}
@@ -351,7 +268,7 @@ export default function JobSchedulingSimulation() {
                   <JobCard 
                     job={job} 
                     onRemove={removeJob}
-                    disabled={isPlaying || currentStep > 0}
+                    disabled={isPlaying || frameIndex > 0}
                     highlighted={job.highlighted}
                   />
                 </motion.div>
@@ -362,11 +279,11 @@ export default function JobSchedulingSimulation() {
         
         {/* Timeline visualization */}
         <TimelineVisualization
-          maxDeadline={maxDeadline}
-          schedule={schedule}
+          maxDeadline={frame.schedule.length}
+          schedule={frame.schedule}
           currentStep={currentStep}
-          currentJobIndex={currentJobIndex}
-          sortedJobs={sortedJobs}
+          currentJob={frame.currentJob}
+          outcome={frame.outcome}
         />
       </div>
     </div>

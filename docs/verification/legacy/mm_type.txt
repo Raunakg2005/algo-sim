@@ -1,0 +1,4 @@
+import { generateMaxMinSteps, type MaxMinSegment, type MaxMinStep } from "@/lib/engines/max-min"
+
+type ArraySegment = MaxMinSegment
+type AlgorithmStep = MaxMinStep

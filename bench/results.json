@@ -1,0 +1,284 @@
+{
+  "env": {
+    "node": "v22.20.0",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13700HX",
+    "cores": 24,
+    "memGB": 15.7,
+    "platform": "win32 10.0.26200",
+    "date": "2026-10-18T19:16:01.976Z",
+    "warmup": 5,
+    "runs": 51
+  },
+  "rows": [
+    {
+      "module": "Merge sort",
+      "input": "n=12",
+      "ui": "max",
+      "frames": 64,
+      "traceKB": 9.1,
+      "medianMs": 0.091,
+      "p95Ms": 0.229
+    },
+    {
+      "module": "Heap sort",
+      "input": "n=12",
+      "ui": "max",
+      "frames": 140,
+      "traceKB": 26.2,
+      "medianMs": 0.084,
+      "p95Ms": 0.16
+    },
+    {
+      "module": "Selection sort",
+      "input": "n=12",
+      "ui": "max",
+      "frames": 116,
+      "traceKB": 21.8,
+      "medianMs": 0.073,
+      "p95Ms": 0.12
+    },
+    {
+      "module": "Insertion sort",
+      "input": "n=12",
+      "ui": "max",
+      "frames": 141,
+      "traceKB": 27.2,
+      "medianMs": 0.079,
+      "p95Ms": 0.188
+    },
+    {
+      "module": "Max-min (D&C)",
+      "input": "n=12",
+      "ui": "max",
+      "frames": 42,
+      "traceKB": 35.2,
+      "medianMs": 0.287,
+      "p95Ms": 0.569
+    },
+    {
+      "module": "Merge sort",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 367,
+      "traceKB": 99.3,
+      "medianMs": 0.224,
+      "p95Ms": 0.664
+    },
+    {
+      "module": "Heap sort",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 980,
+      "traceKB": 334.2,
+      "medianMs": 0.247,
+      "p95Ms": 0.447
+    },
+    {
+      "module": "Selection sort",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 1469,
+      "traceKB": 428.6,
+      "medianMs": 0.239,
+      "p95Ms": 0.559
+    },
+    {
+      "module": "Insertion sort",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 1814,
+      "traceKB": 543.2,
+      "medianMs": 0.548,
+      "p95Ms": 1.192
+    },
+    {
+      "module": "Max-min (D&C)",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 176,
+      "traceKB": 542.7,
+      "medianMs": 1.687,
+      "p95Ms": 2.061
+    },
+    {
+      "module": "Quick sort",
+      "input": "n=10",
+      "ui": "max",
+      "frames": 78,
+      "traceKB": 18.3,
+      "medianMs": 0.082,
+      "p95Ms": 0.195
+    },
+    {
+      "module": "Quick sort",
+      "input": "n=50",
+      "ui": "stress",
+      "frames": 659,
+      "traceKB": 259.3,
+      "medianMs": 0.28,
+      "p95Ms": 0.447
+    },
+    {
+      "module": "Strassen",
+      "input": "8x8",
+      "ui": "max",
+      "frames": 21,
+      "traceKB": 18.9,
+      "medianMs": 0.144,
+      "p95Ms": 0.365
+    },
+    {
+      "module": "Strassen",
+      "input": "16x16",
+      "ui": "stress",
+      "frames": 21,
+      "traceKB": 47.3,
+      "medianMs": 0.176,
+      "p95Ms": 0.39
+    },
+    {
+      "module": "Matrix chain",
+      "input": "10 matrices",
+      "ui": "max",
+      "frames": 290,
+      "traceKB": 219.2,
+      "medianMs": 0.409,
+      "p95Ms": 0.702
+    },
+    {
+      "module": "0/1 knapsack (DP)",
+      "input": "10 items, W=50",
+      "ui": "max",
+      "frames": 1465,
+      "traceKB": 26390.6,
+      "medianMs": 1.072,
+      "p95Ms": 3.39
+    },
+    {
+      "module": "Fractional knapsack",
+      "input": "10 items",
+      "ui": "max",
+      "frames": 4,
+      "traceKB": 5.3,
+      "medianMs": 0.153,
+      "p95Ms": 0.355
+    },
+    {
+      "module": "Job sequencing",
+      "input": "10 jobs",
+      "ui": "max",
+      "frames": 23,
+      "traceKB": 37.5,
+      "medianMs": 0.121,
+      "p95Ms": 0.232
+    },
+    {
+      "module": "Dijkstra",
+      "input": "10 nodes, 48 edges",
+      "ui": "max",
+      "frames": 31,
+      "traceKB": 34.1,
+      "medianMs": 0.175,
+      "p95Ms": 0.287
+    },
+    {
+      "module": "Bellman-Ford",
+      "input": "10 nodes, 48 edges",
+      "ui": "max",
+      "frames": 499,
+      "traceKB": 222.6,
+      "medianMs": 0.269,
+      "p95Ms": 0.595
+    },
+    {
+      "module": "Floyd-Warshall",
+      "input": "10 nodes",
+      "ui": "max",
+      "frames": 1130,
+      "traceKB": 856,
+      "medianMs": 0.555,
+      "p95Ms": 1.087
+    },
+    {
+      "module": "Dijkstra",
+      "input": "15 nodes, 98 edges",
+      "ui": "stress",
+      "frames": 46,
+      "traceKB": 72.7,
+      "medianMs": 0.195,
+      "p95Ms": 0.486
+    },
+    {
+      "module": "Bellman-Ford",
+      "input": "15 nodes, 98 edges",
+      "ui": "stress",
+      "frames": 1501,
+      "traceKB": 846.2,
+      "medianMs": 0.776,
+      "p95Ms": 1.22
+    },
+    {
+      "module": "Floyd-Warshall",
+      "input": "15 nodes",
+      "ui": "stress",
+      "frames": 3676,
+      "traceKB": 5338.1,
+      "medianMs": 3.884,
+      "p95Ms": 5.955
+    },
+    {
+      "module": "MST (Kruskal)",
+      "input": "10 nodes, 22 edges",
+      "ui": "max",
+      "frames": 27,
+      "traceKB": 37.4,
+      "medianMs": 0.086,
+      "p95Ms": 0.191
+    },
+    {
+      "module": "MST (Prim)",
+      "input": "10 nodes, 22 edges",
+      "ui": "max",
+      "frames": 94,
+      "traceKB": 106.1,
+      "medianMs": 0.088,
+      "p95Ms": 0.2
+    },
+    {
+      "module": "MST (Kruskal)",
+      "input": "20 nodes, 95 edges",
+      "ui": "stress",
+      "frames": 97,
+      "traceKB": 282.6,
+      "medianMs": 0.111,
+      "p95Ms": 0.258
+    },
+    {
+      "module": "MST (Prim)",
+      "input": "20 nodes, 95 edges",
+      "ui": "stress",
+      "frames": 637,
+      "traceKB": 1241.4,
+      "medianMs": 0.187,
+      "p95Ms": 0.354
+    },
+    {
+      "module": "TSP (Held-Karp)",
+      "input": "8 cities",
+      "ui": "max",
+      "frames": 1808,
+      "traceKB": 10056.1,
+      "medianMs": 31.79,
+      "p95Ms": 49.629
+    },
+    {
+      "module": "TSP (Held-Karp)",
+      "input": "10 cities",
+      "ui": "stress",
+      "frames": 11540,
+      "traceKB": 329839.1,
+      "medianMs": 2469.553,
+      "p95Ms": 2876.518
+    }
+  ]
+}

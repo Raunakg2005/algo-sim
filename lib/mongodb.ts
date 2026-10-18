@@ -1,28 +1,21 @@
-import { MongoClient } from 'mongodb'
+import { MongoClient } from "mongodb"
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local')
-}
-
-const uri = process.env.MONGODB_URI
-const options = {}
-
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
+// Lazy, shared MongoDB connection. Nothing connects at import time (so `next build` needs no
+// database), and a failed connection is retried on the next request instead of being cached,
+// which matters when the app container starts before MongoDB is ready.
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
-if (process.env.NODE_ENV === 'development') {
+export function getMongoClient(): Promise<MongoClient> {
   if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options)
-    global._mongoClientPromise = client.connect()
+    const uri = process.env.MONGODB_URI
+    if (!uri) throw new Error("MONGODB_URI is not set (see .env.example)")
+    global._mongoClientPromise = new MongoClient(uri).connect().catch((err) => {
+      global._mongoClientPromise = undefined
+      throw err
+    })
   }
-  clientPromise = global._mongoClientPromise
-} else {
-  client = new MongoClient(uri, options)
-  clientPromise = client.connect()
+  return global._mongoClientPromise
 }
-
-export default clientPromise

@@ -11,67 +11,18 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 
-interface CircularQueueStep {
-  queue: (number | undefined)[]
-  front: number
-  rear: number
-  operation: string
-  element?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-}
-
-const circularQueueCode = [
-  "class CircularQueue {",
-  "  constructor(size) {",
-  "    this.items = new Array(size);",
-  "    this.front = -1;",
-  "    this.rear = -1;",
-  "    this.maxSize = size;",
-  "    this.count = 0;",
-  "  }",
-  "",
-  "  enqueue(element) {",
-  "    if (this.isFull()) return false;",
-  "    if (this.isEmpty()) {",
-  "      this.front = 0;",
-  "      this.rear = 0;",
-  "    } else {",
-  "      this.rear = (this.rear + 1) % this.maxSize;",
-  "    }",
-  "    this.items[this.rear] = element;",
-  "    this.count++;",
-  "    return true;",
-  "  }",
-  "",
-  "  dequeue() {",
-  "    if (this.isEmpty()) return null;",
-  "    const element = this.items[this.front];",
-  "    this.items[this.front] = undefined;",
-  "    this.count--;",
-  "    if (this.isEmpty()) {",
-  "      this.front = this.rear = -1;",
-  "    } else {",
-  "      this.front = (this.front + 1) % this.maxSize;",
-  "    }",
-  "    return element;",
-  "  }",
-  "",
-  "  peek() {",
-  "    if (this.isEmpty()) return null;",
-  "    return this.items[this.front];",
-  "  }",
-  "",
-  "  isEmpty() {",
-  "    return this.count === 0;",
-  "  }",
-  "",
-  "  isFull() {",
-  "    return this.count === this.maxSize;",
-  "  }",
-  "}",
-]
+import {
+  CIRCULAR_QUEUE_CODE as circularQueueCode,
+  dequeue,
+  enqueue,
+  isValidCircularQueueSize,
+  parseIntegerInput,
+  peek,
+  playbackAfterOperation,
+  type CircularQueueResult,
+  type CircularQueueState,
+  type CircularQueueStep,
+} from "@/lib/engines/circular-queue"
 
 export default function CircularQueueVisualizer() {
   const [queueSize, setQueueSize] = useState<number>(8)
@@ -100,190 +51,43 @@ export default function CircularQueueVisualizer() {
   }, [queueSize])
 
   const updateQueueSize = (newSize: number) => {
-    if (newSize >= 2 && newSize <= 12) {
+    // non-integers such as 2.5 used to reach new Array(2.5) and crash the page
+    if (isValidCircularQueueSize(newSize)) {
       setQueueSize(newSize)
     }
   }
 
-  const addStep = (
-    newQueue: (number | undefined)[],
-    newFront: number,
-    newRear: number,
-    newCount: number,
-    operation: string,
-    element: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-  ) => {
-    const newStep: CircularQueueStep = {
-      queue: [...newQueue],
-      front: newFront,
-      rear: newRear,
-      operation,
-      element,
-      description,
-      isError,
-      activeCodeLine,
-    }
-    setSteps((prev) => [...prev, newStep])
-  }
+  const current = (): CircularQueueState => ({ items: queue, front, rear, count, size: queueSize })
 
-  const validateInput = (value: string): number | null => {
-    const trimmed = value.trim()
-    if (!trimmed) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(trimmed, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
-    }
-    setInputError("")
-    return num
+  // append an operation's frames to the history and show them
+  const applyResult = (result: CircularQueueResult) => {
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setQueue(result.state.items)
+    setFront(result.state.front)
+    setRear(result.state.rear)
+    setCount(result.state.count)
+    setSteps([...steps, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
   }
 
   const enqueueElement = () => {
-    const element = validateInput(inputValue)
-    if (element === null) return
-
-    // Check if queue is full
-    if (count === queueSize) {
-      addStep(queue, front, rear, count, "enqueue", element, `Cannot enqueue ${element}. Queue is full!`, true, 9)
-      setInputValue("")
+    const parsed = parseIntegerInput(inputValue)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
       return
     }
-
-    const newQueue = [...queue]
-    let newFront = front
-    let newRear = rear
-    let newCount = count
-
-    // If queue is empty, set front and rear to 0
-    if (count === 0) {
-      newFront = 0
-      newRear = 0
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        newCount,
-        "enqueue",
-        element,
-        `Queue is empty. Setting front and rear to 0.`,
-        false,
-        11,
-      )
-    } else {
-      // Move rear circularly
-      newRear = (rear + 1) % queueSize
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        newCount,
-        "enqueue",
-        element,
-        `Moving rear circularly: (${rear} + 1) % ${queueSize} = ${newRear}`,
-        false,
-        14,
-      )
-    }
-
-    // Add element and increment count
-    newQueue[newRear] = element
-    newCount++
-
-    setQueue(newQueue)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
-
-    addStep(
-      newQueue,
-      newFront,
-      newRear,
-      newCount,
-      "enqueue",
-      element,
-      `Enqueued ${element} at position ${newRear}. Queue size: ${newCount}/${queueSize}`,
-      false,
-      16,
-    )
+    setInputError("")
+    applyResult(enqueue(current(), parsed.value))
     setInputValue("")
   }
 
   const dequeueElement = () => {
-    // Check if queue is empty
-    if (count === 0) {
-      addStep(queue, front, rear, count, "dequeue", undefined, "Cannot dequeue from empty queue", true, 21)
-      return
-    }
-
-    const dequeuedElement = queue[front]
-    const newQueue = [...queue]
-    newQueue[front] = undefined
-
-    let newFront = front
-    let newRear = rear
-    const newCount = count - 1
-
-    // If this was the last element, reset front and rear
-    if (newCount === 0) {
-      newFront = -1
-      newRear = -1
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        newCount,
-        "dequeue",
-        dequeuedElement,
-        `Dequeued ${dequeuedElement}. Queue is now empty.`,
-        false,
-        25,
-      )
-    } else {
-      // Move front circularly
-      newFront = (front + 1) % queueSize
-      addStep(
-        newQueue,
-        newFront,
-        newRear,
-        newCount,
-        "dequeue",
-        dequeuedElement,
-        `Dequeued ${dequeuedElement}. Moving front circularly: (${front} + 1) % ${queueSize} = ${newFront}. Queue size: ${newCount}/${queueSize}`,
-        false,
-        27,
-      )
-    }
-
-    setQueue(newQueue)
-    setFront(newFront)
-    setRear(newRear)
-    setCount(newCount)
+    applyResult(dequeue(current()))
   }
 
   const peekElement = () => {
-    if (count === 0) {
-      addStep(queue, front, rear, count, "peek", undefined, "Cannot peek empty queue", true, 32)
-      return
-    }
-
-    const frontElement = queue[front]
-    addStep(
-      queue,
-      front,
-      rear,
-      count,
-      "peek",
-      frontElement,
-      `Front element is ${frontElement} at position ${front}. Queue size: ${count}/${queueSize}`,
-      false,
-      34,
-    )
+    applyResult(peek(current()))
   }
 
   const clearQueue = () => {
@@ -561,11 +365,12 @@ export default function CircularQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -575,11 +380,12 @@ export default function CircularQueueVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>

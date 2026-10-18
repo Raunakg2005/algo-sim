@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { generateGraphColoringSteps, type ColoringStep } from "@/lib/engines/graph-coloring"
 
 type Node = {
   id: string
@@ -31,14 +32,7 @@ type Graph = {
   edges: Edge[]
 }
 
-type AlgorithmStep = {
-  phase: "init" | "try" | "conflict" | "assign" | "backtrack" | "complete"
-  description: string
-  currentNodeId: string | null
-  conflictNodeId: string | null
-  nodeColors: { [key: string]: number | null }
-  previousNodeId?: string | null
-}
+type AlgorithmStep = ColoringStep
 
 const COLORS = [
   "bg-red-500",
@@ -53,7 +47,6 @@ const COLORS = [
   "bg-cyan-500",
 ]
 
-const COLOR_NAMES = ["Red", "Blue", "Green", "Yellow", "Purple", "Pink", "Indigo", "Orange", "Teal", "Cyan"]
 
 export default function GraphColoring() {
   const [graph, setGraph] = useState<Graph>({
@@ -96,6 +89,11 @@ export default function GraphColoring() {
   }, [])
 
   const generateGraph = () => {
+    if (!Number.isInteger(numNodes) || !Number.isInteger(numColors)) {
+      setInputError("Number of nodes and number of colors must be whole numbers")
+      return
+    }
+
     if (numNodes < 2) {
       setInputError("Please specify at least 2 nodes")
       return
@@ -272,137 +270,15 @@ export default function GraphColoring() {
       return
     }
 
+    if (!Number.isInteger(numColors) || numColors < 1 || numColors > 10) {
+      setInputError("Number of colors must be a whole number from 1 to 10")
+      return
+    }
+
     setInputError("")
     setAlgorithmStarted(true)
 
-    const algorithmSteps: AlgorithmStep[] = []
-    const allSolutions: { [key: string]: number | null }[] = []
-
-    const initialNodeColors: { [key: string]: number | null } = {}
-    graph.nodes.forEach((node) => {
-      initialNodeColors[node.id] = null
-    })
-
-    algorithmSteps.push({
-      phase: "init",
-      description: "Initialize graph with no colors assigned",
-      currentNodeId: null,
-      conflictNodeId: null,
-      nodeColors: { ...initialNodeColors },
-    })
-
-    const isColorValid = (
-      nodeId: string,
-      color: number,
-      nodeColors: { [key: string]: number | null },
-    ): [boolean, string | null] => {
-      const adjacentNodes = graph.edges
-        .filter((edge) => edge.source === nodeId || edge.target === nodeId)
-        .map((edge) => (edge.source === nodeId ? edge.target : edge.source))
-
-      for (const adjNodeId of adjacentNodes) {
-        if (nodeColors[adjNodeId] === color) {
-          return [false, adjNodeId]
-        }
-      }
-
-      return [true, null]
-    }
-
-    const solveGraphColoring = (
-      nodeIndex: number,
-      nodeColors: { [key: string]: number | null },
-      steps: AlgorithmStep[],
-    ): boolean => {
-      if (nodeIndex >= graph.nodes.length) {
-        allSolutions.push({ ...nodeColors })
-
-        steps.push({
-          phase: "complete",
-          description: `Solution found! All nodes colored successfully using ${numColors} colors.`,
-          currentNodeId: null,
-          conflictNodeId: null,
-          nodeColors: { ...nodeColors },
-        })
-
-        return true
-      }
-
-      const currentNode = graph.nodes[nodeIndex]
-
-      steps.push({
-        phase: "try",
-        description: `Considering node ${currentNode.label}...`,
-        currentNodeId: currentNode.id,
-        conflictNodeId: null,
-        nodeColors: { ...nodeColors },
-      })
-
-      for (let color = 0; color < numColors; color++) {
-        steps.push({
-          phase: "try",
-          description: `Trying ${COLOR_NAMES[color]} for node ${currentNode.label}...`,
-          currentNodeId: currentNode.id,
-          conflictNodeId: null,
-          nodeColors: { ...nodeColors },
-        })
-
-        const [valid, conflictNodeId] = isColorValid(currentNode.id, color, nodeColors)
-
-        if (!valid) {
-          steps.push({
-            phase: "conflict",
-            description: `Conflict detected: Node ${
-              graph.nodes.find((n) => n.id === conflictNodeId)?.label
-            } already has ${COLOR_NAMES[color]}`,
-            currentNodeId: currentNode.id,
-            conflictNodeId,
-            nodeColors: { ...nodeColors },
-          })
-          continue
-        }
-
-        nodeColors[currentNode.id] = color
-
-        steps.push({
-          phase: "assign",
-          description: `Assigned ${COLOR_NAMES[color]} to node ${currentNode.label}`,
-          currentNodeId: currentNode.id,
-          conflictNodeId: null,
-          nodeColors: { ...nodeColors },
-        })
-
-        if (solveGraphColoring(nodeIndex + 1, nodeColors, steps)) {
-          return true
-        }
-
-        nodeColors[currentNode.id] = null
-
-        steps.push({
-          phase: "backtrack",
-          description: `Backtracking from node ${currentNode.label}...`,
-          currentNodeId: currentNode.id,
-          conflictNodeId: null,
-          nodeColors: { ...nodeColors },
-          previousNodeId: currentNode.id,
-        })
-      }
-
-      return false
-    }
-
-    const nodeColors = { ...initialNodeColors }
-    solveGraphColoring(0, nodeColors, algorithmSteps)
-
-    if (allSolutions.length === 0) {
-      algorithmSteps.push({
-        phase: "complete",
-        description: `No solution found with ${numColors} colors. Try increasing the number of colors.`,
-        currentNodeId: null,
-        conflictNodeId: null,
-        nodeColors: { ...initialNodeColors },
-      })
-    }
+    const { steps: algorithmSteps, solutions: allSolutions } = generateGraphColoringSteps(graph.nodes, graph.edges, numColors)
 
     setSteps(algorithmSteps)
     setSolutions(allSolutions)
@@ -581,7 +457,7 @@ export default function GraphColoring() {
                         onChange={(e) => setNumNodes(Number(e.target.value))}
                         disabled={algorithmStarted}
                       />
-                      <Button
+                      <Button aria-label="Fewer nodes"
                         variant="outline"
                         size="icon"
                         onClick={() => setNumNodes(Math.max(2, numNodes - 1))}
@@ -589,7 +465,7 @@ export default function GraphColoring() {
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="More nodes"
                         variant="outline"
                         size="icon"
                         onClick={() => setNumNodes(Math.min(10, numNodes + 1))}
@@ -612,7 +488,7 @@ export default function GraphColoring() {
                         onChange={(e) => setNumColors(Number(e.target.value))}
                         disabled={algorithmStarted}
                       />
-                      <Button
+                      <Button aria-label="Fewer colours"
                         variant="outline"
                         size="icon"
                         onClick={() => setNumColors(Math.max(1, numColors - 1))}
@@ -620,7 +496,7 @@ export default function GraphColoring() {
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="More colours"
                         variant="outline"
                         size="icon"
                         onClick={() => setNumColors(Math.min(10, numColors + 1))}

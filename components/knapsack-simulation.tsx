@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,16 +10,16 @@ import { Slider } from "@/components/ui/slider"
 import { ChevronRight, ChevronLeft, Play, Pause, RotateCcw, Plus, ArrowDownUp } from "lucide-react"
 import ItemCard from "./item-card"
 import KnapsackContainer from "./knapsack-container"
+import {
+  FRACTIONAL_STEP_NAMES,
+  WELCOME_EXPLANATION,
+  displayRatio,
+  generateFractionalKnapsackFrames,
+  parsePositiveNumber,
+  type FractionalItem,
+} from "@/lib/engines/fractional-knapsack"
 
-interface Item {
-  id: string
-  name: string
-  weight: number
-  value: number
-  ratio: number
-  selected: boolean
-  fraction?: number
-}
+type Item = FractionalItem
 
 export default function KnapsackSimulation() {
   const [items, setItems] = useState<Item[]>([
@@ -31,8 +31,6 @@ export default function KnapsackSimulation() {
   ])
 
   const [knapsackCapacity, setKnapsackCapacity] = useState(50)
-  const [remainingCapacity, setRemainingCapacity] = useState(50)
-  const [totalValue, setTotalValue] = useState(0)
 
   const [newItemName, setNewItemName] = useState("")
   const [newItemWeight, setNewItemWeight] = useState("")
@@ -41,33 +39,18 @@ export default function KnapsackSimulation() {
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [allowFractions, setAllowFractions] = useState(true)
-  const [sortedItems, setSortedItems] = useState<Item[]>([])
-  const [explanation, setExplanation] = useState(
-    "Welcome to the Greedy Knapsack Algorithm simulation. Add items or use the default ones, then start the simulation.",
-  )
+  // messages for the Initial State frame (welcome text, item added, input errors)
+  const [explanation, setExplanation] = useState(WELCOME_EXPLANATION)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    const updatedItems = items.map((item) => ({
-      ...item,
-      ratio: Number.parseFloat((item.value / item.weight).toFixed(2)),
-    }))
-    setItems(updatedItems)
-  }, [])
-
-  const steps = [
-    {
-      name: "Initial State",
-      description: "These are our items with their weights, values, and value-to-weight ratios.",
-    },
-    { name: "Sort Items", description: "Sort items by value-to-weight ratio in descending order." },
-    {
-      name: "Select Items",
-      description: "Select items in order of their value-to-weight ratio until the knapsack is full.",
-    },
-    { name: "Final Result", description: "The knapsack is now optimally filled according to the greedy approach." },
-  ]
+  // all four frames come from the pure engine (lib/engines/fractional-knapsack.ts)
+  const frames = useMemo(
+    () => generateFractionalKnapsackFrames(items, knapsackCapacity, allowFractions),
+    [items, knapsackCapacity, allowFractions],
+  )
+  const frame = frames[Math.min(currentStep, frames.length - 1)]
+  const steps = FRACTIONAL_STEP_NAMES.map((name) => ({ name }))
 
   const resetSimulation = () => {
     if (timerRef.current) {
@@ -75,29 +58,16 @@ export default function KnapsackSimulation() {
     }
     setIsPlaying(false)
     setCurrentStep(0)
-    setSortedItems([])
-    setRemainingCapacity(knapsackCapacity)
-    setTotalValue(0)
-    setExplanation(
-      "Welcome to the Greedy Knapsack Algorithm simulation. Add items or use the default ones, then start the simulation.",
-    )
-
-    setItems((prev) =>
-      prev.map((item) => ({
-        ...item,
-        selected: false,
-        fraction: undefined,
-      })),
-    )
+    setExplanation(WELCOME_EXPLANATION)
   }
 
   const addNewItem = () => {
     if (!newItemName || !newItemWeight || !newItemValue) return
 
-    const weight = Number.parseFloat(newItemWeight)
-    const value = Number.parseFloat(newItemValue)
+    const weight = parsePositiveNumber(newItemWeight)
+    const value = parsePositiveNumber(newItemValue)
 
-    if (isNaN(weight) || isNaN(value) || weight <= 0 || value <= 0) {
+    if (weight === null || value === null) {
       setExplanation("Please enter valid positive numbers for weight and value.")
       return
     }
@@ -107,7 +77,7 @@ export default function KnapsackSimulation() {
       name: newItemName,
       weight,
       value,
-      ratio: Number.parseFloat((value / weight).toFixed(2)),
+      ratio: displayRatio(value, weight),
       selected: false,
     }
 
@@ -123,55 +93,22 @@ export default function KnapsackSimulation() {
   }
 
   const runStep = () => {
-    if (currentStep === 0) {
-      setExplanation("These are our items with their weights, values, and value-to-weight ratios.")
-      setCurrentStep(1)
-    } else if (currentStep === 1) {
-      const sorted = [...items].sort((a, b) => b.ratio - a.ratio)
-      setSortedItems(sorted)
-      setExplanation("Items are now sorted by value-to-weight ratio in descending order.")
-      setCurrentStep(2)
-    } else if (currentStep === 2) {
-      let remaining = knapsackCapacity
-      let value = 0
-      const selected = [...sortedItems]
-
-      for (let i = 0; i < selected.length; i++) {
-        if (remaining >= selected[i].weight) {
-          selected[i].selected = true
-          selected[i].fraction = 1
-          remaining -= selected[i].weight
-          value += selected[i].value
-          setExplanation(`Added ${selected[i].name} completely. Remaining capacity: ${remaining}.`)
-        } else if (allowFractions && remaining > 0) {
-          const fraction = remaining / selected[i].weight
-          selected[i].selected = true
-          selected[i].fraction = fraction
-          value += selected[i].value * fraction
-          remaining = 0
-          setExplanation(`Added ${(fraction * 100).toFixed(1)}% of ${selected[i].name}. Knapsack is now full.`)
-        } else {
-          setExplanation(`Cannot add ${selected[i].name}. Not enough capacity left.`)
-        }
-
-        if (remaining === 0) break
-      }
-
-      setSortedItems(selected)
-      setRemainingCapacity(remaining)
-      setTotalValue(Number.parseFloat(value.toFixed(2)))
-      setCurrentStep(3)
-    } else if (currentStep === 3) {
-      setExplanation(`Final result: Total value: ${totalValue}. Remaining capacity: ${remainingCapacity}.`)
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1)
+    } else {
       setIsPlaying(false)
     }
   }
 
   useEffect(() => {
-    if (isPlaying && currentStep < steps.length) {
-      timerRef.current = setTimeout(() => {
-        runStep()
-      }, 2000)
+    if (isPlaying) {
+      if (currentStep < steps.length - 1) {
+        timerRef.current = setTimeout(() => {
+          setCurrentStep((prev) => prev + 1)
+        }, 2000)
+      } else {
+        setIsPlaying(false)
+      }
     }
 
     return () => {
@@ -184,13 +121,14 @@ export default function KnapsackSimulation() {
   const togglePlay = () => {
     if (currentStep >= steps.length - 1) {
       resetSimulation()
+      setIsPlaying(true)
+      return
     }
     setIsPlaying(!isPlaying)
   }
 
   const updateCapacity = (value: number[]) => {
     setKnapsackCapacity(value[0])
-    setRemainingCapacity(value[0])
     resetSimulation()
   }
 
@@ -202,14 +140,14 @@ export default function KnapsackSimulation() {
           <h2 className="text-xl font-semibold mb-2">
             {currentStep < steps.length ? steps[currentStep].name : "Complete"}
           </h2>
-          <p className="text-muted-foreground">{explanation}</p>
+          <p className="text-muted-foreground">{currentStep === 0 ? explanation : frame.explanation}</p>
         </CardContent>
       </Card>
 
       {/* Controls */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          <Button
+          <Button aria-label="Previous step"
             variant="outline"
             size="icon"
             onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
@@ -223,7 +161,7 @@ export default function KnapsackSimulation() {
             {isPlaying ? "Pause" : "Play"}
           </Button>
 
-          <Button
+          <Button aria-label="Next step"
             variant="outline"
             size="icon"
             onClick={runStep}
@@ -333,7 +271,7 @@ export default function KnapsackSimulation() {
 
           <div className="space-y-3">
             <AnimatePresence>
-              {(currentStep === 0 ? items : sortedItems).map((item, index) => (
+              {frame.list.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={currentStep === 1 ? { opacity: 0, y: 20 } : false}
@@ -354,9 +292,9 @@ export default function KnapsackSimulation() {
         {/* Knapsack visualization */}
         <KnapsackContainer
           capacity={knapsackCapacity}
-          remainingCapacity={remainingCapacity}
-          totalValue={totalValue}
-          items={sortedItems.filter((item) => item.selected)}
+          remainingCapacity={frame.remainingCapacity}
+          totalValue={frame.totalValue}
+          items={frame.knapsack}
           currentStep={currentStep}
         />
       </div>

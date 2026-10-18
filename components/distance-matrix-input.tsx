@@ -79,6 +79,7 @@ export default function DistanceMatrixInput({
           size="icon"
           onClick={decreaseSize}
           disabled={disabled || size <= 2}
+          aria-label="Remove a city"
         >
           <Minus className="h-4 w-4" />
         </Button>
@@ -88,6 +89,7 @@ export default function DistanceMatrixInput({
           size="icon"
           onClick={increaseSize}
           disabled={disabled || size >= 8}
+          aria-label="Add a city"
         >
           <Plus className="h-4 w-4" />
         </Button>

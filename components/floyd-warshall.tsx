@@ -12,6 +12,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  INFINITY,
+  generateFloydWarshallSteps,
+  isMatrixEntryInput,
+  parseDistanceMatrix,
+  reconstructFloydWarshallPath,
+  type FloydWarshallStep,
+} from "@/lib/engines/floyd-warshall"
 
 type Node = {
   id: string
@@ -31,19 +39,6 @@ type Graph = {
   edges: Edge[]
 }
 
-type AlgorithmStep = {
-  phase: "init" | "compare" | "update" | "complete"
-  description: string
-  k: number
-  i: number | null
-  j: number | null
-  distanceMatrix: number[][]
-  previousMatrix?: number[][]
-  newDistance?: number
-}
-
-const INFINITY = Number.MAX_SAFE_INTEGER
-
 export default function FloydWarshall() {
   const [graph, setGraph] = useState<Graph>({
     nodes: [],
@@ -55,7 +50,7 @@ export default function FloydWarshall() {
   const [inputMatrix, setInputMatrix] = useState<string[][]>([])
   const [inputError, setInputError] = useState<string>("")
 
-  const [steps, setSteps] = useState<AlgorithmStep[]>([])
+  const [steps, setSteps] = useState<FloydWarshallStep[]>([])
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
@@ -84,15 +79,12 @@ export default function FloydWarshall() {
   }, [])
 
   useEffect(() => {
-    const newInputMatrix: string[][] = Array(numNodes)
-      .fill(0)
-      .map(() => Array(numNodes).fill("∞"))
-
-    for (let i = 0; i < numNodes; i++) {
-      newInputMatrix[i][i] = "0"
+    // keep a matrix that already has the right size (the Random Graph button sets both at once),
+    // and never call Array() with a negative / fractional length
+    const size = Number.isInteger(numNodes) && numNodes > 0 ? numNodes : 0
+    if (inputMatrix.length !== size) {
+      setInputMatrix(Array.from({ length: size }, (_, i) => Array.from({ length: size }, (_, j) => (i === j ? "0" : "∞"))))
     }
-
-    setInputMatrix(newInputMatrix)
   }, [numNodes])
 
   const handleMatrixInputChange = (i: number, j: number, value: string) => {
@@ -100,47 +92,31 @@ export default function FloydWarshall() {
 
     const newMatrix = JSON.parse(JSON.stringify(inputMatrix))
 
-    if (value === "" || value === "∞" || /^[0-9]+$/.test(value)) {
+    if (isMatrixEntryInput(value)) {
       newMatrix[i][j] = value
       setInputMatrix(newMatrix)
     }
   }
 
-  const validateAndConvertMatrix = (): number[][] | null => {
-    const matrix: number[][] = []
-
-    for (let i = 0; i < numNodes; i++) {
-      matrix[i] = []
-      for (let j = 0; j < numNodes; j++) {
-        if (inputMatrix[i][j] === "∞" || inputMatrix[i][j] === "") {
-          matrix[i][j] = INFINITY
-        } else {
-          const val = Number.parseInt(inputMatrix[i][j])
-          if (isNaN(val)) {
-            setInputError(`Invalid value at position (${i + 1}, ${j + 1}). Please enter a number or ∞.`)
-            return null
-          }
-          matrix[i][j] = val
-        }
-      }
-    }
-
-    return matrix
-  }
-
-  const generateGraph = () => {
-    if (numNodes < 2) {
+  // n and matrix are passed explicitly so that "Random Graph" can build the graph from the matrix it just
+  // generated (state set in the same click is not visible until the next render)
+  const generateGraph = (n: number = numNodes, matrixInput: string[][] = inputMatrix) => {
+    if (!Number.isInteger(n) || n < 2) {
       setInputError("Please specify at least 2 nodes")
       return
     }
 
-    if (numNodes > 10) {
+    if (n > 10) {
       setInputError("Please specify 10 or fewer nodes for better visualization")
       return
     }
 
-    const validMatrix = validateAndConvertMatrix()
-    if (!validMatrix) return
+    const parsed = parseDistanceMatrix(matrixInput, n)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
+      return
+    }
+    const validMatrix = parsed.matrix
 
     setInputError("")
     setDistanceMatrix(validMatrix)
@@ -154,8 +130,8 @@ export default function FloydWarshall() {
     const centerY = graphHeight / 2
     const radius = Math.min(graphWidth, graphHeight) / 3 - padding
 
-    for (let i = 0; i < numNodes; i++) {
-      const angle = (i / numNodes) * 2 * Math.PI
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * 2 * Math.PI
       const x = centerX + radius * Math.cos(angle)
       const y = centerY + radius * Math.sin(angle)
       const label = String.fromCharCode(65 + i)
@@ -168,8 +144,8 @@ export default function FloydWarshall() {
       })
     }
 
-    for (let i = 0; i < numNodes; i++) {
-      for (let j = 0; j < numNodes; j++) {
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
         if (i !== j && validMatrix[i][j] !== INFINITY) {
           edges.push({
             source: nodes[i].id,
@@ -210,7 +186,7 @@ export default function FloydWarshall() {
     }
 
     setInputMatrix(matrix)
-    generateGraph()
+    generateGraph(randomNodes, matrix)
   }
 
   const startAlgorithm = () => {
@@ -224,78 +200,7 @@ export default function FloydWarshall() {
     setSelectedPath(null)
     setPathNodes([])
 
-    const n = distanceMatrix.length
-    const steps: AlgorithmStep[] = []
-
-    const dist: number[][] = JSON.parse(JSON.stringify(distanceMatrix))
-
-    steps.push({
-      phase: "init",
-      description: "Initialize distance matrix with direct edge weights",
-      k: -1,
-      i: null,
-      j: null,
-      distanceMatrix: JSON.parse(JSON.stringify(dist)),
-    })
-
-    for (let k = 0; k < n; k++) {
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          if (dist[i][k] === INFINITY || dist[k][j] === INFINITY) {
-            steps.push({
-              phase: "compare",
-              description: `Comparing paths from ${String.fromCharCode(65 + i)} to ${String.fromCharCode(65 + j)} via ${String.fromCharCode(65 + k)}. Current: ${dist[i][j] === INFINITY ? "∞" : dist[i][j]}, New: ∞ (not possible)`,
-              k,
-              i,
-              j,
-              distanceMatrix: JSON.parse(JSON.stringify(dist)),
-              previousMatrix: JSON.parse(JSON.stringify(dist)),
-            })
-            continue
-          }
-
-          const newDist = dist[i][k] + dist[k][j]
-
-          steps.push({
-            phase: "compare",
-            description: `Comparing paths from ${String.fromCharCode(65 + i)} to ${String.fromCharCode(65 + j)} via ${String.fromCharCode(65 + k)}. Current: ${dist[i][j] === INFINITY ? "∞" : dist[i][j]}, New: ${newDist}`,
-            k,
-            i,
-            j,
-            distanceMatrix: JSON.parse(JSON.stringify(dist)),
-            previousMatrix: JSON.parse(JSON.stringify(dist)),
-            newDistance: newDist,
-          })
-
-          if (newDist < dist[i][j]) {
-            const oldDist = dist[i][j]
-            dist[i][j] = newDist
-
-            steps.push({
-              phase: "update",
-              description: `Update: Path from ${String.fromCharCode(65 + i)} to ${String.fromCharCode(65 + j)} via ${String.fromCharCode(65 + k)} is shorter (${oldDist === INFINITY ? "∞" : oldDist} → ${newDist})`,
-              k,
-              i,
-              j,
-              distanceMatrix: JSON.parse(JSON.stringify(dist)),
-              previousMatrix: JSON.parse(JSON.stringify({ ...dist, [i]: { ...dist[i], [j]: oldDist } })),
-              newDistance: newDist,
-            })
-          }
-        }
-      }
-    }
-
-    steps.push({
-      phase: "complete",
-      description: "Algorithm complete. Final distance matrix shows shortest path between all pairs of nodes.",
-      k: n,
-      i: null,
-      j: null,
-      distanceMatrix: JSON.parse(JSON.stringify(dist)),
-    })
-
-    setSteps(steps)
+    setSteps(generateFloydWarshallSteps(distanceMatrix))
     setCurrentStep(0)
   }
 
@@ -392,10 +297,7 @@ export default function FloydWarshall() {
 
     if (pathNodes.length > 0) {
       for (let i = 0; i < pathNodes.length - 1; i++) {
-        if (
-          (pathNodes[i] === sourceNode.label && pathNodes[i + 1] === targetNode.label) ||
-          (pathNodes[i] === targetNode.label && pathNodes[i + 1] === sourceNode.label)
-        ) {
+        if (pathNodes[i] === sourceNode.label && pathNodes[i + 1] === targetNode.label) {
           return "stroke-green-500"
         }
       }
@@ -424,10 +326,7 @@ export default function FloydWarshall() {
 
     if (pathNodes.length > 0) {
       for (let i = 0; i < pathNodes.length - 1; i++) {
-        if (
-          (pathNodes[i] === sourceNode.label && pathNodes[i + 1] === targetNode.label) ||
-          (pathNodes[i] === targetNode.label && pathNodes[i + 1] === sourceNode.label)
-        ) {
+        if (pathNodes[i] === sourceNode.label && pathNodes[i + 1] === targetNode.label) {
           return 3
         }
       }
@@ -469,47 +368,8 @@ export default function FloydWarshall() {
     }
 
     const finalMatrix = steps[steps.length - 1].distanceMatrix
-    const sourceIndex = source.charCodeAt(0) - 65
-    const targetIndex = target.charCodeAt(0) - 65
-
-    if (finalMatrix[sourceIndex][targetIndex] === INFINITY) {
-      setPathNodes([])
-      return
-    }
-
-    const path: string[] = [source]
-
-    const findIntermediateNodes = (start: number, end: number, visited: Set<number>): string[] => {
-      if (visited.has(start) || visited.has(end)) return []
-
-      visited.add(start)
-      visited.add(end)
-
-      for (let k = 0; k < finalMatrix.length; k++) {
-        if (
-          k !== start &&
-          k !== end &&
-          finalMatrix[start][k] !== INFINITY &&
-          finalMatrix[k][end] !== INFINITY &&
-          finalMatrix[start][k] + finalMatrix[k][end] === finalMatrix[start][end]
-        ) {
-          const intermediateNode = String.fromCharCode(65 + k)
-
-          const firstHalf = findIntermediateNodes(start, k, new Set(visited))
-          const secondHalf = findIntermediateNodes(k, end, new Set(visited))
-
-          return [...firstHalf, intermediateNode, ...secondHalf]
-        }
-      }
-
-      return []
-    }
-
-    const intermediateNodes = findIntermediateNodes(sourceIndex, targetIndex, new Set())
-    path.push(...intermediateNodes)
-    path.push(target)
-
-    setPathNodes(path)
+    const path = reconstructFloydWarshallPath(distanceMatrix, finalMatrix, source.charCodeAt(0) - 65, target.charCodeAt(0) - 65)
+    setPathNodes(path.map((i) => String.fromCharCode(65 + i)))
   }
 
   const handlePathSelection = (source: string, target: string) => {
@@ -543,10 +403,10 @@ export default function FloydWarshall() {
                       min={2}
                       max={10}
                       value={numNodes}
-                      onChange={(e) => setNumNodes(Number(e.target.value))}
+                      onChange={(e) => setNumNodes(Math.min(10, Math.max(0, Math.trunc(Number(e.target.value)) || 0)))}
                       disabled={algorithmStarted}
                     />
-                    <Button
+                    <Button aria-label="Fewer nodes"
                       variant="outline"
                       size="icon"
                       onClick={() => setNumNodes(Math.max(2, numNodes - 1))}
@@ -554,7 +414,7 @@ export default function FloydWarshall() {
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <Button
+                    <Button aria-label="More nodes"
                       variant="outline"
                       size="icon"
                       onClick={() => setNumNodes(Math.min(10, numNodes + 1))}
@@ -566,7 +426,7 @@ export default function FloydWarshall() {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button onClick={generateGraph} disabled={algorithmStarted}>
+                  <Button onClick={() => generateGraph()} disabled={algorithmStarted}>
                     Generate Graph
                   </Button>
                   <Button variant="outline" onClick={generateRandomGraph} disabled={algorithmStarted}>
@@ -798,7 +658,7 @@ export default function FloydWarshall() {
                                   {isUpdated ? (
                                     <div className="flex flex-col items-center">
                                       <span className="line-through text-gray-500">
-                                        {formatDistance(steps[currentStep]?.previousMatrix?.[i][j] || value)}
+                                        {formatDistance(steps[currentStep]?.previousMatrix?.[i][j] ?? value)}
                                       </span>
                                       <span className="font-bold">{formatDistance(value)}</span>
                                     </div>
@@ -1071,7 +931,7 @@ export default function FloydWarshall() {
                                 steps[currentStep].distanceMatrix[steps[currentStep].i!][steps[currentStep].j!],
                               )}
                             </p>
-                            <p>New path distance: {formatDistance(steps[currentStep].newDistance || INFINITY)}</p>
+                            <p>New path distance: {formatDistance(steps[currentStep].newDistance ?? INFINITY)}</p>
                           </div>
                         </div>
                       )}
@@ -1097,7 +957,7 @@ export default function FloydWarshall() {
                             <p>
                               Old distance:{" "}
                               {formatDistance(
-                                steps[currentStep].previousMatrix?.[steps[currentStep].i!][steps[currentStep].j!] ||
+                                steps[currentStep].previousMatrix?.[steps[currentStep].i!][steps[currentStep].j!] ??
                                   INFINITY,
                               )}
                             </p>

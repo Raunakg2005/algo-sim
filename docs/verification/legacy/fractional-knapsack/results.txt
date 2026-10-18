@@ -1,0 +1,29 @@
+{
+  'default items:runs': 38,
+  "default items:'Sort Items' frame shows an empty item list": 38,
+  "default items:'Final Result' caption does not state the result": 38,
+  'custom integer:runs': 4000,
+  "custom integer:'Sort Items' frame shows an empty item list": 4000,
+  "custom integer:'Final Result' caption does not state the result": 4000,
+  'custom close ratios (2-decimal values):runs': 4000,
+  "custom close ratios (2-decimal values):'Sort Items' frame shows an empty item list": 4000,
+  'custom close ratios (2-decimal values):total value != exact greedy': 912,
+  'custom close ratios (2-decimal values):selected items/fractions != exact greedy': 981,
+  "custom close ratios (2-decimal values):'Final Result' caption does not state the result": 4000,
+  'custom 1-decimal:runs': 4000,
+  "custom 1-decimal:'Sort Items' frame shows an empty item list": 4000,
+  "custom 1-decimal:'Final Result' caption does not state the result": 4000,
+  "seq:frames 'Final Result' whose total disagrees with greedy for the current 'allow fractions' setting": 312,
+  "seq:frames 'Initial State' showing items as already selected": 71,
+  "seq:frames 'Final Result' whose knapsack contents disagree with the displayed total": 150
+}
+sequence frames inspected: 22351
+{
+  'custom close ratios (2-decimal values) value': '{"items":[[45,46.42],[44,45.54]],"cap":55,"frac":false,"legacy":46.42,"exact":45.54}',
+  'custom close ratios (2-decimal values) sel': '{"items":[[45,46.42],[44,45.54]],"cap":55,"frac":false,"legacy":[["1",1]],"exact":[["2",1]]}',
+  'seq stale toggle': 'cap=70 next,next,next,toggle',
+  'seq stale0': 'cap=50 next,next,next,back,back,back',
+  'seq inconsistent': 'cap=40 next,next,next,back,toggle,next'
+}
+float remainder case: [["Item 1",1],["Item 2",1],["Item 3",1],["Item 4",8.881784197001253e-17]] remaining 0 explanation: Added 0.0% of Item 4. Knapsack is now full.
+integer minimal (capacity 10, allow fractions): {"key":26,"items":[[8,1],[15,2]],"legacy":1.27,"exact":1.3333333333333333,"shownRatios":[0.13,0.13]}

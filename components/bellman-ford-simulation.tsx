@@ -12,6 +12,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  INFINITY,
+  generateBellmanFordSteps,
+  isMatrixEntryInput,
+  parseWeightMatrix,
+  reconstructBellmanFordPath,
+  type BellmanFordStep,
+} from "@/lib/engines/bellman-ford"
 
 type Node = {
   id: string
@@ -31,19 +39,6 @@ type Graph = {
   edges: Edge[]
 }
 
-type AlgorithmStep = {
-  phase: "init" | "relax" | "update" | "negative-cycle" | "complete"
-  description: string
-  iteration: number
-  edge?: { source: string; target: string; weight: number }
-  distances: Record<string, number>
-  previousDistances?: Record<string, number>
-  predecessors: Record<string, string | null>
-  relaxed?: boolean
-}
-
-const INFINITY = Number.MAX_SAFE_INTEGER
-
 export default function BellmanFord() {
   const [graph, setGraph] = useState<Graph>({
     nodes: [],
@@ -55,7 +50,7 @@ export default function BellmanFord() {
   const [inputMatrix, setInputMatrix] = useState<string[][]>([])
   const [inputError, setInputError] = useState<string>("")
 
-  const [steps, setSteps] = useState<AlgorithmStep[]>([])
+  const [steps, setSteps] = useState<BellmanFordStep[]>([])
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
@@ -84,18 +79,16 @@ export default function BellmanFord() {
   }, [])
 
   useEffect(() => {
-    const newInputMatrix: string[][] = Array(numNodes)
-      .fill(0)
-      .map(() => Array(numNodes).fill("∞"))
-
-    for (let i = 0; i < numNodes; i++) {
-      newInputMatrix[i][i] = "0"
+    const size = Number.isInteger(numNodes) && numNodes > 0 ? numNodes : 0
+    if (inputMatrix.length !== size) {
+      const newInputMatrix: string[][] = Array.from({ length: size }, (_, i) =>
+        Array.from({ length: size }, (_, j) => (i === j ? "0" : "∞")),
+      )
+      setInputMatrix(newInputMatrix)
     }
 
-    setInputMatrix(newInputMatrix)
-
-    const validLabels = Array.from({ length: numNodes }, (_, i) => String.fromCharCode(65 + i))
-    if (!validLabels.includes(sourceNode)) {
+    const validLabels = Array.from({ length: size }, (_, i) => String.fromCharCode(65 + i))
+    if (validLabels.length > 0 && !validLabels.includes(sourceNode)) {
       setSourceNode(validLabels[0])
     }
   }, [numNodes])
@@ -105,58 +98,31 @@ export default function BellmanFord() {
 
     const newMatrix = JSON.parse(JSON.stringify(inputMatrix))
 
-    if (value === "" || value === "∞" || /^-?[0-9]+$/.test(value)) {
+    // "-" must be accepted while typing a negative number; incomplete entries are rejected on Generate Graph
+    if (isMatrixEntryInput(value)) {
       newMatrix[i][j] = value
       setInputMatrix(newMatrix)
     }
   }
 
-  const validateAndConvertMatrix = (): { matrix: number[][]; edges: Edge[] } | null => {
-    const matrix: number[][] = []
-    const edges: Edge[] = []
-
-    for (let i = 0; i < numNodes; i++) {
-      matrix[i] = []
-      for (let j = 0; j < numNodes; j++) {
-        if (inputMatrix[i][j] === "∞" || inputMatrix[i][j] === "") {
-          matrix[i][j] = INFINITY
-        } else {
-          const val = Number.parseInt(inputMatrix[i][j])
-          if (isNaN(val)) {
-            setInputError(`Invalid value at position (${i + 1}, ${j + 1}). Please enter a number or ∞.`)
-            return null
-          }
-          matrix[i][j] = val
-
-          if (val !== INFINITY && i !== j) {
-            const sourceLabel = String.fromCharCode(65 + i)
-            const targetLabel = String.fromCharCode(65 + j)
-            edges.push({
-              source: `node-${sourceLabel}`,
-              target: `node-${targetLabel}`,
-              weight: val,
-            })
-          }
-        }
-      }
-    }
-
-    return { matrix, edges }
-  }
-
-  const generateGraph = () => {
-    if (numNodes < 2) {
+  // n and matrix are passed explicitly so that "Random Graph" can build the graph from the matrix it just
+  // generated (state set in the same click is not visible until the next render)
+  const generateGraph = (n: number = numNodes, matrix: string[][] = inputMatrix) => {
+    if (!Number.isInteger(n) || n < 2) {
       setInputError("Please specify at least 2 nodes")
       return
     }
 
-    if (numNodes > 10) {
+    if (n > 10) {
       setInputError("Please specify 10 or fewer nodes for better visualization")
       return
     }
 
-    const validData = validateAndConvertMatrix()
-    if (!validData) return
+    const parsed = parseWeightMatrix(matrix, n)
+    if ("error" in parsed) {
+      setInputError(parsed.error)
+      return
+    }
 
     setInputError("")
 
@@ -168,8 +134,8 @@ export default function BellmanFord() {
     const centerY = graphHeight / 2
     const radius = Math.min(graphWidth, graphHeight) / 2.5 - padding
 
-    for (let i = 0; i < numNodes; i++) {
-      const angle = (i / numNodes) * 2 * Math.PI
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * 2 * Math.PI
       const x = centerX + radius * Math.cos(angle)
       const y = centerY + radius * Math.sin(angle)
       const label = String.fromCharCode(65 + i)
@@ -184,7 +150,7 @@ export default function BellmanFord() {
 
     setGraph({
       nodes,
-      edges: validData.edges,
+      edges: parsed.edges.map((e) => ({ source: `node-${e.source}`, target: `node-${e.target}`, weight: e.weight })),
     })
 
     resetAlgorithm()
@@ -217,7 +183,7 @@ export default function BellmanFord() {
     const randomSource = String.fromCharCode(65 + Math.floor(Math.random() * randomNodes))
     setSourceNode(randomSource)
 
-    generateGraph()
+    generateGraph(randomNodes, matrix)
   }
 
   const startAlgorithm = () => {
@@ -226,120 +192,19 @@ export default function BellmanFord() {
       return
     }
 
+    if (!graph.nodes.some((n) => n.label === sourceNode)) {
+      setInputError(`Source node ${sourceNode} is not in the generated graph. Click Generate Graph first.`)
+      return
+    }
+
     setInputError("")
     setAlgorithmStarted(true)
     setSelectedTarget(null)
     setPathNodes([])
 
-    const steps: AlgorithmStep[] = []
-    const sourceIndex = sourceNode.charCodeAt(0) - 65
-
-    const distances: Record<string, number> = {}
-    const predecessors: Record<string, string | null> = {}
-
-    graph.nodes.forEach((node) => {
-      const nodeLabel = node.label
-      distances[nodeLabel] = nodeLabel === sourceNode ? 0 : INFINITY
-      predecessors[nodeLabel] = null
-    })
-
-    steps.push({
-      phase: "init",
-      description: `Initialize distances: Set distance to source node ${sourceNode} as 0, all others as ∞`,
-      iteration: 0,
-      distances: { ...distances },
-      predecessors: { ...predecessors },
-    })
-
-    const edges: { source: string; target: string; weight: number }[] = graph.edges.map((edge) => {
-      const sourceNode = graph.nodes.find((n) => n.id === edge.source)!
-      const targetNode = graph.nodes.find((n) => n.id === edge.target)!
-      return {
-        source: sourceNode.label,
-        target: targetNode.label,
-        weight: edge.weight,
-      }
-    })
-
-    let hasNegativeCycle = false
-
-    for (let i = 1; i <= graph.nodes.length; i++) {
-      for (let j = 0; j < edges.length; j++) {
-        const edge = edges[j]
-        const { source, target, weight } = edge
-
-        if (distances[source] === INFINITY) {
-          steps.push({
-            phase: "relax",
-            description: `Edge ${source} → ${target} (weight: ${weight}): Source node ${source} is unreachable, skipping`,
-            iteration: i,
-            edge: { ...edge },
-            distances: { ...distances },
-            predecessors: { ...predecessors },
-            relaxed: false,
-          })
-          continue
-        }
-
-        const newDistance = distances[source] + weight
-
-        steps.push({
-          phase: "relax",
-          description: `Edge ${source} → ${target} (weight: ${weight}): Current distance to ${target} is ${distances[target] === INFINITY ? "∞" : distances[target]}, new potential distance is ${newDistance}`,
-          iteration: i,
-          edge: { ...edge },
-          distances: { ...distances },
-          previousDistances: { ...distances },
-          predecessors: { ...predecessors },
-          relaxed: false,
-        })
-
-        if (newDistance < distances[target]) {
-          if (i === graph.nodes.length) {
-            hasNegativeCycle = true
-            steps.push({
-              phase: "negative-cycle",
-              description: `Negative cycle detected! Edge ${source} → ${target} can still be relaxed in iteration ${i}`,
-              iteration: i,
-              edge: { ...edge },
-              distances: { ...distances },
-              previousDistances: { ...distances },
-              predecessors: { ...predecessors },
-            })
-            break
-          }
-
-          const oldDistance = distances[target]
-          distances[target] = newDistance
-          predecessors[target] = source
-
-          steps.push({
-            phase: "update",
-            description: `Update: Distance to ${target} improved from ${oldDistance === INFINITY ? "∞" : oldDistance} to ${newDistance} via ${source}`,
-            iteration: i,
-            edge: { ...edge },
-            distances: { ...distances },
-            previousDistances: { ...{ ...distances, [target]: oldDistance } },
-            predecessors: { ...predecessors },
-            relaxed: true,
-          })
-        }
-      }
-
-      if (hasNegativeCycle) break
-    }
-
-    if (!hasNegativeCycle) {
-      steps.push({
-        phase: "complete",
-        description: `Algorithm complete. Final distances from source node ${sourceNode} to all other nodes calculated.`,
-        iteration: graph.nodes.length,
-        distances: { ...distances },
-        predecessors: { ...predecessors },
-      })
-    }
-
-    setSteps(steps)
+    const labelOf = (id: string) => graph.nodes.find((n) => n.id === id)!.label
+    const edges = graph.edges.map((edge) => ({ source: labelOf(edge.source), target: labelOf(edge.target), weight: edge.weight }))
+    setSteps(generateBellmanFordSteps(graph.nodes.map((n) => n.label), edges, sourceNode))
     setCurrentStep(0)
   }
 
@@ -514,23 +379,7 @@ export default function BellmanFord() {
     if (!algorithmStarted || currentStep < steps.length - 1 || steps[currentStep].phase !== "complete") {
       return
     }
-
-    const finalStep = steps[steps.length - 1]
-
-    if (finalStep.distances[target] === INFINITY) {
-      setPathNodes([])
-      return
-    }
-
-    const path: string[] = [target]
-    let current = target
-
-    while (finalStep.predecessors[current] !== null) {
-      current = finalStep.predecessors[current]!
-      path.unshift(current)
-    }
-
-    setPathNodes(path)
+    setPathNodes(reconstructBellmanFordPath(steps[steps.length - 1], target))
   }
 
   return (
@@ -559,10 +408,10 @@ export default function BellmanFord() {
                       min={2}
                       max={10}
                       value={numNodes}
-                      onChange={(e) => setNumNodes(Number(e.target.value))}
+                      onChange={(e) => setNumNodes(Math.min(10, Math.max(0, Math.trunc(Number(e.target.value)) || 0)))}
                       disabled={algorithmStarted}
                     />
-                    <Button
+                    <Button aria-label="Fewer nodes"
                       variant="outline"
                       size="icon"
                       onClick={() => setNumNodes(Math.max(2, numNodes - 1))}
@@ -570,7 +419,7 @@ export default function BellmanFord() {
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <Button
+                    <Button aria-label="More nodes"
                       variant="outline"
                       size="icon"
                       onClick={() => setNumNodes(Math.min(10, numNodes + 1))}
@@ -598,7 +447,7 @@ export default function BellmanFord() {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button onClick={generateGraph} disabled={algorithmStarted}>
+                  <Button onClick={() => generateGraph()} disabled={algorithmStarted}>
                     Generate Graph
                   </Button>
                   <Button variant="outline" onClick={generateRandomGraph} disabled={algorithmStarted}>
@@ -844,14 +693,14 @@ export default function BellmanFord() {
                                 {isUpdated ? (
                                   <div className="flex flex-col items-center">
                                     <span className="line-through text-gray-500">
-                                      {formatDistance(steps[currentStep]?.previousDistances?.[nodeLabel] || INFINITY)}
+                                      {formatDistance(steps[currentStep]?.previousDistances?.[nodeLabel] ?? INFINITY)}
                                     </span>
                                     <span className="font-bold">
-                                      {formatDistance(steps[currentStep]?.distances[nodeLabel] || INFINITY)}
+                                      {formatDistance(steps[currentStep]?.distances[nodeLabel] ?? INFINITY)}
                                     </span>
                                   </div>
                                 ) : (
-                                  formatDistance(steps[currentStep]?.distances[nodeLabel] || INFINITY)
+                                  formatDistance(steps[currentStep]?.distances[nodeLabel] ?? INFINITY)
                                 )}
                               </td>
                               <td className="p-2 border text-center">
@@ -899,7 +748,7 @@ export default function BellmanFord() {
                         <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded">
                           <p className="font-medium">Shortest path: {pathNodes.join(" → ")}</p>
                           <p className="text-sm">
-                            Distance: {formatDistance(steps[currentStep]?.distances[selectedTarget!] || INFINITY)}
+                            Distance: {formatDistance(steps[currentStep]?.distances[selectedTarget!] ?? INFINITY)}
                           </p>
                         </div>
                       ) : selectedTarget ? (
@@ -1117,7 +966,7 @@ export default function BellmanFord() {
                           <p>
                             Old distance to {steps[currentStep].edge.target}:{" "}
                             {formatDistance(
-                              steps[currentStep].previousDistances?.[steps[currentStep].edge.target] || INFINITY,
+                              steps[currentStep].previousDistances?.[steps[currentStep].edge.target] ?? INFINITY,
                             )}
                           </p>
                           <p>

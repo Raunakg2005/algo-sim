@@ -24,34 +24,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import {
+  GOAL_GRID,
+  generateFifteenPuzzleSteps,
+  type PuzzlePosition,
+  type PuzzleStep,
+} from "@/lib/engines/fifteen-puzzle"
 
-type Position = {
-  row: number
-  col: number
-}
-
-type PuzzleState = {
-  grid: number[][]
-  blankPos: Position
-  cost: number
-  heuristic: number
-  totalCost: number
-  parent: number | null
-  move: string | null
-  movedTile: number | null
-}
-
-type AlgorithmStep = {
-  phase: "init" | "branch" | "bound" | "prune" | "update" | "complete"
-  description: string
-  currentStateId: number
-  bestStateId: number | null
-  states: Map<number, PuzzleState>
-  activeStates: number[]
-  exploredStates: number[]
-  prunedStates: number[]
-  path: number[]
-}
+type Position = PuzzlePosition
+type AlgorithmStep = PuzzleStep
 
 export default function FifteenPuzzleBranchAndBound() {
   const [initialGrid, setInitialGrid] = useState<number[][]>([
@@ -71,13 +52,6 @@ export default function FifteenPuzzleBranchAndBound() {
   const [activeTab, setActiveTab] = useState("input")
   const animationRef = useRef<NodeJS.Timeout | null>(null)
 
-  const goalGrid = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
-    [9, 10, 11, 12],
-    [13, 14, 15, 0],
-  ]
-
   const directions = [
     { row: -1, col: 0, name: "up" },
     { row: 1, col: 0, name: "down" },
@@ -94,7 +68,7 @@ export default function FifteenPuzzleBranchAndBound() {
         return null
       }
 
-      const validNumbers = values.every((num) => num >= 0 && num <= 15)
+      const validNumbers = values.every((num) => Number.isInteger(num) && num >= 0 && num <= 15)
       if (!validNumbers) {
         setInputError("Numbers must be between 0 and 15 (0 represents the blank space)")
         return null
@@ -119,15 +93,13 @@ export default function FifteenPuzzleBranchAndBound() {
   }
 
   const generateRandomPuzzle = () => {
-    const puzzle = [
-      [1, 2, 3, 4],
-      [5, 6, 7, 8],
-      [9, 10, 11, 12],
-      [13, 14, 15, 0],
-    ]
+    const puzzle = GOAL_GRID.map((row) => [...row])
 
     let blankPos = { row: 3, col: 3 }
-    const numMoves = 100 
+    let previousBlank: Position | null = null
+    // A short scramble that never undoes the previous move. (The original 100 random moves gave boards that the
+    // search, limited to 1000 states, failed to solve about two thirds of the time.)
+    const numMoves = 15
 
     for (let i = 0; i < numMoves; i++) {
       const validMoves = []
@@ -135,8 +107,9 @@ export default function FifteenPuzzleBranchAndBound() {
       for (const dir of directions) {
         const newRow = blankPos.row + dir.row
         const newCol = blankPos.col + dir.col
+        const undoesLastMove = previousBlank !== null && previousBlank.row === newRow && previousBlank.col === newCol
 
-        if (newRow >= 0 && newRow < 4 && newCol >= 0 && newCol < 4) {
+        if (newRow >= 0 && newRow < 4 && newCol >= 0 && newCol < 4 && !undoesLastMove) {
           validMoves.push({ row: newRow, col: newCol, dir })
         }
       }
@@ -145,6 +118,7 @@ export default function FifteenPuzzleBranchAndBound() {
 
       puzzle[blankPos.row][blankPos.col] = puzzle[randomMove.row][randomMove.col]
       puzzle[randomMove.row][randomMove.col] = 0
+      previousBlank = blankPos
       blankPos = { row: randomMove.row, col: randomMove.col }
     }
 
@@ -161,51 +135,6 @@ export default function FifteenPuzzleBranchAndBound() {
     }
   }
 
-  const calculateManhattanDistance = (grid: number[][]): number => {
-    let distance = 0
-
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        const value = grid[row][col]
-
-        if (value !== 0) {
-          const goalRow = Math.floor((value - 1) / 4)
-          const goalCol = (value - 1) % 4
-
-          distance += Math.abs(row - goalRow) + Math.abs(col - goalCol)
-        }
-      }
-    }
-
-    return distance
-  }
-
-  const isPuzzleSolved = (grid: number[][]): boolean => {
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        if (grid[row][col] !== goalGrid[row][col]) {
-          return false
-        }
-      }
-    }
-    return true
-  }
-
-  const findBlankPosition = (grid: number[][]): Position => {
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        if (grid[row][col] === 0) {
-          return { row, col }
-        }
-      }
-    }
-    return { row: -1, col: -1 } 
-  }
-
-  const copyGrid = (grid: number[][]): number[][] => {
-    return grid.map((row) => [...row])
-  }
-
   const startAlgorithm = () => {
     if (inputError) {
       return
@@ -214,198 +143,7 @@ export default function FifteenPuzzleBranchAndBound() {
     setAlgorithmStarted(true)
     setActiveTab("visualization")
 
-    const algorithmSteps: AlgorithmStep[] = []
-
-    const blankPos = findBlankPosition(initialGrid)
-    const initialHeuristic = calculateManhattanDistance(initialGrid)
-
-    const initialState: PuzzleState = {
-      grid: copyGrid(initialGrid),
-      blankPos,
-      cost: 0,
-      heuristic: initialHeuristic,
-      totalCost: initialHeuristic,
-      parent: null,
-      move: null,
-      movedTile: null,
-    }
-
-    const states = new Map<number, PuzzleState>()
-    states.set(1, initialState)
-
-    algorithmSteps.push({
-      phase: "init",
-      description: `Initialize with initial state. Manhattan distance heuristic: ${initialHeuristic}`,
-      currentStateId: 1,
-      bestStateId: null,
-      states,
-      activeStates: [1],
-      exploredStates: [],
-      prunedStates: [],
-      path: [],
-    })
-
-    const priorityQueue: number[] = [1]
-    let bestStateId: number | null = null
-    let stateCounter = 1
-
-    const visited = new Set<string>()
-    visited.add(JSON.stringify(initialGrid))
-
-    while (priorityQueue.length > 0 && stateCounter < 1000) {
-      priorityQueue.sort((a, b) => {
-        const stateA = states.get(a)!
-        const stateB = states.get(b)!
-        return stateA.totalCost - stateB.totalCost
-      })
-
-      const currentStateId = priorityQueue.shift()!
-      const currentState = states.get(currentStateId)!
-
-      const exploredStates = [...algorithmSteps[algorithmSteps.length - 1].exploredStates, currentStateId]
-
-      algorithmSteps.push({
-        phase: "branch",
-        description: `Select state ${currentStateId} with lowest total cost (${currentState.totalCost})`,
-        currentStateId,
-        bestStateId,
-        states: new Map(states),
-        activeStates: [...priorityQueue],
-        exploredStates,
-        prunedStates: [...algorithmSteps[algorithmSteps.length - 1].prunedStates],
-        path: [],
-      })
-
-      if (isPuzzleSolved(currentState.grid)) {
-        bestStateId = currentStateId
-
-        const path: number[] = []
-        let stateId = currentStateId
-
-        while (stateId !== null) {
-          path.unshift(stateId)
-          const parentStateId = states.get(stateId)!.parent;
-          if (parentStateId !== null) {
-            stateId = parentStateId;
-          } else {
-            break;
-          }
-          if (stateId === null) break
-        }
-
-        algorithmSteps.push({
-          phase: "complete",
-          description: `Solution found! Total moves: ${currentState.cost}`,
-          currentStateId,
-          bestStateId,
-          states: new Map(states),
-          activeStates: [],
-          exploredStates,
-          prunedStates: [...algorithmSteps[algorithmSteps.length - 1].prunedStates],
-          path,
-        })
-
-        break
-      }
-
-      for (const dir of directions) {
-        const newRow = currentState.blankPos.row + dir.row
-        const newCol = currentState.blankPos.col + dir.col
-
-        if (newRow >= 0 && newRow < 4 && newCol >= 0 && newCol < 4) {
-          const newGrid = copyGrid(currentState.grid)
-          const movedTile = newGrid[newRow][newCol]
-
-          newGrid[currentState.blankPos.row][currentState.blankPos.col] = movedTile
-          newGrid[newRow][newCol] = 0
-
-          const stateString = JSON.stringify(newGrid)
-          if (visited.has(stateString)) {
-            continue
-          }
-
-          visited.add(stateString)
-
-          stateCounter++
-          const newStateId = stateCounter
-
-          const newHeuristic = calculateManhattanDistance(newGrid)
-          const newCost = currentState.cost + 1
-          const newTotalCost = newCost + newHeuristic
-
-          const newState: PuzzleState = {
-            grid: newGrid,
-            blankPos: { row: newRow, col: newCol },
-            cost: newCost,
-            heuristic: newHeuristic,
-            totalCost: newTotalCost,
-            parent: currentStateId,
-            move: dir.name,
-            movedTile,
-          }
-
-          states.set(newStateId, newState)
-
-          algorithmSteps.push({
-            phase: "branch",
-            description: `Move tile ${movedTile} ${dir.name}. New state ${newStateId} with cost ${newCost} + heuristic ${newHeuristic} = ${newTotalCost}`,
-            currentStateId: newStateId,
-            bestStateId,
-            states: new Map(states),
-            activeStates: [...priorityQueue],
-            exploredStates,
-            prunedStates: [...algorithmSteps[algorithmSteps.length - 1].prunedStates],
-            path: [],
-          })
-
-          if (bestStateId !== null && newTotalCost >= states.get(bestStateId)!.cost) {
-            algorithmSteps.push({
-              phase: "prune",
-              description: `Prune state ${newStateId} as its total cost (${newTotalCost}) is not better than current best (${states.get(bestStateId)!.cost})`,
-              currentStateId: newStateId,
-              bestStateId,
-              states: new Map(states),
-              activeStates: [...priorityQueue],
-              exploredStates,
-              prunedStates: [...algorithmSteps[algorithmSteps.length - 1].prunedStates, newStateId],
-              path: [],
-            })
-
-            continue
-          }
-
-          priorityQueue.push(newStateId)
-
-          algorithmSteps.push({
-            phase: "bound",
-            description: `Add state ${newStateId} to queue with total cost ${newTotalCost}`,
-            currentStateId: newStateId,
-            bestStateId,
-            states: new Map(states),
-            activeStates: [...priorityQueue],
-            exploredStates,
-            prunedStates: [...algorithmSteps[algorithmSteps.length - 1].prunedStates],
-            path: [],
-          })
-        }
-      }
-    }
-
-    if (bestStateId === null) {
-      algorithmSteps.push({
-        phase: "complete",
-        description: "No solution found within the search limit.",
-        currentStateId: algorithmSteps[algorithmSteps.length - 1].currentStateId,
-        bestStateId: null,
-        states: new Map(states),
-        activeStates: [],
-        exploredStates: algorithmSteps[algorithmSteps.length - 1].exploredStates,
-        prunedStates: algorithmSteps[algorithmSteps.length - 1].prunedStates,
-        path: [],
-      })
-    }
-
-    setSteps(algorithmSteps)
+    setSteps(generateFifteenPuzzleSteps(initialGrid))
     setCurrentStep(0)
   }
 

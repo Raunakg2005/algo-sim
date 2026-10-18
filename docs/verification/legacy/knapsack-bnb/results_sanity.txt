@@ -1,0 +1,7 @@
+legacy under the engine's frame checker (typed small ints): 5000/5000 runs violate; wrong optimum 0
+{
+  'frame #: node # pruned flag out of step': 13834,
+  'frame #: queued node # missing or pruned': 8388,
+  'frame #: best node drawn as pruned': 436,
+  'node #: bound # < subtree optimum #': 6
+}

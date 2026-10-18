@@ -1,0 +1,4 @@
+import { generateSelectionSortSteps, type SelectionSortStep } from "@/lib/engines/selection-sort"
+
+// Define the types for our sorting steps
+type SortingStep = SelectionSortStep

@@ -12,6 +12,7 @@ import { Play, Pause, RotateCcw, StepForward, X, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { generateDijkstraSteps, validateDijkstraInput, type DijkstraStep } from "@/lib/engines/dijkstra"
 
 type Node = {
   id: string
@@ -31,24 +32,6 @@ type Graph = {
   edges: Edge[]
 }
 
-type NodeState = {
-  id: string
-  distance: number
-  previous: string | null
-  visited: boolean
-  current: boolean
-  relaxed: boolean
-}
-
-type AlgorithmStep = {
-  phase: "init" | "select" | "relax" | "finalize" | "complete"
-  description: string
-  nodeStates: { [key: string]: NodeState }
-  currentNode?: string
-  relaxedEdges?: { source: string; target: string; newDistance: number; improved: boolean }[]
-  finalPath?: string[]
-}
-
 export default function DijkstraShortestPath() {
   const [graph, setGraph] = useState<Graph>({
     nodes: [],
@@ -65,7 +48,7 @@ export default function DijkstraShortestPath() {
   const [bulkInput, setBulkInput] = useState("")
   const [showNodeLabels, setShowNodeLabels] = useState(true)
 
-  const [steps, setSteps] = useState<AlgorithmStep[]>([])
+  const [steps, setSteps] = useState<DijkstraStep[]>([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
@@ -304,174 +287,16 @@ export default function DijkstraShortestPath() {
   }
 
   const startAlgorithm = () => {
-    if (!sourceNode) {
-      setInputError("Please select a source node")
+    // rejects a missing source and negative weights (Dijkstra's greedy choice is only valid for weights >= 0)
+    const error = validateDijkstraInput(graph, sourceNode)
+    if (error || !sourceNode) {
+      setInputError(error ?? "Please select a source node")
       return
     }
 
     setInputError("")
     setAlgorithmStarted(true)
-
-    const algorithmSteps: AlgorithmStep[] = []
-
-    const initialNodeStates: { [key: string]: NodeState } = {}
-
-    graph.nodes.forEach((node) => {
-      initialNodeStates[node.id] = {
-        id: node.id,
-        distance: node.id === sourceNode ? 0 : Number.POSITIVE_INFINITY,
-        previous: null,
-        visited: false,
-        current: node.id === sourceNode,
-        relaxed: false,
-      }
-    })
-
-    algorithmSteps.push({
-      phase: "init",
-      description: "Initialize distances: source = 0, all others = ∞",
-      nodeStates: initialNodeStates,
-    })
-
-    const nodeStates = { ...initialNodeStates }
-    const unvisited = new Set(graph.nodes.map((node) => node.id))
-
-    while (unvisited.size > 0) {
-      let minDistance = Number.POSITIVE_INFINITY
-      let minNode: string | null = null
-
-      unvisited.forEach((nodeId) => {
-        if (nodeStates[nodeId].distance < minDistance) {
-          minDistance = nodeStates[nodeId].distance
-          minNode = nodeId
-        }
-      })
-
-      if (minNode === null || minDistance === Number.POSITIVE_INFINITY) {
-        break
-      }
-
-      Object.keys(nodeStates).forEach((nodeId) => {
-        nodeStates[nodeId] = {
-          ...nodeStates[nodeId],
-          current: nodeId === minNode,
-        }
-      })
-
-      algorithmSteps.push({
-        phase: "select",
-        description: `Select node with minimum distance: ${graph.nodes.find((n) => n.id === minNode)?.label} (distance = ${minDistance === Number.POSITIVE_INFINITY ? "∞" : minDistance})`,
-        nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-        currentNode: minNode,
-      })
-
-      const neighbors: { nodeId: string; weight: number }[] = []
-
-      graph.edges.forEach((edge) => {
-        if (edge.source === minNode && unvisited.has(edge.target)) {
-          neighbors.push({ nodeId: edge.target, weight: edge.weight })
-        } else if (edge.target === minNode && unvisited.has(edge.source)) {
-          neighbors.push({ nodeId: edge.source, weight: edge.weight })
-        }
-      })
-
-      const relaxedEdges: { source: string; target: string; newDistance: number; improved: boolean }[] = []
-
-      neighbors.forEach(({ nodeId, weight }) => {
-        const newDistance = nodeStates[minNode!].distance + weight
-
-        if (newDistance < nodeStates[nodeId].distance) {
-          nodeStates[nodeId] = {
-            ...nodeStates[nodeId],
-            distance: newDistance,
-            previous: minNode,
-            relaxed: true,
-          }
-          relaxedEdges.push({
-            source: minNode!,
-            target: nodeId,
-            newDistance,
-            improved: true,
-          })
-        } else {
-          relaxedEdges.push({
-            source: minNode!,
-            target: nodeId,
-            newDistance: nodeStates[nodeId].distance,
-            improved: false,
-          })
-        }
-      })
-
-      if (relaxedEdges.length > 0) {
-        algorithmSteps.push({
-          phase: "relax",
-          description: "Relax neighbors: update distances if a shorter path is found",
-          nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-          currentNode: minNode,
-          relaxedEdges,
-        })
-      }
-
-      unvisited.delete(minNode)
-      nodeStates[minNode] = {
-        ...nodeStates[minNode],
-        visited: true,
-        current: false,
-      }
-
-      Object.keys(nodeStates).forEach((nodeId) => {
-        if (nodeStates[nodeId].relaxed) {
-          nodeStates[nodeId] = {
-            ...nodeStates[nodeId],
-            relaxed: false,
-          }
-        }
-      })
-
-      algorithmSteps.push({
-        phase: "finalize",
-        description: `Finalize node ${graph.nodes.find((n) => n.id === minNode)?.label}: shortest distance = ${minDistance === Number.POSITIVE_INFINITY ? "∞" : minDistance}`,
-        nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-        currentNode: minNode,
-      })
-    }
-
-    algorithmSteps.push({
-      phase: "complete",
-      description: "Algorithm complete: all reachable nodes have been processed",
-      nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-    })
-
-    if (targetNode) {
-      const finalPath: string[] = []
-      let current = targetNode
-
-      while (current) {
-        finalPath.unshift(current)
-        current = nodeStates[current].previous || ""
-        if (!current) break
-      }
-
-      if (finalPath.length > 1 && finalPath[0] === sourceNode) {
-        const pathDescription = finalPath.map((nodeId) => graph.nodes.find((n) => n.id === nodeId)?.label).join(" → ")
-
-        algorithmSteps.push({
-          phase: "complete",
-          description: `Shortest path from ${graph.nodes.find((n) => n.id === sourceNode)?.label} to ${graph.nodes.find((n) => n.id === targetNode)?.label}: ${pathDescription} (distance = ${nodeStates[targetNode].distance})`,
-          nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-          finalPath,
-        })
-      } else if (nodeStates[targetNode].distance === Number.POSITIVE_INFINITY) {
-        algorithmSteps.push({
-          phase: "complete",
-          description: `No path exists from ${graph.nodes.find((n) => n.id === sourceNode)?.label} to ${graph.nodes.find((n) => n.id === targetNode)?.label}`,
-          nodeStates: JSON.parse(JSON.stringify(nodeStates)),
-        })
-      }
-    }
-
-    setSteps(algorithmSteps)
+    setSteps(generateDijkstraSteps(graph, sourceNode, targetNode))
     setCurrentStep(0)
   }
 
@@ -524,6 +349,7 @@ export default function DijkstraShortestPath() {
     if (!step) return "bg-blue-500"
 
     const nodeState = step.nodeStates[nodeId]
+    if (!nodeState) return "bg-blue-500" // node added after the run started
 
     if (nodeState.current) return "bg-yellow-500"
     if (nodeId === sourceNode) return "bg-green-500"
@@ -543,6 +369,7 @@ export default function DijkstraShortestPath() {
     if (!step) return ""
 
     const nodeState = step.nodeStates[nodeId]
+    if (!nodeState) return ""
 
     if (nodeState.current) return "ring-2 ring-yellow-300"
     if (step.finalPath?.includes(nodeId)) return "ring-2 ring-white"
@@ -806,7 +633,7 @@ export default function DijkstraShortestPath() {
                         className="flex justify-between items-center text-sm p-1 rounded hover:bg-muted"
                       >
                         <span>{node.label}</span>
-                        <Button variant="ghost" size="icon" onClick={() => removeNode(node.id)}>
+                        <Button aria-label="Remove node" variant="ghost" size="icon" onClick={() => removeNode(node.id)}>
                           <X className="h-4 w-4" />
                         </Button>
                       </li>
@@ -832,7 +659,7 @@ export default function DijkstraShortestPath() {
                           <span>
                             {sourceNode?.label} → {targetNode?.label} (weight: {edge.weight})
                           </span>
-                          <Button variant="ghost" size="icon" onClick={() => removeEdge(edge.source, edge.target)}>
+                          <Button aria-label="Remove edge" variant="ghost" size="icon" onClick={() => removeEdge(edge.source, edge.target)}>
                             <X className="h-4 w-4" />
                           </Button>
                         </li>

@@ -11,42 +11,10 @@ import { Play, Pause, RotateCcw, StepForward, StepBack } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { generateSumOfSubsetsSteps, type SubsetStep, type SubsetTreeNode } from "@/lib/engines/sum-of-subsets"
 
-type SubsetState = {
-  include: boolean
-  index: number
-  currentSum: number
-  remainingSum: number
-  currentSubset: number[]
-}
-
-type TreeNode = {
-  id: string
-  parentId: string | null
-  level: number
-  index: number
-  include: boolean
-  sum: number
-  subset: number[]
-  isLeaf: boolean
-  isSuccess: boolean
-  isFailure: boolean
-  isBacktracked: boolean
-  children: string[]
-}
-
-type AlgorithmStep = {
-  phase: "init" | "decision" | "backtrack" | "success" | "complete"
-  description: string
-  currentIndex: number
-  currentSum: number
-  remainingTarget: number
-  currentSubset: number[]
-  treeState: { [key: string]: TreeNode }
-  currentNodeId: string
-  previousNodeId?: string
-  solutions: number[][]
-}
+type TreeNode = SubsetTreeNode
+type AlgorithmStep = SubsetStep
 
 export default function SumOfSubsets() {
   const [numbers, setNumbers] = useState<number[]>([2, 4, 6, 8, 10])
@@ -80,7 +48,7 @@ export default function SumOfSubsets() {
     return () => window.removeEventListener("resize", updateDimensions)
   }, [])
 
-  const parseInput = () => {
+  const parseInput = (): { numbers: number[]; target: number } | null => {
     try {
       setInputError("")
 
@@ -111,14 +79,14 @@ export default function SumOfSubsets() {
 
       setNumbers(parsedNumbers)
       setTargetSum(parsedTargetSum)
-      return true
+      return { numbers: parsedNumbers, target: parsedTargetSum }
     } catch (error) {
       if (error instanceof Error) {
         setInputError(error.message)
       } else {
         setInputError("An unknown error occurred")
       }
-      return false
+      return null
     }
   }
 
@@ -150,242 +118,18 @@ export default function SumOfSubsets() {
   }
 
   const startAlgorithm = () => {
-    if (!parseInput()) {
+    const parsed = parseInput()
+    if (!parsed) {
       return
     }
 
     setAlgorithmStarted(true)
 
-    const sortedNumbers = [...numbers].sort((a, b) => a - b)
-    setNumbers(sortedNumbers)
-    setNumbersInput(sortedNumbers.join(", "))
-
-    const algorithmSteps: AlgorithmStep[] = []
-    const solutions: number[][] = []
-
-    const rootNode: TreeNode = {
-      id: "root",
-      parentId: null,
-      level: 0,
-      index: -1,
-      include: false,
-      sum: 0,
-      subset: [],
-      isLeaf: false,
-      isSuccess: false,
-      isFailure: false,
-      isBacktracked: false,
-      children: [],
-    }
-
-    const treeState: { [key: string]: TreeNode } = {
-      root: rootNode,
-    }
-
-    algorithmSteps.push({
-      phase: "init",
-      description: "Initialize with empty subset. Target sum: " + targetSum,
-      currentIndex: -1,
-      currentSum: 0,
-      remainingTarget: targetSum,
-      currentSubset: [],
-      treeState,
-      currentNodeId: "root",
-      solutions: [],
-    })
-
-    const generateSteps = (
-      index: number,
-      currentSum: number,
-      currentSubset: number[],
-      nodeId: string,
-      parentNodeId: string | null,
-    ) => {
-      if (index === sortedNumbers.length) {
-        if (currentSum === targetSum) {
-          solutions.push([...currentSubset])
-
-          treeState[nodeId] = {
-            ...treeState[nodeId],
-            isLeaf: true,
-            isSuccess: true,
-          }
-
-          algorithmSteps.push({
-            phase: "success",
-            description: `Found a solution! Subset ${currentSubset.join(", ")} sums to ${targetSum}`,
-            currentIndex: index,
-            currentSum,
-            remainingTarget: targetSum - currentSum,
-            currentSubset: [...currentSubset],
-            treeState: JSON.parse(JSON.stringify(treeState)),
-            currentNodeId: nodeId,
-            previousNodeId: parentNodeId || undefined,
-            solutions: [...solutions],
-          })
-        } else {
-          treeState[nodeId] = {
-            ...treeState[nodeId],
-            isLeaf: true,
-            isFailure: true,
-          }
-
-          algorithmSteps.push({
-            phase: "backtrack",
-            description: `Not a solution. Sum ${currentSum} ≠ ${targetSum}. Backtracking...`,
-            currentIndex: index,
-            currentSum,
-            remainingTarget: targetSum - currentSum,
-            currentSubset: [...currentSubset],
-            treeState: JSON.parse(JSON.stringify(treeState)),
-            currentNodeId: nodeId,
-            previousNodeId: parentNodeId || undefined,
-            solutions: [...solutions],
-          })
-        }
-        return
-      }
-
-      const remainingSum = sortedNumbers.slice(index + 1).reduce((sum, num) => sum + num, 0)
-
-      if (currentSum + sortedNumbers[index] <= targetSum) {
-        const includeNodeId = `${nodeId}-include-${index}`
-
-        treeState[includeNodeId] = {
-          id: includeNodeId,
-          parentId: nodeId,
-          level: treeState[nodeId].level + 1,
-          index,
-          include: true,
-          sum: currentSum + sortedNumbers[index],
-          subset: [...currentSubset, sortedNumbers[index]],
-          isLeaf: false,
-          isSuccess: false,
-          isFailure: false,
-          isBacktracked: false,
-          children: [],
-        }
-
-        treeState[nodeId].children.push(includeNodeId)
-
-        algorithmSteps.push({
-          phase: "decision",
-          description: `Include number ${sortedNumbers[index]} at index ${index}`,
-          currentIndex: index,
-          currentSum,
-          remainingTarget: targetSum - currentSum,
-          currentSubset: [...currentSubset],
-          treeState: JSON.parse(JSON.stringify(treeState)),
-          currentNodeId: includeNodeId,
-          previousNodeId: nodeId,
-          solutions: [...solutions],
-        })
-
-        generateSteps(
-          index + 1,
-          currentSum + sortedNumbers[index],
-          [...currentSubset, sortedNumbers[index]],
-          includeNodeId,
-          nodeId,
-        )
-
-        treeState[includeNodeId].isBacktracked = true
-      } else {
-        algorithmSteps.push({
-          phase: "decision",
-          description: `Cannot include ${sortedNumbers[index]} as it would exceed the target sum`,
-          currentIndex: index,
-          currentSum,
-          remainingTarget: targetSum - currentSum,
-          currentSubset: [...currentSubset],
-          treeState: JSON.parse(JSON.stringify(treeState)),
-          currentNodeId: nodeId,
-          solutions: [...solutions],
-        })
-      }
-
-      if (currentSum + remainingSum - sortedNumbers[index] >= targetSum) {
-        const excludeNodeId = `${nodeId}-exclude-${index}`
-
-        treeState[excludeNodeId] = {
-          id: excludeNodeId,
-          parentId: nodeId,
-          level: treeState[nodeId].level + 1,
-          index,
-          include: false,
-          sum: currentSum,
-          subset: [...currentSubset],
-          isLeaf: false,
-          isSuccess: false,
-          isFailure: false,
-          isBacktracked: false,
-          children: [],
-        }
-
-        treeState[nodeId].children.push(excludeNodeId)
-
-        algorithmSteps.push({
-          phase: "decision",
-          description: `Exclude number ${sortedNumbers[index]} at index ${index}`,
-          currentIndex: index,
-          currentSum,
-          remainingTarget: targetSum - currentSum,
-          currentSubset: [...currentSubset],
-          treeState: JSON.parse(JSON.stringify(treeState)),
-          currentNodeId: excludeNodeId,
-          previousNodeId: nodeId,
-          solutions: [...solutions],
-        })
-
-        generateSteps(index + 1, currentSum, [...currentSubset], excludeNodeId, nodeId)
-
-        treeState[excludeNodeId].isBacktracked = true
-      } else {
-        algorithmSteps.push({
-          phase: "decision",
-          description: `Cannot exclude ${sortedNumbers[index]} as the remaining sum would be insufficient`,
-          currentIndex: index,
-          currentSum,
-          remainingTarget: targetSum - currentSum,
-          currentSubset: [...currentSubset],
-          treeState: JSON.parse(JSON.stringify(treeState)),
-          currentNodeId: nodeId,
-          solutions: [...solutions],
-        })
-      }
-
-      if (parentNodeId) {
-        algorithmSteps.push({
-          phase: "backtrack",
-          description: `Backtracking from index ${index}...`,
-          currentIndex: index - 1,
-          currentSum: treeState[parentNodeId].sum,
-          remainingTarget: targetSum - treeState[parentNodeId].sum,
-          currentSubset: [...treeState[parentNodeId].subset],
-          treeState: JSON.parse(JSON.stringify(treeState)),
-          currentNodeId: parentNodeId,
-          previousNodeId: nodeId,
-          solutions: [...solutions],
-        })
-      }
-    }
-
-    generateSteps(0, 0, [], "root", null)
-
-    algorithmSteps.push({
-      phase: "complete",
-      description:
-        solutions.length > 0
-          ? `Algorithm complete. Found ${solutions.length} solution(s).`
-          : "Algorithm complete. No solutions found.",
-      currentIndex: sortedNumbers.length,
-      currentSum: 0,
-      remainingTarget: targetSum,
-      currentSubset: [],
-      treeState: JSON.parse(JSON.stringify(treeState)),
-      currentNodeId: "root",
-      solutions,
-    })
+    // use the values just parsed from the input boxes (the numbers/targetSum state only updates on the next render)
+    const { sorted, steps: algorithmSteps } = generateSumOfSubsetsSteps(parsed.numbers, parsed.target)
+    setNumbers(sorted)
+    setTargetSum(parsed.target)
+    setNumbersInput(sorted.join(", "))
 
     setSteps(algorithmSteps)
     setCurrentStep(0)

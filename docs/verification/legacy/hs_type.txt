@@ -1,0 +1,3 @@
+import { generateHeapSortSteps, type HeapSortStep } from "@/lib/engines/heap-sort"
+
+type SortingStep = HeapSortStep

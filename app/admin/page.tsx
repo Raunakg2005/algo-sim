@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import NavBar from "@/components/navbar"
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { averageRating } from "@/lib/feedback-stats"
 
 type Feedback = {
   _id: string
@@ -117,26 +118,9 @@ export default function AdminDashboard() {
       })
     })
 
-    // Calculate average rating
-    const ratingValues: Record<string, number> = {
-      Excellent: 5,
-      "Very Good": 4,
-      Good: 3,
-      Fair: 2,
-      Poor: 1,
-    }
-
-    let totalRating = 0
-    let totalRatingCount = 0
-
-    Object.values(ratingCounts).forEach((counts) => {
-      Object.entries(counts).forEach(([rating, count]) => {
-        totalRating += (ratingValues[rating] || 0) * count
-        totalRatingCount += count
-      })
-    })
-
-    const avgRating = totalRatingCount > 0 ? (totalRating / totalRatingCount).toFixed(1) : 0
+    // average of the four Excellent..Poor questions only (see lib/feedback-stats.ts)
+    const average = averageRating(feedbacks)
+    const avgRating = average === null ? 0 : average.toFixed(1)
 
     return {
       totalFeedbacks,

@@ -1,0 +1,10 @@
+opt 6: boards 5, suboptimal 0, unsolved 0
+opt 7: boards 9, suboptimal 0, unsolved 0
+opt 8: boards 20, suboptimal 0, unsolved 0
+opt 9: boards 41, suboptimal 0, unsolved 0
+opt 10: boards 85, suboptimal 0, unsolved 0
+opt 11: boards 171, suboptimal 0, unsolved 0
+opt 12: boards 339, suboptimal 1, unsolved 0
+opt 13: boards 676, suboptimal 2, unsolved 0
+opt 14: boards 1340, suboptimal 2, unsolved 0
+total 2686: suboptimal 5 (0.19%), unsolved within 1000 states 0

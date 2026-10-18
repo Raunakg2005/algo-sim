@@ -1,0 +1,18 @@
+stack: 20000 random operation sequences (length 1-30, values -20..20, capacity 10)
+  code-line highlight wrong on 105572/300246 frames (35.2%)
+  highlighted code line wrong (peek: shows "if (this.isEmpty()) return null;"): 14759/20000 sequences (73.8%)
+    minimal example: push(0), peek
+  visualization shows a stale frame, not the state after the operation: 18959/20000 sequences (94.8%)
+    minimal example: push(5), pop
+  highlighted code line wrong (pop: shows "if (this.isEmpty()) return null;"): 16610/20000 sequences (83.0%)
+    minimal example: push(5), pop
+  highlighted code line wrong (push error: shows "this.top++;"): 1813/20000 sequences (9.1%)
+    minimal example: push(17), push(-4), push(-12), push(15), push(0), push(-14), peek, push(12), push(-12), push(14), push(-1), push(4)
+input parsing (validateInput = parseInt):
+  "3.7" -> pushed 3
+  "1e3" -> pushed 1
+  "12abc" -> pushed 12
+  "0x1A" -> pushed 0
+  "99999999999999999999" -> pushed 100000000000000000000
+  "-0" -> pushed 0
+  " 42 " -> pushed 42

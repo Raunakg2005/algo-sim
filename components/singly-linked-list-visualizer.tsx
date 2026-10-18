@@ -12,138 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface ListNode {
-  value: number
-  next: number | null
-  id: number
-}
-
-interface LinkedListStep {
-  nodes: ListNode[]
-  head: number | null
-  operation: string
-  element?: number
-  position?: number
-  description: string
-  isError: boolean
-  activeCodeLine: number
-  highlightedNodes?: number[]
-}
-
-const singlyLinkedListCode = [
-  "class Node {",
-  "  constructor(data) {",
-  "    this.data = data;",
-  "    this.next = null;",
-  "  }",
-  "}",
-  "",
-  "class SinglyLinkedList {",
-  "  constructor() {",
-  "    this.head = null;",
-  "    this.size = 0;",
-  "  }",
-  "",
-  "  // Insert at beginning",
-  "  insertAtBeginning(data) {",
-  "    const newNode = new Node(data);",
-  "    newNode.next = this.head;",
-  "    this.head = newNode;",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Insert at end",
-  "  insertAtEnd(data) {",
-  "    const newNode = new Node(data);",
-  "    if (!this.head) {",
-  "      this.head = newNode;",
-  "    } else {",
-  "      let current = this.head;",
-  "      while (current.next) {",
-  "        current = current.next;",
-  "      }",
-  "      current.next = newNode;",
-  "    }",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Insert at position",
-  "  insertAtPosition(data, position) {",
-  "    if (position < 0 || position > this.size) {",
-  "      throw new Error('Invalid position');",
-  "    }",
-  "    if (position === 0) {",
-  "      this.insertAtBeginning(data);",
-  "      return;",
-  "    }",
-  "    const newNode = new Node(data);",
-  "    let current = this.head;",
-  "    for (let i = 0; i < position - 1; i++) {",
-  "      current = current.next;",
-  "    }",
-  "    newNode.next = current.next;",
-  "    current.next = newNode;",
-  "    this.size++;",
-  "  }",
-  "",
-  "  // Delete from beginning",
-  "  deleteFromBeginning() {",
-  "    if (!this.head) return null;",
-  "    const deletedData = this.head.data;",
-  "    this.head = this.head.next;",
-  "    this.size--;",
-  "    return deletedData;",
-  "  }",
-  "",
-  "  // Delete from end",
-  "  deleteFromEnd() {",
-  "    if (!this.head) return null;",
-  "    if (!this.head.next) {",
-  "      const deletedData = this.head.data;",
-  "      this.head = null;",
-  "      this.size--;",
-  "      return deletedData;",
-  "    }",
-  "    let current = this.head;",
-  "    while (current.next.next) {",
-  "      current = current.next;",
-  "    }",
-  "    const deletedData = current.next.data;",
-  "    current.next = null;",
-  "    this.size--;",
-  "    return deletedData;",
-  "  }",
-  "",
-  "  // Search for element",
-  "  search(data) {",
-  "    let current = this.head;",
-  "    let position = 0;",
-  "    while (current) {",
-  "      if (current.data === data) {",
-  "        return position;",
-  "      }",
-  "      current = current.next;",
-  "      position++;",
-  "    }",
-  "    return -1;",
-  "  }",
-  "",
-  "  // Display list",
-  "  display() {",
-  "    const elements = [];",
-  "    let current = this.head;",
-  "    while (current) {",
-  "      elements.push(current.data);",
-  "      current = current.next;",
-  "    }",
-  "    return elements;",
-  "  }",
-  "}",
-]
+import * as ll from "@/lib/engines/singly-linked-list"
+import { singlyLinkedListCode, type ListNode, type LinkedListStep, type SinglyListState } from "@/lib/engines/singly-linked-list"
+import { playbackAfterOperation } from "@/lib/engines/stack"
 
 export default function SinglyLinkedListVisualizer() {
-  const [nodes, setNodes] = useState<ListNode[]>([])
-  const [head, setHead] = useState<number | null>(null)
+  const [list, setList] = useState<SinglyListState>(ll.EMPTY_SINGLY_LIST)
+  const { nodes, head } = list
   const [inputValue, setInputValue] = useState<string>("")
   const [positionInput, setPositionInput] = useState<string>("")
   const [inputError, setInputError] = useState<string>("")
@@ -152,515 +27,91 @@ export default function SinglyLinkedListVisualizer() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1)
   const [activeView, setActiveView] = useState<string>("split")
-  const [nextId, setNextId] = useState<number>(1)
   const [operation, setOperation] = useState<string>("insertEnd")
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const addStep = (
-    newNodes: ListNode[],
-    newHead: number | null,
-    operation: string,
-    element: number | undefined,
-    position: number | undefined,
-    description: string,
-    isError = false,
-    activeCodeLine = 0,
-    highlightedNodes: number[] = [],
-  ) => {
-    const newStep: LinkedListStep = {
-      nodes: [...newNodes],
-      head: newHead,
-      operation,
-      element,
-      position,
-      description,
-      isError,
-      activeCodeLine,
-      highlightedNodes,
-    }
-    setSteps((prev) => [...prev, newStep])
+  // Every operation is computed by the pure engine (lib/engines); the component only stores the result.
+  const run = (result: ll.OpResult<SinglyListState, LinkedListStep>): boolean => {
+    // show the new operation's frames instead of leaving the view on an older state
+    const playback = playbackAfterOperation(steps.length, result.steps.length)
+    setList(result.state)
+    setSteps((prev) => [...prev, ...result.steps])
+    setCurrentStepIndex(playback.index)
+    setIsPlaying(playback.play)
+    return result.ok
   }
 
-  const validateInput = (): number | null => {
-    const value = inputValue.trim()
-    if (!value) {
-      setInputError("Please enter a number")
-      return null
-    }
-    const num = Number.parseInt(value, 10)
-    if (isNaN(num)) {
-      setInputError("Please enter a valid number")
-      return null
-    }
-    setInputError("")
-    return num
+  const readValue = (): number | null => {
+    const parsed = ll.parseValueInput(inputValue)
+    setInputError(parsed.ok ? "" : parsed.error)
+    return parsed.ok ? parsed.value : null
   }
 
-  const validatePosition = (): number | null => {
-    const pos = positionInput.trim()
-    if (!pos) {
-      setInputError("Please enter a position")
-      return null
-    }
-    const num = Number.parseInt(pos, 10)
-    if (isNaN(num) || num < 0) {
-      setInputError("Please enter a valid position (≥ 0)")
-      return null
-    }
-    setInputError("")
-    return num
+  const readPosition = (): number | null => {
+    const parsed = ll.parsePositionInput(positionInput)
+    setInputError(parsed.ok ? "" : parsed.error)
+    return parsed.ok ? parsed.value : null
   }
 
   const insertAtBeginning = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    const newNode: ListNode = {
-      value,
-      next: head,
-      id: nextId,
-    }
-
-    const newNodes = [...nodes, newNode]
-    const newHead = nextId
-
-    addStep(newNodes, head, "insertBeginning", value, undefined, "Creating new node", false, 14, [])
-    addStep(
-      newNodes,
-      newHead,
-      "insertBeginning",
-      value,
-      undefined,
-      `Inserted ${value} at beginning. New head points to node ${nextId}`,
-      false,
-      17,
-      [nextId],
-    )
-
-    setNodes(newNodes)
-    setHead(newHead)
-    setNextId(nextId + 1)
+    run(ll.insertAtBeginning(list, value))
     setInputValue("")
   }
 
   const insertAtEnd = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    const newNode: ListNode = {
-      value,
-      next: null,
-      id: nextId,
-    }
-
-    if (head === null) {
-      const newNodes = [...nodes, newNode]
-      addStep(newNodes, null, "insertEnd", value, undefined, "List is empty, inserting as first node", false, 23, [])
-      addStep(
-        newNodes,
-        nextId,
-        "insertEnd",
-        value,
-        undefined,
-        `Inserted ${value} as first node. Head points to node ${nextId}`,
-        false,
-        24,
-        [nextId],
-      )
-
-      setNodes(newNodes)
-      setHead(nextId)
-    } else {
-      // Find the last node
-      let current = head
-      const traversalPath: number[] = [current]
-
-      while (nodes.find((n) => n.id === current)?.next !== null) {
-        const currentNode = nodes.find((n) => n.id === current)
-        if (currentNode?.next) {
-          current = currentNode.next
-          traversalPath.push(current)
-        }
-      }
-
-      addStep(
-        nodes,
-        head,
-        "insertEnd",
-        value,
-        undefined,
-        `Traversing to find last node: ${traversalPath.join(" → ")}`,
-        false,
-        26,
-        traversalPath,
-      )
-
-      const newNodes = [...nodes, newNode]
-      const updatedNodes = newNodes.map((node) => (node.id === current ? { ...node, next: nextId } : node))
-
-      addStep(
-        updatedNodes,
-        head,
-        "insertEnd",
-        value,
-        undefined,
-        `Inserted ${value} at end. Last node now points to node ${nextId}`,
-        false,
-        30,
-        [nextId],
-      )
-
-      setNodes(updatedNodes)
-    }
-
-    setNextId(nextId + 1)
+    run(ll.insertAtEnd(list, value))
     setInputValue("")
   }
 
   const insertAtPosition = () => {
-    const value = validateInput()
-    const position = validatePosition()
-    if (value === null || position === null) return
-
-    const listSize = nodes.filter((n) => {
-      let current = head
-      while (current !== null) {
-        if (current === n.id) return true
-        const node = nodes.find((node) => node.id === current)
-        current = node?.next || null
-      }
-      return false
-    }).length
-
-    if (position > listSize) {
-      addStep(
-        nodes,
-        head,
-        "insertPosition",
-        value,
-        position,
-        `Invalid position ${position}. List size is ${listSize}`,
-        true,
-        35,
-        [],
-      )
-      return
+    // the value is validated first, so a valid position no longer hides the value's error message
+    const value = readValue()
+    if (value === null) return
+    const position = readPosition()
+    if (position === null) return
+    if (run(ll.insertAtPosition(list, value, position))) {
+      setInputValue("")
+      setPositionInput("")
     }
-
-    if (position === 0) {
-      insertAtBeginning()
-      return
-    }
-
-    const newNode: ListNode = {
-      value,
-      next: null,
-      id: nextId,
-    }
-
-    // Traverse to position - 1
-    let current = head
-    const traversalPath: number[] = []
-
-    for (let i = 0; i < position - 1 && current !== null; i++) {
-      traversalPath.push(current)
-      const node = nodes.find((n) => n.id === current)
-      current = node?.next || null
-    }
-
-    if (current === null) {
-      addStep(nodes, head, "insertPosition", value, position, `Invalid position ${position}`, true, 35, [])
-      return
-    }
-
-    addStep(
-      nodes,
-      head,
-      "insertPosition",
-      value,
-      position,
-      `Traversing to position ${position - 1}: ${traversalPath.join(" → ")}`,
-      false,
-      43,
-      traversalPath,
-    )
-
-    const currentNode = nodes.find((n) => n.id === current)
-    newNode.next = currentNode?.next || null
-
-    const newNodes = [...nodes, newNode]
-    const updatedNodes = newNodes.map((node) => (node.id === current ? { ...node, next: nextId } : node))
-
-    addStep(
-      updatedNodes,
-      head,
-      "insertPosition",
-      value,
-      position,
-      `Inserted ${value} at position ${position}`,
-      false,
-      47,
-      [nextId],
-    )
-
-    setNodes(updatedNodes)
-    setNextId(nextId + 1)
-    setInputValue("")
-    setPositionInput("")
   }
 
   const deleteFromBeginning = () => {
-    if (head === null) {
-      addStep(nodes, head, "deleteBeginning", undefined, undefined, "Cannot delete from empty list", true, 52, [])
-      return
-    }
-
-    const headNode = nodes.find((n) => n.id === head)
-    const deletedValue = headNode?.value
-    const newHead = headNode?.next || null
-
-    addStep(
-      nodes,
-      head,
-      "deleteBeginning",
-      deletedValue,
-      undefined,
-      `Deleting head node with value ${deletedValue}`,
-      false,
-      53,
-      [head],
-    )
-
-    const updatedNodes = nodes.filter((n) => n.id !== head)
-
-    addStep(
-      updatedNodes,
-      newHead,
-      "deleteBeginning",
-      deletedValue,
-      undefined,
-      `Deleted ${deletedValue} from beginning. New head: ${newHead ? `node ${newHead}` : "null"}`,
-      false,
-      55,
-      [],
-    )
-
-    setNodes(updatedNodes)
-    setHead(newHead)
+    run(ll.deleteFromBeginning(list))
   }
 
   const deleteFromEnd = () => {
-    if (head === null) {
-      addStep(nodes, head, "deleteEnd", undefined, undefined, "Cannot delete from empty list", true, 60, [])
-      return
-    }
-
-    const headNode = nodes.find((n) => n.id === head)
-    if (headNode?.next === null) {
-      // Only one node
-      addStep(
-        nodes,
-        head,
-        "deleteEnd",
-        headNode.value,
-        undefined,
-        `Deleting only node with value ${headNode.value}`,
-        false,
-        62,
-        [head],
-      )
-      addStep(
-        [],
-        null,
-        "deleteEnd",
-        headNode.value,
-        undefined,
-        `Deleted ${headNode.value} from end. List is now empty`,
-        false,
-        65,
-        [],
-      )
-
-      setNodes([])
-      setHead(null)
-      return
-    }
-
-    // Find second to last node
-    let current: number | null = head
-    let previous: number | null = null
-    const traversalPath: number[] = []
-
-    while (current !== null) {
-      const currentNode = nodes.find((n) => n.id === current)
-      if (currentNode?.next === null) break
-
-      traversalPath.push(current)
-      previous = current
-      current = currentNode && currentNode.next !== null ? currentNode.next : null
-    }
-
-    const lastNode = nodes.find((n) => n.id === current)
-
-    addStep(
-      nodes,
-      head,
-      "deleteEnd",
-      lastNode?.value,
-      undefined,
-      `Traversing to find last node: ${traversalPath.join(" → ")} → ${current}`,
-      false,
-      68,
-      [...traversalPath, ...(current !== null ? [current] : [])],
-    )
-
-    const updatedNodes = nodes
-      .filter((n) => n.id !== current)
-      .map((node) => (node.id === previous ? { ...node, next: null } : node))
-
-    addStep(
-      updatedNodes,
-      head,
-      "deleteEnd",
-      lastNode?.value,
-      undefined,
-      `Deleted ${lastNode?.value} from end`,
-      false,
-      73,
-      [],
-    )
-
-    setNodes(updatedNodes)
+    run(ll.deleteFromEnd(list))
   }
 
   const deleteAtPosition = () => {
-    const position = Number.parseInt(positionInput)
-
-    if (Number.isNaN(position) || position < 0) {
-      setInputError("Please enter a valid position (0 or greater)")
+    const parsed = ll.parseDeletePositionInput(positionInput)
+    if (!parsed.ok) {
+      setInputError(parsed.error)
       return
     }
-
-    const size = nodes.length
-
-    if (position >= size) {
-      addStep(
-        nodes,
-        head,
-        "deletePosition",
-        undefined,
-        position,
-        `Invalid position ${position}. List size is ${size}`,
-        true,
-        77,
-        [],
-      )
-      setInputError(`Position must be less than list size (${size})`)
-      return
-    }
-
-    setInputError("")
-
-    if (position === 0) {
-      deleteFromBeginning()
-      setPositionInput("")
-      return
-    }
-
-    // Find the node at position-1 and the node at position
-    let current = head
-    let previous: number | null = null
-    const traversalPath: number[] = []
-
-    for (let i = 0; i < position; i++) {
-      const currentNode = nodes.find((n) => n.id === current)
-      traversalPath.push(current!)
-      previous = current
-      current = currentNode?.next || null
-    }
-
-    const nodeToDelete = nodes.find((n) => n.id === current)
-    const deletedValue = nodeToDelete?.value
-
-    addStep(
-      nodes,
-      head,
-      "deletePosition",
-      deletedValue,
-      position,
-      `Traversing to position ${position}: ${traversalPath.join(" → ")} → ${current}`,
-      false,
-      78,
-      [...traversalPath, ...(current !== null ? [current] : [])],
-    )
-
-    const updatedNodes = nodes
-      .filter((n) => n.id !== current)
-      .map((node) => (node.id === previous ? { ...node, next: nodeToDelete?.next || null } : node))
-
-    addStep(
-      updatedNodes,
-      head,
-      "deletePosition",
-      deletedValue,
-      position,
-      `Deleted ${deletedValue} from position ${position}`,
-      false,
-      81,
-      [],
-    )
-
-    setNodes(updatedNodes)
-    setPositionInput("")
+    const result = ll.deleteAtPosition(list, parsed.value)
+    setInputError(result.inputError ?? "")
+    if (run(result)) setPositionInput("")
   }
 
   const searchElement = () => {
-    const value = validateInput()
+    const value = readValue()
     if (value === null) return
-
-    let current = head
-    let position = 0
-    const searchPath: number[] = []
-
-    while (current !== null) {
-      const currentNode = nodes.find((n) => n.id === current)
-      searchPath.push(current)
-
-      addStep(
-        nodes,
-        head,
-        "search",
-        value,
-        position,
-        `Searching for ${value}. Checking node ${current} with value ${currentNode?.value}`,
-        false,
-        80,
-        searchPath,
-      )
-
-      if (currentNode?.value === value) {
-        addStep(nodes, head, "search", value, position, `Found ${value} at position ${position}`, false, 81, [current])
-        setInputValue("")
-        return
-      }
-
-      current = currentNode?.next || null
-      position++
-    }
-
-    addStep(nodes, head, "search", value, undefined, `Element ${value} not found in the list`, false, 86, searchPath)
+    run(ll.search(list, value))
     setInputValue("")
   }
 
   const clearList = () => {
-    setNodes([])
-    setHead(null)
+    setList(ll.EMPTY_SINGLY_LIST)
     setSteps([])
     setCurrentStepIndex(0)
     setIsPlaying(false)
     setInputError("")
-    setNextId(1)
   }
 
   const togglePlay = () => {
@@ -741,26 +192,15 @@ export default function SinglyLinkedListVisualizer() {
     const displayHead = steps.length > 0 ? currentStep.head : head
     const highlightedNodes = currentStep.highlightedNodes || []
 
-    // Build the linked list order
-    const orderedNodes: ListNode[] = []
-    let current = displayHead
-
-    while (current !== null) {
-      const node = displayNodes.find((n) => n.id === current)
-      if (node) {
-        orderedNodes.push(node)
-        current = node.next
-      } else {
-        break
-      }
-    }
+    // Build the linked list order (cycle-safe walk along next pointers)
+    const orderedNodes: ListNode[] = ll.orderFrom(displayNodes, displayHead)
 
     return (
       <div className="flex flex-col items-center min-h-[400px] mb-4">
         <div className="mb-4 text-center">
           <h3 className="text-lg font-semibold mb-2">Singly Linked List Visualization</h3>
           <p className="text-sm text-gray-600">
-            Size: {orderedNodes.length} | Head: {displayHead ? `Node ${displayHead}` : "null"}
+            Size: {orderedNodes.length} | Head: {displayHead !== null ? `Node ${displayHead}` : "null"}
           </p>
         </div>
 
@@ -808,7 +248,7 @@ export default function SinglyLinkedListVisualizer() {
                           {/* Next pointer part */}
                           <div className="px-4 py-3">
                             <div className="text-sm text-gray-500">Next</div>
-                            <div className="text-sm font-mono">{node.next ? `→${node.next}` : "null"}</div>
+                            <div className="text-sm font-mono">{node.next !== null ? `→${node.next}` : "null"}</div>
                           </div>
                         </motion.div>
 
@@ -868,11 +308,12 @@ export default function SinglyLinkedListVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Previous step"
             >
               <Minus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={togglePlay} variant="outline" size="icon" className="h-10 w-10" aria-label={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
 
@@ -882,11 +323,12 @@ export default function SinglyLinkedListVisualizer() {
               variant="outline"
               size="icon"
               className="h-10 w-10"
+              aria-label="Next step"
             >
               <Plus className="h-5 w-5" />
             </Button>
 
-            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10">
+            <Button onClick={resetAnimation} variant="outline" size="icon" className="h-10 w-10" aria-label="Reset">
               <RotateCcw className="h-5 w-5" />
             </Button>
           </div>

@@ -14,6 +14,9 @@ import CircularQueueVisualizer from "@/components/circular-queue-visualizer"
 import DoubleEndedQueueVisualizer from "@/components/double-ended-queue-visualizer"
 import PriorityQueueVisualizer from "@/components/priority-queue-visualizer"
 import SingleLinkListVisualizer from "@/components/singly-linked-list-visualizer"
+import DoublyLinkedListVisualizer from "@/components/doubly-linked-list-visualizer"
+import CircularLinkedListVisualizer from "@/components/circular-linked-list-visualizer"
+import CircularDoublyLinkedListVisualizer from "@/components/circular-doubly-linked-list-visualizer"
 
 interface Option {
   key: string
@@ -286,6 +289,12 @@ export default function DataStructureSimulationPage() {
                         <PriorityQueueVisualizer />
                       ) : selectedSubOperation === "singlyLinkedList" ? (
                         <SingleLinkListVisualizer />
+                      ) : selectedSubOperation === "doublyLinkedList" ? (
+                        <DoublyLinkedListVisualizer />
+                      ) : selectedSubOperation === "circularLinkedList" ? (
+                        <CircularLinkedListVisualizer />
+                      ) : selectedSubOperation === "circularDoublyLinkedList" ? (
+                        <CircularDoublyLinkedListVisualizer />
                       ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">

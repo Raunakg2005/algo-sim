@@ -12,33 +12,20 @@ import { Play, Pause, RotateCcw, StepForward, X, Check, BookOpen } from "lucide-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-type Item = {
-  id: number
-  weight: number
-  value: number
-  selected?: boolean
-}
+import {
+  MAX_KNAPSACK_CAPACITY,
+  MAX_KNAPSACK_ITEMS,
+  generateKnapsackSteps,
+  nextItemId,
+  parsePositiveInteger,
+  type KnapsackCell,
+  type KnapsackItem,
+  type KnapsackStep,
+} from "@/lib/engines/knapsack-01"
 
-type Cell = {
-  value: number
-  includeItem: boolean
-  highlighted?: boolean
-  comparing?: boolean
-  fromAbove?: boolean
-  fromDiagonal?: boolean
-}
-
-type AlgorithmStep = {
-  phase: "init" | "compute" | "backtrack" | "complete"
-  description: string
-  currentRow?: number
-  currentCol?: number
-  table: Cell[][]
-  selectedItems: number[]
-  totalValue: number
-  totalWeight: number
-  comparingCells?: { row: number; col: number }[]
-}
+type Item = KnapsackItem & { selected?: boolean }
+type Cell = KnapsackCell
+type AlgorithmStep = KnapsackStep
 
 export default function KnapsackProblem() {
   const [items, setItems] = useState<Item[]>([
@@ -65,21 +52,27 @@ export default function KnapsackProblem() {
       return
     }
 
-    const weight = Number.parseInt(newItemWeight)
-    const value = Number.parseInt(newItemValue)
+    const weight = parsePositiveInteger(newItemWeight)
+    const value = parsePositiveInteger(newItemValue)
 
-    if (isNaN(weight) || weight <= 0) {
-      setInputError("Weight must be a positive number")
+    if (weight === null) {
+      setInputError("Weight must be a positive whole number")
       return
     }
 
-    if (isNaN(value) || value <= 0) {
-      setInputError("Value must be a positive number")
+    if (value === null) {
+      setInputError("Value must be a positive whole number")
+      return
+    }
+
+    if (items.length >= MAX_KNAPSACK_ITEMS) {
+      setInputError(`At most ${MAX_KNAPSACK_ITEMS} items can be visualized`)
       return
     }
 
     setInputError("")
-    setItems([...items, { id: items.length + 1, weight, value }])
+    // ids stay unique after removals (items.length + 1 could repeat an existing id)
+    setItems([...items, { id: nextItemId(items), weight, value }])
     setNewItemWeight("")
     setNewItemValue("")
   }
@@ -89,9 +82,12 @@ export default function KnapsackProblem() {
   }
 
   const updateCapacity = (value: string) => {
-    const newCapacity = Number.parseInt(value)
-    if (!isNaN(newCapacity) && newCapacity > 0) {
+    const newCapacity = parsePositiveInteger(value)
+    if (newCapacity !== null && newCapacity <= MAX_KNAPSACK_CAPACITY) {
+      setInputError("")
       setCapacity(newCapacity)
+    } else if (value.trim() !== "") {
+      setInputError(`Capacity must be a whole number between 1 and ${MAX_KNAPSACK_CAPACITY}`)
     }
   }
 
@@ -125,226 +121,8 @@ export default function KnapsackProblem() {
     setInputError("")
     setAlgorithmStarted(true)
 
-    const algorithmSteps: AlgorithmStep[] = []
-
-    const n = items.length
-    const w = capacity
-    const dp: Cell[][] = Array(n + 1)
-      .fill(null)
-      .map(() =>
-        Array(w + 1)
-          .fill(null)
-          .map(() => ({ value: 0, includeItem: false })),
-      )
-
-    algorithmSteps.push({
-      phase: "init",
-      description: "Initialize the DP table with zeros",
-      table: JSON.parse(JSON.stringify(dp)),
-      selectedItems: [],
-      totalValue: 0,
-      totalWeight: 0,
-    })
-
-    for (let i = 1; i <= n; i++) {
-      const item = items[i - 1]
-
-      const rowInitStep = JSON.parse(JSON.stringify(dp))
-      rowInitStep[i][0].highlighted = true
-
-      algorithmSteps.push({
-        phase: "compute",
-        description: `Starting row ${i}: considering item ${i} (weight: ${item.weight}, value: ${item.value})`,
-        currentRow: i,
-        currentCol: 0,
-        table: rowInitStep,
-        selectedItems: [],
-        totalValue: 0,
-        totalWeight: 0,
-      })
-
-      for (let j = 0; j <= w; j++) {
-        const currentStep = JSON.parse(JSON.stringify(dp))
-        currentStep[i][j].highlighted = true
-
-        if (j === 0) {
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Cell [${i}][${j}]: First column is always 0`,
-            currentRow: i,
-            currentCol: j,
-            table: currentStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-          })
-        } else if (item.weight > j) {
-          currentStep[i][j].comparing = true
-          currentStep[i - 1][j].comparing = true
-          currentStep[i][j].fromAbove = true
-
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Cell [${i}][${j}]: Item ${i} doesn't fit (weight ${item.weight} > capacity ${j})`,
-            currentRow: i,
-            currentCol: j,
-            table: currentStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-            comparingCells: [
-              { row: i, col: j },
-              { row: i - 1, col: j },
-            ],
-          })
-
-          dp[i][j].value = dp[i - 1][j].value
-          dp[i][j].includeItem = false
-
-          const updatedStep = JSON.parse(JSON.stringify(dp))
-          updatedStep[i][j].highlighted = true
-
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Cell [${i}][${j}]: Take value ${dp[i][j].value} from above`,
-            currentRow: i,
-            currentCol: j,
-            table: updatedStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-          })
-        } else {
-          const valueWithout = dp[i - 1][j].value
-          const valueWith = dp[i - 1][j - item.weight].value + item.value
-
-          currentStep[i][j].comparing = true
-          currentStep[i - 1][j].comparing = true
-          currentStep[i - 1][j - item.weight].comparing = true
-          currentStep[i][j].fromAbove = valueWithout >= valueWith
-          currentStep[i][j].fromDiagonal = valueWith > valueWithout
-
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Cell [${i}][${j}]: Compare including vs excluding item ${i}`,
-            currentRow: i,
-            currentCol: j,
-            table: currentStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-            comparingCells: [
-              { row: i, col: j },
-              { row: i - 1, col: j },
-              { row: i - 1, col: j - item.weight },
-            ],
-          })
-
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Without item ${i}: ${valueWithout}, With item ${i}: ${valueWith} (${dp[i - 1][j - item.weight].value} + ${item.value})`,
-            currentRow: i,
-            currentCol: j,
-            table: currentStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-            comparingCells: [
-              { row: i, col: j },
-              { row: i - 1, col: j },
-              { row: i - 1, col: j - item.weight },
-            ],
-          })
-
-          if (valueWith > valueWithout) {
-            dp[i][j].value = valueWith
-            dp[i][j].includeItem = true
-          } else {
-            dp[i][j].value = valueWithout
-            dp[i][j].includeItem = false
-          }
-
-          const updatedStep = JSON.parse(JSON.stringify(dp))
-          updatedStep[i][j].highlighted = true
-
-          algorithmSteps.push({
-            phase: "compute",
-            description: `Cell [${i}][${j}]: Choose ${
-              dp[i][j].includeItem ? "to include" : "not to include"
-            } item ${i}, value = ${dp[i][j].value}`,
-            currentRow: i,
-            currentCol: j,
-            table: updatedStep,
-            selectedItems: [],
-            totalValue: 0,
-            totalWeight: 0,
-          })
-        }
-      }
-    }
-
-    algorithmSteps.push({
-      phase: "complete",
-      description: `DP table complete. Maximum value: ${dp[n][w].value}`,
-      table: JSON.parse(JSON.stringify(dp)),
-      selectedItems: [],
-      totalValue: dp[n][w].value,
-      totalWeight: 0,
-    })
-
-    const selectedItems: number[] = []
-    let i = n
-    let j = w
-    let totalWeight = 0
-
-    while (i > 0 && j > 0) {
-      if (dp[i][j].includeItem) {
-        const item = items[i - 1]
-        selectedItems.push(item.id)
-        totalWeight += item.weight
-        j -= item.weight
-
-        const backtrackStep = JSON.parse(JSON.stringify(dp))
-        backtrackStep[i][j + item.weight].highlighted = true
-
-        algorithmSteps.push({
-          phase: "backtrack",
-          description: `Backtracking: Include item ${i} (weight: ${item.weight}, value: ${item.value})`,
-          table: backtrackStep,
-          selectedItems: [...selectedItems],
-          totalValue: dp[n][w].value,
-          totalWeight,
-        })
-      }
-      i--
-
-      if (i > 0) {
-        const backtrackStep = JSON.parse(JSON.stringify(dp))
-        backtrackStep[i][j].highlighted = true
-
-        algorithmSteps.push({
-          phase: "backtrack",
-          description: `Backtracking: Move to item ${i}`,
-          table: backtrackStep,
-          selectedItems: [...selectedItems],
-          totalValue: dp[n][w].value,
-          totalWeight,
-        })
-      }
-    }
-
-    algorithmSteps.push({
-      phase: "complete",
-      description: `Optimal solution: ${selectedItems.length} items selected with total value ${
-        dp[n][w].value
-      } and weight ${totalWeight}`,
-      table: JSON.parse(JSON.stringify(dp)),
-      selectedItems: [...selectedItems],
-      totalValue: dp[n][w].value,
-      totalWeight,
-    })
-
-    setSteps(algorithmSteps)
+    // the whole step list comes from the pure engine (lib/engines/knapsack-01.ts)
+    setSteps(generateKnapsackSteps(items, capacity))
     setCurrentStep(0)
   }
 
@@ -435,6 +213,7 @@ export default function KnapsackProblem() {
                       placeholder="Weight"
                       value={newItemWeight}
                       onChange={(e) => setNewItemWeight(e.target.value)}
+                      disabled={algorithmStarted}
                     />
                   </div>
                   <div className="flex-1">
@@ -446,9 +225,10 @@ export default function KnapsackProblem() {
                       placeholder="Value"
                       value={newItemValue}
                       onChange={(e) => setNewItemValue(e.target.value)}
+                      disabled={algorithmStarted}
                     />
                   </div>
-                  <Button className="self-end" onClick={addItem}>
+                  <Button className="self-end" onClick={addItem} disabled={algorithmStarted}>
                     Add Item
                   </Button>
                 </div>
@@ -460,11 +240,13 @@ export default function KnapsackProblem() {
                       id="capacity"
                       type="number"
                       min="1"
+                      max={MAX_KNAPSACK_CAPACITY}
                       value={capacity}
                       onChange={(e) => updateCapacity(e.target.value)}
+                      disabled={algorithmStarted}
                     />
                   </div>
-                  <Button variant="outline" className="self-end" onClick={generateRandomItems}>
+                  <Button variant="outline" className="self-end" onClick={generateRandomItems} disabled={algorithmStarted}>
                     Random Items
                   </Button>
                 </div>
@@ -513,7 +295,7 @@ export default function KnapsackProblem() {
                             <TableCell>{item.weight}</TableCell>
                             <TableCell>{item.value}</TableCell>
                             <TableCell>
-                              <Button
+                              <Button aria-label="Remove item"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => removeItem(item.id)}
@@ -635,10 +417,7 @@ export default function KnapsackProblem() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`p-3   => (
-                      <div
-                        key={item.id}
-                        className={\`p-3 border rounded-md ${
+                        className={`p-3 border rounded-md ${
                           steps[currentStep]?.selectedItems.includes(item.id)
                             ? "bg-green-100 dark:bg-green-900/30 border-green-500"
                             : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"

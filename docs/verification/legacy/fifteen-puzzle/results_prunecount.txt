@@ -1,0 +1,1 @@
+deep boards (opt 12-14) sampled 559: runs with a superseded-entry prune 26, total prunes 30, wrong/unsolved 0

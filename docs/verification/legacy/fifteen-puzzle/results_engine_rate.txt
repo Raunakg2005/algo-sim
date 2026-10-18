@@ -1,0 +1,7 @@
+UI random (100 moves) x300: engine solved 99, legacy solved 65; mean frames engine 1940 legacy 2120
+non-reversing scramble of 10 moves: engine solved 200/200, mean frames 68, max 238
+non-reversing scramble of 15 moves: engine solved 200/200, mean frames 168, max 954
+non-reversing scramble of 20 moves: engine solved 196/200, mean frames 529, max 2501
+non-reversing scramble of 25 moves: engine solved 157/200, mean frames 1274, max 2514
+non-reversing scramble of 30 moves: engine solved 92/200, mean frames 1764, max 2548
+non-reversing scramble of 40 moves: engine solved 31/200, mean frames 2296, max 2556

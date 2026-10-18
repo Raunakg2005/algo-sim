@@ -1,0 +1,24 @@
+== singly-linked-list: 20000 random click sequences (length 1..20, values -20..20, positions 0..size+1, 5% malformed input)
+sequences with >=1 defect: 19542 (97.7%)
+  codeLine: 19542 sequences (97.7%); failing clicks by op: {"insertPosition":11470,"deleteBeginning":34973,"deletePosition":29546,"deleteEnd":18758,"search":21654}
+  validation: 685 sequences (3.4%); failing clicks by op: {"insertPosition":685}
+  clicks per op: {"insertPosition":35285,"insertEnd":34513,"deleteBeginning":34973,"deletePosition":31138,"deleteEnd":29092,"insertBeginning":33413,"search":35298}
+exhaustive: all 6174 click sequences of length 1..3 over 18 clicks (values 1,2; positions 0..2; one empty-value insertPosition)
+  codeLine: 5211 failing sequences; minimal: insertPosition("1", pos 1)  =>  insertPosition frame "Invalid position 1. List size is 0" highlights line 35 "" outside insertAtPosition() [37..53]
+  validation: 955 failing sequences; minimal: insertPosition("", pos 0)  =>  invalid value "" silently ignored (no error message)
+== doubly-linked-list: 20000 random click sequences (length 1..20, values -20..20, positions 0..size+1, 5% malformed input)
+sequences with >=1 defect: 19658 (98.3%)
+  codeLine: 19658 sequences (98.3%); failing clicks by op: {"insertPosition":10564,"deleteBeginning":31204,"traverseBackward":28057,"traverseForward":29084,"search":25670,"deleteEnd":26806}
+  validation: 575 sequences (2.9%); failing clicks by op: {"insertPosition":575}
+  clicks per op: {"insertPosition":32016,"insertEnd":30410,"deleteBeginning":31204,"traverseBackward":28057,"traverseForward":29084,"search":27371,"deleteEnd":26806,"insertBeginning":28764}
+exhaustive: all 5219 click sequences of length 1..3 over 17 clicks (values 1,2; positions 0..2; one empty-value insertPosition)
+  codeLine: 4508 failing sequences; minimal: insertPosition("1", pos 1)  =>  insertPosition frame "Invalid position 1. List size is 0" highlights line 41 "  // Insert at position" outside insertAtPosition() [42..64]
+  validation: 851 failing sequences; minimal: insertPosition("", pos 0)  =>  invalid value "" silently ignored (no error message)
+== circular-linked-list: 20000 random click sequences (length 1..20, values -20..20, positions 0..size+1, 5% malformed input)
+sequences with >=1 defect: 19544 (97.7%)
+  codeLine: 19544 sequences (97.7%); failing clicks by op: {"deleteBeginning":31204,"deletePosition":26696,"traverse":29084,"search":25670,"deleteEnd":26806}
+  validation: 575 sequences (2.9%); failing clicks by op: {"insertPosition":575}
+  clicks per op: {"insertPosition":32016,"insertEnd":30410,"deleteBeginning":31204,"deletePosition":28057,"traverse":29084,"search":27371,"deleteEnd":26806,"insertBeginning":28764}
+exhaustive: all 7239 click sequences of length 1..3 over 19 clicks (values 1,2; positions 0..2; one empty-value insertPosition)
+  validation: 1065 failing sequences; minimal: insertPosition("", pos 0)  =>  invalid value "" silently ignored (no error message)
+  codeLine: 5776 failing sequences; minimal: deleteBeginning()  =>  deleteBeginning frame "Cannot delete from empty list" highlights line 62 "    this.size++;" outside deleteFromBeginning() [66..77]

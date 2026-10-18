@@ -96,7 +96,7 @@ export default function AboutPage() {
       name: "Raunak Kumar Gupta",
       role: "Software Architect",
       bio: "Algorithm enthusiast with a passion for making complex concepts accessible through visualization. Created Algo-Sim as a solo project to help students understand algorithms through interactive learning.",
-      image: "/rKG.jpg",
+      image: "/rkg.jpg",
       social: {
         github: "https://github.com/Raunakg2005",
         linkedin: "https://www.linkedin.com/in/raunak-kumar-gupta-7b3503270",
